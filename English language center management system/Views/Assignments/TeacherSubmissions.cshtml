@@ -1,0 +1,2093 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Assigments.TeacherSubmissionsViewModel
+@using System
+@using System.Linq
+@using System.Collections.Generic
+@using English_language_center_management_system.Models
+@using English_language_center_management_system.Models.ViewModels.Assigments
+
+@{
+    ViewBag.Title = "Bài nộp học viên";
+
+    var availableClasses =
+        Model != null && Model.AvailableClasses != null
+            ? Model.AvailableClasses
+            : new List<Class>();
+
+    var availableAssignments =
+        Model != null && Model.AvailableAssignments != null
+            ? Model.AvailableAssignments
+            : new List<Assignment>();
+
+    var submissions =
+        Model != null && Model.Submissions != null
+            ? Model.Submissions
+            : new List<TeacherSubmissionRowViewModel>();
+
+    var selectedClass = Model != null
+        ? Model.SelectedClass
+        : null;
+
+    string teacherName =
+        Session["FullName"] as string ??
+        Session["Username"] as string ??
+        "Giáo viên";
+
+    string teacherInitial = string.IsNullOrWhiteSpace(teacherName)
+        ? "G"
+        : teacherName.Substring(0, 1).ToUpper();
+
+    int totalSubmissions = submissions.Count;
+
+    int gradedCount = submissions.Count(s =>
+        s.Grade.HasValue);
+
+    int pendingCount = totalSubmissions - gradedCount;
+
+    int lateCount = submissions.Count(s =>
+        s.DueDate != DateTime.MinValue &&
+        s.SubmittedAt > s.DueDate);
+
+    int onTimeCount = totalSubmissions - lateCount;
+
+    var gradedScores = submissions
+        .Where(s => s.Grade.HasValue)
+        .Select(s => s.Grade.Value)
+        .ToList();
+
+    decimal averageGrade = gradedScores.Any()
+        ? Math.Round(gradedScores.Average(), 1)
+        : 0m;
+
+    string selectedClassName =
+        selectedClass != null &&
+        !string.IsNullOrWhiteSpace(selectedClass.ClassName)
+            ? selectedClass.ClassName
+            : "Lớp học";
+
+    string selectedCourseName =
+        selectedClass != null &&
+        selectedClass.Course != null &&
+        !string.IsNullOrWhiteSpace(selectedClass.Course.CourseName)
+            ? selectedClass.Course.CourseName
+            : "Chưa cập nhật khóa học";
+
+    string selectedCourseLevel =
+        selectedClass != null &&
+        selectedClass.Course != null &&
+        !string.IsNullOrWhiteSpace(selectedClass.Course.Level)
+            ? selectedClass.Course.Level
+            : "";
+
+    var selectedAssignment = Model != null &&
+                             Model.SelectedAssignmentId.HasValue
+        ? availableAssignments.FirstOrDefault(
+            a => a.Id == Model.SelectedAssignmentId.Value)
+        : null;
+}
+
+<style>
+    /* ==========================================
+       TEACHER SUBMISSIONS
+       Đồng bộ TeacherDashboard.cshtml
+       ========================================== */
+
+    .ts-page {
+        min-width: 0;
+        color: #202938;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+        .ts-page *,
+        .ts-page *::before,
+        .ts-page *::after {
+            box-sizing: border-box;
+        }
+
+        .ts-page input,
+        .ts-page select,
+        .ts-page button,
+        .ts-page a {
+            transition: background .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease;
+        }
+
+    /* Tiêu đề trang */
+
+    .ts-page-intro {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        margin-bottom: 22px;
+        padding: 27px 28px;
+        border: 1px solid #e8ebf1;
+        border-radius: 16px;
+        background: radial-gradient( circle at 100% 0, rgba(198, 40, 40, .07), transparent 34% ), #ffffff;
+        box-shadow: 0 4px 18px rgba(28, 39, 60, .035);
+    }
+
+    .ts-page-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 62px;
+        height: 62px;
+        flex: 0 0 62px;
+        border: 5px solid #fff2f2;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #fbe3e3, #f4caca);
+        color: #aa252a;
+        font-size: 24px;
+    }
+
+    .ts-page-intro-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ts-page-kicker {
+        display: block;
+        margin-bottom: 7px;
+        color: #c62828;
+        font-size: .65rem;
+        font-weight: 850;
+        letter-spacing: 1.25px;
+    }
+
+    .ts-page-intro h1 {
+        margin: 0 0 8px;
+        color: #202938;
+        font-size: clamp(1.35rem, 2vw, 1.8rem);
+        font-weight: 850;
+        line-height: 1.45;
+    }
+
+    .ts-page-intro p {
+        max-width: 720px;
+        margin: 0;
+        color: #737d8e;
+        font-size: .87rem;
+        line-height: 1.75;
+    }
+
+    .ts-intro-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+        .ts-intro-tags span {
+            padding: 5px 9px;
+            border-radius: 20px;
+            background: #f2f4f8;
+            color: #626d7e;
+            font-size: .7rem;
+            font-weight: 700;
+        }
+
+    /* Thông báo */
+
+    .ts-page .alert {
+        margin-bottom: 18px;
+        border-radius: 10px;
+        font-size: 12px;
+        line-height: 1.75;
+    }
+
+        .ts-page .alert .glyphicon {
+            margin-right: 5px;
+        }
+
+    /* Lựa chọn lớp và bài tập */
+
+    .ts-filter-panel {
+        margin-bottom: 22px;
+        padding: 22px 23px;
+        border: 1px solid #e7eaf0;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 4px 16px rgba(28, 39, 60, .025);
+    }
+
+    .ts-filter-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+        .ts-filter-heading h2 {
+            margin: 0 0 6px;
+            color: #202938;
+            font-size: 1.13rem;
+            font-weight: 850;
+        }
+
+        .ts-filter-heading p {
+            margin: 0;
+            color: #929aaa;
+            font-size: .77rem;
+            line-height: 1.7;
+        }
+
+    .ts-filter-heading-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
+        border-radius: 10px;
+        background: #fff0f0;
+        color: #c62828;
+        font-size: 15px;
+    }
+
+    .ts-filter-heading .glyphicon {
+        color: #c62828;
+    }
+
+    .ts-filter-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 14px;
+    }
+
+    .ts-field {
+        min-width: 0;
+    }
+
+        .ts-field label {
+            display: block;
+            margin-bottom: 7px;
+            color: #344054;
+            font-size: 11.5px;
+            font-weight: 800;
+        }
+
+            .ts-field label .glyphicon {
+                margin-right: 5px;
+            }
+
+    .ts-select {
+        display: block;
+        width: 100%;
+        height: 43px;
+        padding: 8px 11px;
+        border: 1px solid #dfe3ea;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #344054;
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+    }
+
+        .ts-select:focus {
+            border-color: #c62828;
+            box-shadow: 0 0 0 3px rgba(198, 40, 40, .09);
+        }
+
+    .ts-field-help {
+        margin: 6px 0 0;
+        color: #929aaa;
+        font-size: 10.5px;
+        line-height: 1.7;
+    }
+
+    .ts-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 42px;
+        padding: 10px 15px;
+        border: 1px solid #c62828;
+        border-radius: 8px;
+        background: #c62828;
+        color: #ffffff;
+        font-size: 11.5px;
+        font-weight: 800;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+        .ts-button:hover,
+        .ts-button:focus {
+            border-color: #a61f24;
+            background: #a61f24;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .ts-button:disabled {
+            border-color: #b8bec8;
+            background: #b8bec8;
+            cursor: not-allowed;
+        }
+
+    .ts-button-outline {
+        border-color: #e1e5ec;
+        background: #ffffff;
+        color: #596273;
+    }
+
+        .ts-button-outline:hover,
+        .ts-button-outline:focus {
+            border-color: #efc5c5;
+            background: #fff4f4;
+            color: #b42329;
+        }
+
+    .ts-selected-assignment {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-top: 15px;
+        padding: 11px 13px;
+        border: 1px solid #f0dede;
+        border-radius: 9px;
+        background: #fffafa;
+        color: #7b8495;
+        font-size: 10.5px;
+        line-height: 1.8;
+    }
+
+        .ts-selected-assignment .glyphicon {
+            margin-top: 3px;
+            color: #c62828;
+        }
+
+        .ts-selected-assignment strong {
+            color: #344054;
+        }
+
+    /* Tóm tắt lớp */
+
+    .ts-class-summary {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 18px;
+        padding: 20px 23px;
+        border: 1px solid #e7eaf0;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 4px 16px rgba(28, 39, 60, .025);
+    }
+
+    .ts-class-main {
+        min-width: 0;
+    }
+
+    .ts-class-kicker {
+        display: block;
+        margin-bottom: 5px;
+        color: #b12a2f;
+        font-size: .62rem;
+        font-weight: 850;
+        letter-spacing: 1.1px;
+    }
+
+    .ts-class-summary h2 {
+        margin: 0 0 5px;
+        color: #202938;
+        font-size: 1.15rem;
+        font-weight: 850;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .ts-class-course {
+        margin: 0;
+        color: #737d8e;
+        font-size: .82rem;
+        line-height: 1.7;
+    }
+
+    .ts-class-level {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 5px 9px;
+        border-radius: 6px;
+        background: #f2f4f8;
+        color: #596273;
+        font-size: 10px;
+        font-weight: 750;
+    }
+
+    .ts-class-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex: 0 0 auto;
+        padding: 8px 11px;
+        border: 1px solid #f0d0d0;
+        border-radius: 8px;
+        background: #fff5f5;
+        color: #b42329;
+        font-size: 10px;
+        font-weight: 850;
+        white-space: nowrap;
+    }
+
+    /* Thống kê */
+
+    .ts-stat-neutral .teacher-stat-icon {
+        background: #fff0f0;
+        color: #c62828;
+    }
+
+    .ts-stat-graded .teacher-stat-icon {
+        background: #e9f8ef;
+        color: #198754;
+    }
+
+    .ts-stat-pending .teacher-stat-icon {
+        background: #fff5e8;
+        color: #bf7516;
+    }
+
+    .ts-stat-late .teacher-stat-icon {
+        background: #edf4ff;
+        color: #376bc4;
+    }
+
+    /* Panel danh sách */
+
+    .ts-roster-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .ts-search-wrap {
+        position: relative;
+        flex: 1 1 260px;
+        max-width: 390px;
+        min-width: 0;
+    }
+
+    .ts-search-icon {
+        position: absolute;
+        top: 13px;
+        left: 12px;
+        color: #929aaa;
+        font-size: 12px;
+        pointer-events: none;
+    }
+
+    .ts-search-input {
+        display: block;
+        width: 100%;
+        height: 39px;
+        padding: 8px 12px 8px 34px;
+        border: 1px solid #dfe3ea;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #344054;
+        font-family: inherit;
+        font-size: 11.5px;
+        outline: none;
+    }
+
+        .ts-search-input:focus {
+            border-color: #c62828;
+            box-shadow: 0 0 0 3px rgba(198, 40, 40, .09);
+        }
+
+    .ts-search-result {
+        color: #929aaa;
+        font-size: 10.5px;
+    }
+
+    .ts-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid #e7eaf0;
+        border-radius: 10px;
+        scrollbar-width: thin;
+        scrollbar-color: #c4cbd6 #edf0f4;
+    }
+
+    .ts-submissions-table {
+        width: 100%;
+        min-width: 1050px;
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #ffffff;
+    }
+
+        .ts-submissions-table thead th {
+            padding: 13px 12px;
+            border-bottom: 1px solid #e7eaf0;
+            background: #f8fafc;
+            color: #718096;
+            font-size: 9.5px;
+            font-weight: 850;
+            letter-spacing: .3px;
+            text-align: left;
+            vertical-align: middle;
+            line-height: 1.6;
+            white-space: nowrap;
+        }
+
+        .ts-submissions-table tbody td {
+            padding: 13px 12px;
+            border-bottom: 1px solid #edf0f4;
+            color: #475467;
+            font-size: 11.5px;
+            vertical-align: middle;
+        }
+
+        .ts-submissions-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .ts-submissions-table tbody tr:hover td {
+            background: #fffdfd;
+        }
+
+    /* Thông tin học viên */
+
+    .ts-student-cell {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        min-width: 175px;
+    }
+
+    .ts-student-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 35px;
+        height: 35px;
+        flex: 0 0 35px;
+        border-radius: 10px;
+        background: #fbe5e5;
+        color: #b42329;
+        font-size: 12px;
+        font-weight: 850;
+    }
+
+    .ts-student-info {
+        min-width: 0;
+    }
+
+    .ts-student-name {
+        display: block;
+        margin: 1px 0 4px;
+        color: #273247;
+        font-size: 11.5px;
+        font-weight: 850;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .ts-student-username {
+        display: block;
+        color: #929aaa;
+        font-size: 10px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    /* Bài tập */
+
+    .ts-assignment-title {
+        display: block;
+        margin-bottom: 6px;
+        color: #273247;
+        font-size: 11.5px;
+        font-weight: 800;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .ts-assignment-deadline {
+        display: block;
+        color: #929aaa;
+        font-size: 10px;
+        line-height: 1.65;
+    }
+
+    /* Thời gian nộp và trạng thái */
+
+    .ts-submitted-date {
+        display: block;
+        margin-bottom: 7px;
+        color: #344054;
+        font-size: 11px;
+        font-weight: 750;
+        line-height: 1.6;
+        white-space: nowrap;
+    }
+
+    .ts-submission-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 8px;
+        border-radius: 6px;
+        font-size: 9.5px;
+        font-weight: 850;
+        line-height: 1.5;
+        white-space: nowrap;
+    }
+
+    .ts-status-on-time {
+        background: #e9f8ef;
+        color: #176b3a;
+    }
+
+    .ts-status-late {
+        background: #fff0f0;
+        color: #b42329;
+    }
+
+    /* Tệp bài làm */
+
+    .ts-file-cell {
+        min-width: 155px;
+        text-align: center;
+    }
+
+    .ts-file-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 34px;
+        padding: 8px 11px;
+        border: 1px solid #e5caca;
+        border-radius: 7px;
+        background: #fff6f6;
+        color: #b42329;
+        font-size: 10.5px;
+        font-weight: 800;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+        .ts-file-button:hover,
+        .ts-file-button:focus {
+            border-color: #c62828;
+            background: #c62828;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+    .ts-no-file {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: #929aaa;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    /* Điểm */
+
+    .ts-grade-cell {
+        min-width: 105px;
+        text-align: center;
+    }
+
+    .ts-grade-input {
+        display: block;
+        width: 82px;
+        height: 39px;
+        margin: 0 auto;
+        padding: 8px 7px;
+        border: 1px solid #dfe3ea;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #273247;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 850;
+        text-align: center;
+        outline: none;
+    }
+
+        .ts-grade-input:focus {
+            border-color: #c62828;
+            box-shadow: 0 0 0 3px rgba(198, 40, 40, .09);
+        }
+
+        .ts-grade-input.is-invalid {
+            border-color: #c62828;
+            background: #fff4f4;
+            box-shadow: 0 0 0 2px rgba(198, 40, 40, .07);
+        }
+
+    .ts-grade-status {
+        display: inline-block;
+        margin-top: 6px;
+        padding: 4px 7px;
+        border-radius: 5px;
+        background: #f1f3f6;
+        color: #7b8495;
+        font-size: 9px;
+        font-weight: 800;
+        line-height: 1.5;
+    }
+
+        .ts-grade-status.is-graded {
+            background: #e9f8ef;
+            color: #176b3a;
+        }
+
+        .ts-grade-status.is-failed {
+            background: #fff0f0;
+            color: #b42329;
+        }
+
+    /* Empty state */
+
+    .ts-empty-state {
+        padding: 42px 20px;
+        text-align: center;
+    }
+
+    .ts-empty-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 54px;
+        height: 54px;
+        margin: 0 auto 13px;
+        border-radius: 15px;
+        background: #fff0f0;
+        color: #c62828;
+        font-size: 22px;
+    }
+
+    .ts-empty-state strong {
+        display: block;
+        margin-bottom: 6px;
+        color: #344054;
+        font-size: 13px;
+        font-weight: 850;
+    }
+
+    .ts-empty-state p {
+        max-width: 480px;
+        margin: 0 auto;
+        color: #929aaa;
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    /* Nút lưu */
+
+    .ts-save-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid #edf0f4;
+    }
+
+    .ts-save-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        flex: 1 1 300px;
+        color: #929aaa;
+        font-size: 10.5px;
+        line-height: 1.8;
+    }
+
+        .ts-save-note .glyphicon {
+            margin-top: 3px;
+            color: #c62828;
+        }
+
+    .ts-save-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 11px 17px;
+        border: 1px solid #c62828;
+        border-radius: 8px;
+        background: #c62828;
+        color: #ffffff;
+        font-size: 11.5px;
+        font-weight: 850;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(198, 40, 40, .12);
+    }
+
+        .ts-save-button:hover,
+        .ts-save-button:focus {
+            border-color: #a61f24;
+            background: #a61f24;
+            color: #ffffff;
+        }
+
+    /* Ghi chú cuối trang */
+
+    .ts-footer-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin-top: 14px;
+        padding: 12px 14px;
+        border: 1px solid #e7eaf0;
+        border-radius: 9px;
+        background: #f9fafc;
+        color: #778194;
+        font-size: 10.5px;
+        line-height: 1.8;
+    }
+
+        .ts-footer-note .glyphicon {
+            margin-top: 3px;
+            color: #c62828;
+        }
+
+    /* Responsive */
+
+    @@media (max-width: 1100px) {
+        .ts-page-intro {
+            align-items: flex-start;
+        }
+
+        .ts-filter-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+            .ts-filter-grid .ts-button {
+                justify-self: start;
+            }
+    }
+
+    @@media (max-width: 767px) {
+        .ts-page-intro {
+            align-items: flex-start;
+            gap: 13px;
+            padding: 19px;
+        }
+
+        .ts-page-icon {
+            width: 46px;
+            height: 46px;
+            flex-basis: 46px;
+            border-width: 3px;
+            border-radius: 12px;
+            font-size: 18px;
+        }
+
+        .ts-page-intro-content {
+            flex-basis: calc(100% - 60px);
+        }
+
+        .ts-filter-panel {
+            padding: 16px;
+        }
+
+        .ts-class-summary {
+            flex-direction: column;
+            padding: 16px;
+        }
+
+        .ts-roster-toolbar {
+            align-items: flex-start;
+        }
+
+        .ts-search-wrap {
+            max-width: none;
+            flex-basis: 100%;
+        }
+
+        .ts-save-bar {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .ts-save-button {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="teacher-portal" id="teacher-submissions-page">
+
+    @* SIDEBAR — GIỐNG TEACHER DASHBOARD *@
+
+    <aside class="teacher-sidebar">
+
+        <a class="teacher-brand"
+           href="@Url.Action("TeacherDashboard", "Home")">
+
+            <span class="teacher-brand-mark">EC</span>
+
+            <span class="teacher-brand-text">
+                ELC PORTAL
+                <small>TEACHER SPACE</small>
+            </span>
+
+        </a>
+
+        <div class="teacher-sidebar-caption">
+            KHÔNG GIAN GIẢNG DẠY
+        </div>
+
+        <nav class="teacher-side-nav">
+
+            <a href="@Url.Action("TeacherDashboard", "Home")#teacher-dashboard"
+               class="teacher-nav-link">
+
+                <span class="teacher-nav-icon">⌂</span>
+                Dashboard
+
+            </a>
+
+            <a href="@Url.Action("TeacherTeachingSchedule", "ClassSessions")#teacher-weekly-schedule"
+               class="teacher-nav-link">
+
+                <span class="teacher-nav-icon">▦</span>
+                Lịch dạy + Lớp phụ trách
+
+            </a>
+
+            <a href="@Url.Action("TeacherAttendance", "Attendances")"
+               class="teacher-nav-link">
+
+                <span class="teacher-nav-icon">✓</span>
+                Điểm danh
+
+            </a>
+
+            <a href="@Url.Action("TeacherGrades", "AssessmentScores")"
+               class="teacher-nav-link">
+
+                <span class="teacher-nav-icon">A+</span>
+                Nhập điểm &amp; đánh giá
+
+            </a>
+
+            <a href="@Url.Action("TeacherSubmissions", "Assignments")"
+               class="teacher-nav-link is-active">
+
+                <span class="teacher-nav-icon">📄</span>
+                Bài nộp học viên
+
+            </a>
+
+            <a href="@Url.Action("TeacherClassResources", "CourseMaterials")"
+               class="teacher-nav-link">
+
+                <span class="teacher-nav-icon">📚</span>
+                Bài tập &amp; tài liệu
+
+            </a>
+
+            <a href="@Url.Action("TeacherProfile", "Profiles")"
+               class="teacher-nav-link">
+
+                <span class="teacher-nav-icon">◎</span>
+                Hồ sơ cá nhân
+
+            </a>
+
+        </nav>
+
+        <div class="teacher-sidebar-bottom">
+
+            <div class="teacher-support-card">
+
+                <span class="teacher-support-icon">?</span>
+
+                <strong>Cần hỗ trợ?</strong>
+
+                <p>
+                    Liên hệ trung tâm để được hỗ trợ
+                    về bài tập, bài nộp hoặc chấm điểm.
+                </p>
+
+                @Html.ActionLink(
+                    "Liên hệ trung tâm →",
+                    "Contact",
+                    "Home",
+                    null,
+                    new { @class = "teacher-support-link" }
+                )
+
+            </div>
+
+            @Html.ActionLink(
+                "↪ Đăng xuất",
+                "Logout",
+                "Auth",
+                null,
+                new { @class = "teacher-logout-link" }
+            )
+
+        </div>
+
+    </aside>
+
+    @* KHU VỰC CHÍNH *@
+
+    <div class="teacher-main">
+
+        <header class="teacher-topbar">
+
+            <div class="teacher-topbar-title">
+                <span>CỔNG GIÁO VIÊN</span>
+                <strong>Bài nộp &amp; Chấm bài tập</strong>
+            </div>
+
+            <div class="teacher-topbar-user">
+
+                <span class="teacher-avatar-small">
+                    @teacherInitial
+                </span>
+
+                <span class="teacher-topbar-user-info">
+                    <strong>@teacherName</strong>
+                    <small>Giáo viên</small>
+                </span>
+
+            </div>
+
+        </header>
+
+        <main class="teacher-content">
+
+            <div class="ts-page">
+
+                <div class="teacher-breadcrumb">
+
+                    @Html.ActionLink(
+                        "Trang chủ",
+                        "TeacherDashboard",
+                        "Home"
+                    )
+
+                    <span>/</span>
+                    Cổng giáo viên
+                    <span>/</span>
+                    Bài nộp học viên
+
+                </div>
+
+                @* THÔNG BÁO *@
+
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible">
+
+                        <button type="button"
+                                class="close"
+                                data-dismiss="alert"
+                                aria-label="Đóng">
+
+                            <span aria-hidden="true">&times;</span>
+
+                        </button>
+
+                        <i class="glyphicon glyphicon-ok-circle"></i>
+                        @TempData["SuccessMessage"]
+
+                    </div>
+                }
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible">
+
+                        <button type="button"
+                                class="close"
+                                data-dismiss="alert"
+                                aria-label="Đóng">
+
+                            <span aria-hidden="true">&times;</span>
+
+                        </button>
+
+                        <i class="glyphicon glyphicon-exclamation-sign"></i>
+                        @TempData["ErrorMessage"]
+
+                    </div>
+                }
+
+                @* TIÊU ĐỀ *@
+
+                <section class="ts-page-intro">
+
+                    <div class="ts-page-icon">
+                        <i class="glyphicon glyphicon-cloud-download"></i>
+                    </div>
+
+                    <div class="ts-page-intro-content">
+
+                        <span class="ts-page-kicker">
+                            TEACHING WORKSPACE
+                        </span>
+
+                        <h1>Bài nộp &amp; Chấm bài tập</h1>
+
+                        <p>
+                            Theo dõi bài tập học viên đã nộp, kiểm tra hạn nộp,
+                            mở tệp bài làm và nhập điểm trực tiếp.
+                        </p>
+
+                        <div class="ts-intro-tags">
+
+                            <span>
+                                <i class="glyphicon glyphicon-user"></i>
+                                @teacherName
+                            </span>
+
+                            <span>
+                                <i class="glyphicon glyphicon-blackboard"></i>
+                                @availableClasses.Count lớp phụ trách
+                            </span>
+
+                            <span>
+                                <i class="glyphicon glyphicon-file"></i>
+                                Quản lý bài nộp
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                @* BỘ LỌC LỚP *@
+
+                <section class="teacher-panel ts-filter-panel">
+
+                    <div class="teacher-panel-heading">
+
+                        <div>
+
+                            <span class="teacher-panel-eyebrow">
+                                CLASS MANAGEMENT
+                            </span>
+
+                            <h2>Chọn lớp học</h2>
+
+                            <p>
+                                Chọn lớp để xem các bài tập và bài nộp của học viên.
+                            </p>
+
+                        </div>
+
+                        <span class="teacher-panel-heading-icon">
+                            <i class="glyphicon glyphicon-filter"></i>
+                        </span>
+
+                    </div>
+
+                    <form action="@Url.Action("TeacherSubmissions", "Assignments")"
+                          method="get"
+                          id="ts-class-form"
+                          class="ts-filter-grid">
+
+                        <div class="ts-field">
+
+                            <label for="ts-class-select">
+                                <i class="glyphicon glyphicon-blackboard"></i>
+                                Lớp phụ trách
+                            </label>
+
+                            <select name="classId"
+                                    id="ts-class-select"
+                                    class="ts-select"
+                                    @(availableClasses.Any() ? "" : "disabled=\"disabled\"")>
+
+                                @if (!availableClasses.Any())
+                                {
+                                    <option value="">
+                                        Chưa có lớp được phân công
+                                    </option>
+                                }
+                                else
+                                {
+                                    foreach (var cls in availableClasses)
+                                    {
+                                        string courseName =
+                                            cls.Course != null &&
+                                            !string.IsNullOrWhiteSpace(cls.Course.CourseName)
+                                                ? " · " + cls.Course.CourseName
+                                                : "";
+
+                                        <option value="@cls.Id"
+                                                @(Model.SelectedClassId == cls.Id ? "selected=\"selected\"" : "")>
+
+                                            @cls.ClassName@courseName
+
+                                        </option>
+                                    }
+                                }
+
+                            </select>
+
+                            <p class="ts-field-help">
+                                Danh sách chỉ hiển thị các lớp do bạn phụ trách.
+                            </p>
+
+                        </div>
+
+                        <button type="submit"
+                                class="ts-button"
+                                @(availableClasses.Any() ? "" : "disabled=\"disabled\"")>
+
+                            <i class="glyphicon glyphicon-search"></i>
+                            Xem lớp
+
+                        </button>
+
+                    </form>
+
+                </section>
+
+                @if (selectedClass == null)
+                {
+                    <section class="teacher-panel">
+
+                        <div class="ts-empty-state">
+
+                            <div class="ts-empty-icon">
+                                <i class="glyphicon glyphicon-blackboard"></i>
+                            </div>
+
+                            <strong>Chưa có lớp để quản lý bài nộp</strong>
+
+                            <p>
+                                Hiện chưa có lớp học nào được phân công cho bạn.
+                                Khi có lớp phụ trách, lớp sẽ xuất hiện trong danh sách ở trên.
+                            </p>
+
+                        </div>
+
+                    </section>
+                }
+                else
+                {
+                    @* TÓM TẮT LỚP *@
+
+                    <section class="ts-class-summary">
+
+                        <div class="ts-class-main">
+
+                            <span class="ts-class-kicker">
+                                MY CLASS
+                            </span>
+
+                            <h2>@selectedClassName</h2>
+
+                            <p class="ts-class-course">
+                                @selectedCourseName
+                            </p>
+
+                            @if (!string.IsNullOrWhiteSpace(selectedCourseLevel))
+                            {
+                                <span class="ts-class-level">
+                                    <i class="glyphicon glyphicon-book"></i>
+                                    Trình độ: @selectedCourseLevel
+                                </span>
+                            }
+
+                        </div>
+
+                        <span class="ts-class-badge">
+
+                            <i class="glyphicon glyphicon-file"></i>
+                            @availableAssignments.Count bài tập
+
+                        </span>
+
+                    </section>
+
+                    @* THỐNG KÊ *@
+
+                    <section class="teacher-stat-grid">
+
+                        <article class="teacher-stat-card ts-stat-neutral">
+
+                            <div class="teacher-stat-top">
+
+                                <span class="teacher-stat-icon teacher-icon-red">
+                                    <i class="glyphicon glyphicon-cloud-upload"></i>
+                                </span>
+
+                                <span class="teacher-stat-label">
+                                    TỔNG BÀI NỘP
+                                </span>
+
+                            </div>
+
+                            <strong class="teacher-stat-number"
+                                    id="ts-stat-total">
+                                @totalSubmissions
+                            </strong>
+
+                            <span class="teacher-stat-description">
+                                Bài nộp theo bộ lọc hiện tại
+                            </span>
+
+                        </article>
+
+                        <article class="teacher-stat-card ts-stat-graded">
+
+                            <div class="teacher-stat-top">
+
+                                <span class="teacher-stat-icon teacher-icon-blue">
+                                    <i class="glyphicon glyphicon-check"></i>
+                                </span>
+
+                                <span class="teacher-stat-label">
+                                    ĐÃ CHẤM ĐIỂM
+                                </span>
+
+                            </div>
+
+                            <strong class="teacher-stat-number"
+                                    id="ts-stat-graded">
+                                @gradedCount
+                            </strong>
+
+                            <span class="teacher-stat-description">
+                                Bài nộp đã có điểm số
+                            </span>
+
+                        </article>
+
+                        <article class="teacher-stat-card ts-stat-pending">
+
+                            <div class="teacher-stat-top">
+
+                                <span class="teacher-stat-icon teacher-icon-orange">
+                                    <i class="glyphicon glyphicon-time"></i>
+                                </span>
+
+                                <span class="teacher-stat-label">
+                                    CHỜ CHẤM
+                                </span>
+
+                            </div>
+
+                            <strong class="teacher-stat-number"
+                                    id="ts-stat-pending">
+                                @pendingCount
+                            </strong>
+
+                            <span class="teacher-stat-description">
+                                Bài nộp chưa có điểm số
+                            </span>
+
+                        </article>
+
+                        <article class="teacher-stat-card ts-stat-late">
+
+                            <div class="teacher-stat-top">
+
+                                <span class="teacher-stat-icon teacher-icon-purple">
+                                    <i class="glyphicon glyphicon-calendar"></i>
+                                </span>
+
+                                <span class="teacher-stat-label">
+                                    NỘP MUỘN
+                                </span>
+
+                            </div>
+
+                            <strong class="teacher-stat-number">
+                                @lateCount
+                            </strong>
+
+                            <span class="teacher-stat-description">
+                                @onTimeCount bài nộp đúng hạn
+                            </span>
+
+                        </article>
+
+                    </section>
+
+                    @* BỘ LỌC BÀI TẬP *@
+
+                    <section class="teacher-panel ts-filter-panel">
+
+                        <div class="teacher-panel-heading">
+
+                            <div>
+
+                                <span class="teacher-panel-eyebrow">
+                                    ASSIGNMENT FILTER
+                                </span>
+
+                                <h2>Lọc theo bài tập</h2>
+
+                                <p>
+                                    Chọn một bài tập cụ thể hoặc xem tất cả bài nộp của lớp.
+                                </p>
+
+                            </div>
+
+                            <span class="teacher-panel-heading-icon">
+                                <i class="glyphicon glyphicon-filter"></i>
+                            </span>
+
+                        </div>
+
+                        <form action="@Url.Action("TeacherSubmissions", "Assignments")"
+                              method="get"
+                              id="ts-assignment-form"
+                              class="ts-filter-grid">
+
+                            <input type="hidden"
+                                   name="classId"
+                                   value="@Model.SelectedClassId" />
+
+                            <div class="ts-field">
+
+                                <label for="ts-assignment-select">
+                                    <i class="glyphicon glyphicon-list-alt"></i>
+                                    Đợt bài tập
+                                </label>
+
+                                <select name="assignmentId"
+                                        id="ts-assignment-select"
+                                        class="ts-select">
+
+                                    <option value=""
+                                            @(Model.SelectedAssignmentId.HasValue ? "" : "selected=\"selected\"")>
+
+                                        Tất cả bài tập trong lớp
+
+                                    </option>
+
+                                    @foreach (var assignment in availableAssignments)
+                                    {
+                                        <option value="@assignment.Id"
+                                                @(Model.SelectedAssignmentId == assignment.Id ? "selected=\"selected\"" : "")>
+
+                                            @assignment.Title
+                                            (Hạn: @assignment.DueDate.ToString("dd/MM/yyyy HH:mm"))
+
+                                        </option>
+                                    }
+
+                                </select>
+
+                                <p class="ts-field-help">
+                                    Có @availableAssignments.Count bài tập trong lớp hiện tại.
+                                </p>
+
+                            </div>
+
+                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+
+                                <button type="submit" class="ts-button">
+
+                                    <i class="glyphicon glyphicon-search"></i>
+                                    Lọc bài nộp
+
+                                </button>
+
+                                <a href="@Url.Action("TeacherSubmissions", "Assignments",
+                                    new { classId = Model.SelectedClassId })"
+                                   class="ts-button ts-button-outline">
+
+                                    <i class="glyphicon glyphicon-refresh"></i>
+                                    Bỏ lọc
+
+                                </a>
+
+                            </div>
+
+                        </form>
+
+                        @if (selectedAssignment != null)
+                        {
+                            <div class="ts-selected-assignment">
+
+                                <i class="glyphicon glyphicon-info-sign"></i>
+
+                                <span>
+                                    Đang xem bài tập:
+                                    <strong>@selectedAssignment.Title</strong>
+                                    · Hạn nộp:
+                                    <strong>
+                                        @selectedAssignment.DueDate.ToString("dd/MM/yyyy HH:mm")
+                                    </strong>
+                                </span>
+
+                            </div>
+                        }
+
+                    </section>
+
+                    @* DANH SÁCH BÀI NỘP VÀ FORM CHẤM ĐIỂM *@
+
+                    <form action="@Url.Action("SaveSubmissionGrades", "Assignments")"
+                          method="post"
+                          id="ts-grades-form">
+
+                        @Html.AntiForgeryToken()
+                        @Html.HiddenFor(m => m.SelectedClassId)
+                        @Html.HiddenFor(m => m.SelectedAssignmentId)
+
+                        <section class="teacher-panel">
+
+                            <div class="teacher-panel-heading">
+
+                                <div>
+
+                                    <span class="teacher-panel-eyebrow">
+                                        SUBMISSION REVIEW
+                                    </span>
+
+                                    <h2>Bài làm của học viên</h2>
+
+                                    <p>
+                                        Tải bài làm, kiểm tra thời gian nộp và nhập điểm từ 0 đến 10.
+                                    </p>
+
+                                </div>
+
+                                <span class="teacher-pending-badge">
+                                    @totalSubmissions
+                                </span>
+
+                            </div>
+
+                            @if (submissions.Any())
+                            {
+                                <div class="ts-roster-toolbar">
+
+                                    <div class="ts-search-wrap">
+
+                                        <i class="glyphicon glyphicon-search ts-search-icon"></i>
+
+                                        <input type="search"
+                                               id="ts-submission-search"
+                                               class="ts-search-input"
+                                               placeholder="Tìm theo tên học viên hoặc bài tập..."
+                                               autocomplete="off" />
+
+                                    </div>
+
+                                    <span class="ts-search-result"
+                                          id="ts-search-result">
+
+                                        Hiển thị @totalSubmissions bài nộp
+
+                                    </span>
+
+                                </div>
+
+                                <div class="ts-table-wrap">
+
+                                    <table class="ts-submissions-table">
+
+                                        <thead>
+
+                                            <tr>
+
+                                                <th style="width:220px;">
+                                                    HỌC VIÊN
+                                                </th>
+
+                                                <th style="width:230px;">
+                                                    BÀI TẬP
+                                                </th>
+
+                                                <th style="width:175px;">
+                                                    THỜI GIAN NỘP
+                                                </th>
+
+                                                <th style="width:175px; text-align:center;">
+                                                    TỆP BÀI LÀM
+                                                </th>
+
+                                                <th style="width:120px; text-align:center;">
+                                                    ĐIỂM SỐ
+                                                </th>
+
+                                            </tr>
+
+                                        </thead>
+
+                                        <tbody id="ts-submission-body">
+
+                                            @for (int i = 0; i < submissions.Count; i++)
+                                            {
+                                                var sub = submissions[i];
+
+                                                bool isLate =
+                                                    sub.DueDate != DateTime.MinValue &&
+                                                    sub.SubmittedAt > sub.DueDate;
+
+                                                string studentName =
+                                                    !string.IsNullOrWhiteSpace(sub.StudentName)
+                                                        ? sub.StudentName
+                                                        : "Học viên";
+
+                                                string studentUsername =
+                                                    !string.IsNullOrWhiteSpace(sub.StudentUsername)
+                                                        ? sub.StudentUsername
+                                                        : "Chưa có tài khoản";
+
+                                                string studentInitial =
+                                                    studentName.Substring(0, 1).ToUpper();
+
+                                                bool hasGrade = sub.Grade.HasValue;
+
+                                                <tr class="ts-submission-row"
+                                                    data-submission-row
+                                                    data-student-name="@studentName"
+                                                    data-student-username="@studentUsername"
+                                                    data-assignment-title="@sub.AssignmentTitle">
+
+                                                    @* CÁC TRƯỜNG DÙNG CHO MODEL BINDING *@
+
+                                                    @Html.HiddenFor(m => m.Submissions[i].SubmissionId)
+                                                    @Html.HiddenFor(m => m.Submissions[i].AssignmentId)
+
+                                                    @* HỌC VIÊN *@
+
+                                                    <td>
+
+                                                        <div class="ts-student-cell">
+
+                                                            <span class="ts-student-avatar">
+                                                                @studentInitial
+                                                            </span>
+
+                                                            <span class="ts-student-info">
+
+                                                                <strong class="ts-student-name">
+                                                                    @studentName
+                                                                </strong>
+
+                                                                <span class="ts-student-username">
+                                                                    @(studentUsername == "Chưa có tài khoản"
+                                                                        ? studentUsername
+                                                                        : "@" + studentUsername)
+                                                                </span>
+
+                                                            </span>
+
+                                                        </div>
+
+                                                    </td>
+
+                                                    @* BÀI TẬP VÀ HẠN NỘP *@
+
+                                                    <td>
+
+                                                        <strong class="ts-assignment-title">
+                                                            @sub.AssignmentTitle
+                                                        </strong>
+
+                                                        <span class="ts-assignment-deadline">
+
+                                                            <i class="glyphicon glyphicon-time"></i>
+
+                                                            Hạn:
+
+                                                            @(sub.DueDate == DateTime.MinValue
+                                                                ? "Chưa cập nhật"
+                                                                : sub.DueDate.ToString("dd/MM/yyyy HH:mm"))
+
+                                                        </span>
+
+                                                    </td>
+
+                                                    @* THỜI GIAN NỘP *@
+
+                                                    <td>
+
+                                                        <span class="ts-submitted-date">
+                                                            @sub.SubmittedAt.ToString("dd/MM/yyyy")
+                                                            <br />
+                                                            @sub.SubmittedAt.ToString("HH:mm")
+                                                        </span>
+
+                                                        @if (isLate)
+                                                        {
+                                                            <span class="ts-submission-status ts-status-late">
+
+                                                                <i class="glyphicon glyphicon-time"></i>
+                                                                Nộp muộn
+
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="ts-submission-status ts-status-on-time">
+
+                                                                <i class="glyphicon glyphicon-ok-circle"></i>
+                                                                Đúng hạn
+
+                                                            </span>
+                                                        }
+
+                                                    </td>
+
+                                                    @* TỆP BÀI LÀM *@
+
+                                                    <td class="ts-file-cell">
+
+                                                        @if (!string.IsNullOrWhiteSpace(sub.FileUrl))
+                                                        {
+                                                            <a href="@sub.FileUrl"
+                                                               target="_blank"
+                                                               rel="noopener noreferrer"
+                                                               class="ts-file-button"
+                                                               title="Mở hoặc tải tệp bài làm">
+
+                                                                <i class="glyphicon glyphicon-cloud-download"></i>
+                                                                Mở bài làm
+
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="ts-no-file">
+
+                                                                <i class="glyphicon glyphicon-file"></i>
+                                                                Không có tệp
+
+                                                            </span>
+                                                        }
+
+                                                    </td>
+
+                                                    @* ĐIỂM SỐ *@
+
+                                                    <td class="ts-grade-cell">
+
+                                                        @Html.TextBoxFor(
+                                                            m => m.Submissions[i].Grade,
+                                                            new
+                                                            {
+                                                                @class = "ts-grade-input",
+                                                                type = "number",
+                                                                step = "0.1",
+                                                                min = "0",
+                                                                max = "10",
+                                                                inputmode = "decimal",
+                                                                placeholder = "0–10",
+                                                                autocomplete = "off",
+                                                                data_grade_input = "true"
+                                                            })
+
+                                                        <span class="ts-grade-status @(hasGrade ? "is-graded" : "")"
+                                                              data-grade-status>
+
+                                                            @(hasGrade
+                                                                ? "Đã chấm"
+                                                                : "Chờ chấm")
+
+                                                        </span>
+
+                                                    </td>
+
+                                                </tr>
+                                            }
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                                <div class="ts-empty-state"
+                                     id="ts-no-search-results"
+                                     style="display:none;">
+
+                                    <div class="ts-empty-icon">
+                                        <i class="glyphicon glyphicon-search"></i>
+                                    </div>
+
+                                    <strong>Không tìm thấy bài nộp</strong>
+
+                                    <p>
+                                        Hãy thử tìm theo tên học viên hoặc tên bài tập khác.
+                                    </p>
+
+                                </div>
+
+                                <div class="ts-save-bar">
+
+                                    <div class="ts-save-note">
+
+                                        <i class="glyphicon glyphicon-info-sign"></i>
+
+                                        <span>
+                                            Điểm bài tập sử dụng thang 0–10.
+                                            Bạn có thể để trống điểm nếu chưa chấm xong;
+                                            những điểm đã nhập sẽ được lưu khi gửi biểu mẫu.
+                                        </span>
+
+                                    </div>
+
+                                    <button type="submit"
+                                            class="ts-save-button"
+                                            id="ts-save-button">
+
+                                        <i class="glyphicon glyphicon-floppy-disk"></i>
+                                        Lưu tất cả điểm số
+
+                                    </button>
+
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="ts-empty-state">
+
+                                    <div class="ts-empty-icon">
+                                        <i class="glyphicon glyphicon-inbox"></i>
+                                    </div>
+
+                                    <strong>Chưa có bài nộp</strong>
+
+                                    <p>
+                                        Chưa có học viên nào nộp bài cho lựa chọn hiện tại.
+                                        Bạn có thể chọn bài tập khác ở bộ lọc phía trên.
+                                    </p>
+
+                                </div>
+                            }
+
+                        </section>
+
+                    </form>
+
+                    <div class="ts-footer-note">
+
+                        <i class="glyphicon glyphicon-shield"></i>
+
+                        <span>
+                            Chỉ chấm những bài nộp thuộc lớp được phân công.
+                            Hệ thống vẫn kiểm tra quyền truy cập và giới hạn điểm
+                            từ 0 đến 10 khi lưu dữ liệu.
+                        </span>
+
+                    </div>
+
+                }
+
+            </div>
+
+        </main>
+
+        <footer class="teacher-footer">
+            <span>© @DateTime.Now.Year English Center</span>
+            <span>Teacher Information System</span>
+        </footer>
+
+    </div>
+
+</div>
+
+@section scripts {
+    <script>
+                (function () {
+                    "use strict";
+
+                    var classSelect = document.getElementById("ts-class-select");
+                    var assignmentSelect = document.getElementById("ts-assignment-select");
+                    var searchInput = document.getElementById("ts-submission-search");
+
+                    var rows = Array.prototype.slice.call(
+                        document.querySelectorAll("[data-submission-row]")
+                    );
+
+                    var noResults = document.getElementById(
+                        "ts-no-search-results"
+                    );
+
+                    var searchResult = document.getElementById("ts-search-result");
+
+                    function filterSubmissions() {
+                        var term = searchInput
+                            ? searchInput.value.trim().toLocaleLowerCase()
+                            : "";
+
+                        var visibleCount = 0;
+
+                        rows.forEach(function (row) {
+                            var name = (
+                                row.getAttribute("data-student-name") || ""
+                            ).toLocaleLowerCase();
+
+                            var username = (
+                                row.getAttribute("data-student-username") || ""
+                            ).toLocaleLowerCase();
+
+                            var assignment = (
+                                row.getAttribute("data-assignment-title") || ""
+                            ).toLocaleLowerCase();
+
+                            var matched =
+                                !term ||
+                                name.indexOf(term) >= 0 ||
+                                username.indexOf(term) >= 0 ||
+                                assignment.indexOf(term) >= 0;
+
+                            row.style.display = matched ? "" : "none";
+
+                            if (matched) {
+                                visibleCount++;
+                            }
+                        });
+
+                        if (searchResult) {
+                            searchResult.textContent =
+                                "Hiển thị " + visibleCount +
+                                "/" + rows.length + " bài nộp";
+                        }
+
+                        if (noResults) {
+                            noResults.style.display =
+                                rows.length > 0 && visibleCount === 0
+                                    ? "block"
+                                    : "none";
+                        }
+                    }
+
+                    function updateGradeStatus(input) {
+                        var row = input.closest("[data-submission-row]");
+
+                        if (!row) {
+                            return;
+                        }
+
+                        var status = row.querySelector("[data-grade-status]");
+
+                        if (!status) {
+                            return;
+                        }
+
+                        input.classList.remove("is-invalid");
+
+                        if (input.value.trim() === "") {
+                            status.className = "ts-grade-status";
+                            status.textContent = "Chờ chấm";
+                            return;
+                        }
+
+                        var value = Number(input.value);
+
+                        if (!isFinite(value) || value < 0 || value > 10) {
+                            input.classList.add("is-invalid");
+                            status.className = "ts-grade-status ts-status-late";
+                            status.textContent = "Điểm không hợp lệ";
+                            return;
+                        }
+
+                        status.className = "ts-grade-status is-graded";
+                        status.textContent = "Đã chấm";
+                    }
+
+                    if (classSelect) {
+                        classSelect.addEventListener("change", function () {
+                            if (classSelect.value) {
+                                classSelect.form.submit();
+                            }
+                        });
+                    }
+
+                    if (assignmentSelect) {
+                        assignmentSelect.addEventListener("change", function () {
+                            assignmentSelect.form.submit();
+                        });
+                    }
+
+                    if (searchInput) {
+                        searchInput.addEventListener("input", filterSubmissions);
+                    }
+
+                    document.querySelectorAll("[data-grade-input]").forEach(
+                        function (input) {
+                            input.addEventListener("input", function () {
+                                updateGradeStatus(input);
+                            });
+
+                            input.addEventListener("change", function () {
+                                updateGradeStatus(input);
+                            });
+                        }
+                    );
+
+                    var gradesForm = document.getElementById("ts-grades-form");
+
+                    if (gradesForm) {
+                        gradesForm.addEventListener("submit", function (event) {
+                            var invalidInput = null;
+
+                            document.querySelectorAll("[data-grade-input]").forEach(
+                                function (input) {
+                                    input.classList.remove("is-invalid");
+
+                                    if (input.value.trim() === "") {
+                                        return;
+                                    }
+
+                                    var value = Number(input.value);
+
+                                    if (
+                                        !isFinite(value) ||
+                                        value < 0 ||
+                                        value > 10
+                                    ) {
+                                        input.classList.add("is-invalid");
+
+                                        if (!invalidInput) {
+                                            invalidInput = input;
+                                        }
+                                    }
+                                }
+                            );
+
+                            if (invalidInput) {
+                                event.preventDefault();
+
+                                alert(
+                                    "Điểm bài tập phải nằm trong khoảng từ 0 đến 10."
+                                );
+
+                                invalidInput.focus();
+
+                                invalidInput.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "center"
+                                });
+                            }
+                        });
+                    }
+
+                    document.querySelectorAll("[data-grade-input]").forEach(
+                        function (input) {
+                            updateGradeStatus(input);
+                        }
+                    );
+
+                    filterSubmissions();
+                })();
+    </script>
+}

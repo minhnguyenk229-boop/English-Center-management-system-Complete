@@ -1,0 +1,305 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Classes.ClassEditViewModel
+@using System
+@using System.Collections.Generic
+@using System.Web.Mvc
+
+@{
+    ViewBag.Title = "Sửa lớp học";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var selectedStatus = Model != null && !String.IsNullOrWhiteSpace(Model.Status) ? Model.Status : "Mở đăng ký";
+    var statusOptions = new List<SelectListItem>
+{
+        new SelectListItem { Value = "Mở đăng ký", Text = "Mở đăng ký", Selected = selectedStatus == "Mở đăng ký" || selectedStatus == "Open" },
+        new SelectListItem { Value = "Đã đủ sĩ số", Text = "Đã đủ sĩ số", Selected = selectedStatus == "Đã đủ sĩ số" || selectedStatus == "Full" },
+        new SelectListItem { Value = "Đang học", Text = "Đang học", Selected = selectedStatus == "Đang học" || selectedStatus == "Studying" },
+        new SelectListItem { Value = "Đã hoàn thành", Text = "Đã hoàn thành", Selected = selectedStatus == "Đã hoàn thành" || selectedStatus == "Completed" },
+        new SelectListItem { Value = "Đã đóng", Text = "Đã đóng", Selected = selectedStatus == "Đã đóng" || selectedStatus == "Closed" }
+    };
+}
+
+<div class="admin-class-form-page">
+    <div class="admin-class-form-heading">
+        <div>
+            <div class="admin-class-form-eyebrow">
+                QUẢN LÝ ĐÀO TẠO
+            </div>
+            <h2>Sửa thông tin lớp học</h2>
+            <p>
+                Cập nhật khóa học, giáo viên phụ trách và thông tin lớp học.
+            </p>
+        </div>
+        <div class="admin-class-form-heading-icon">
+            <i class="glyphicon glyphicon-edit"></i>
+        </div>
+    </div>
+
+    <div class="admin-class-form-card">
+        <div class="admin-class-form-card-heading">
+            <h3>Thông tin lớp học #@Model.Id</h3>
+            <p>Kiểm tra thông tin trước khi lưu thay đổi.</p>
+        </div>
+
+        @using (Html.BeginForm("Edit", "Classes", FormMethod.Post, new { @class = "admin-class-form" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.Id)
+            @Html.ValidationSummary(false, "", new { @class = "admin-class-form-validation-summary" })
+
+            <div class="admin-class-form-grid">
+                <!-- Khóa học -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.CourseId, "Khóa học *", new { @class = "admin-class-form-label" })
+                    @Html.DropDownListFor(m => m.CourseId, (IEnumerable<SelectListItem>)ViewBag.CourseId, "-- Chọn khóa học --", new { @class = "admin-class-form-control", id = "CourseId" })
+                    @Html.ValidationMessageFor(m => m.CourseId, "", new { @class = "admin-class-form-error" })
+                </div>
+
+                <!-- Giáo viên phụ trách -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.TeacherId, "Giáo viên phụ trách", new { @class = "admin-class-form-label" })
+                    @Html.DropDownListFor(m => m.TeacherId, (IEnumerable<SelectListItem>)ViewBag.TeacherId, "-- Chưa phân công giáo viên --", new { @class = "admin-class-form-control" })
+                    @Html.ValidationMessageFor(m => m.TeacherId, "", new { @class = "admin-class-form-error" })
+                </div>
+
+                <!-- Tên lớp học -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.ClassName, "Tên lớp học *", new { @class = "admin-class-form-label" })
+                    @Html.TextBoxFor(m => m.ClassName, new { @class = "admin-class-form-control", placeholder = "Nhập tên lớp học", maxlength = "100" })
+                    @Html.ValidationMessageFor(m => m.ClassName, "", new { @class = "admin-class-form-error" })
+                </div>
+
+                <!-- Phòng học -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.RoomId, "Phòng học *", new { @class = "admin-class-form-label" })
+                    @Html.DropDownListFor(m => m.RoomId, (IEnumerable<SelectListItem>)ViewBag.RoomId, "-- Chọn phòng học --", new { @class = "admin-class-form-control", id = "RoomId" })
+                    @Html.ValidationMessageFor(m => m.RoomId, "", new { @class = "admin-class-form-error" })
+                </div>
+
+                <!-- Sĩ số tối đa -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.MaxCapacity, "Sĩ số tối đa", new { @class = "admin-class-form-label" })
+                    @Html.TextBoxFor(m => m.MaxCapacity, new { @class = "admin-class-form-control bg-light", id = "MaxCapacity", @readonly = "readonly" })
+                    @Html.ValidationMessageFor(m => m.MaxCapacity, "", new { @class = "admin-class-form-error" })
+                </div>
+
+                <!-- Trạng thái -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.Status, "Trạng thái *", new { @class = "admin-class-form-label" })
+                    @Html.DropDownListFor(m => m.Status, statusOptions, new { @class = "admin-class-form-control" })
+                    @Html.ValidationMessageFor(m => m.Status, "", new { @class = "admin-class-form-error" })
+                </div>
+
+                <!-- Thứ học trong tuần -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.ScheduleDays, "Thứ học trong tuần *", new { @class = "admin-class-form-label" })
+                    @Html.TextBoxFor(m => m.ScheduleDays, new { @class = "admin-class-form-control", id = "ScheduleDays" })
+                    @Html.ValidationMessageFor(m => m.ScheduleDays, "", new { @class = "admin-class-form-error" })
+                    <small class="admin-class-form-hint" id="scheduleDaysHint">Số thứ học phải khớp với số buổi/tuần của khóa học.</small>
+                </div>
+
+                <!-- Giờ bắt đầu -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.DailyStartTimeStr, "Giờ bắt đầu *", new { @class = "admin-class-form-label" })
+                    @Html.TextBoxFor(m => m.DailyStartTimeStr, new { @class = "admin-class-form-control", id = "DailyStartTimeStr", type = "time", @Value = Model.DailyStartTimeStr })
+                    @Html.ValidationMessageFor(m => m.DailyStartTimeStr, "", new { @class = "admin-class-form-error" })
+                </div>
+
+                <!-- Giờ kết thúc -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.DailyEndTimeStr, "Giờ kết thúc", new { @class = "admin-class-form-label" })
+                    @Html.TextBoxFor(m => m.DailyEndTimeStr, new { @class = "admin-class-form-control bg-light", id = "DailyEndTimeStr", type = "time", @readonly = "readonly", @Value = Model.DailyEndTimeStr })
+                    @Html.ValidationMessageFor(m => m.DailyEndTimeStr, "", new { @class = "admin-class-form-error" })
+                </div>
+
+                <!-- Ngày bắt đầu học -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.StartDate, "Ngày bắt đầu học *", new { @class = "admin-class-form-label" })
+                    @Html.TextBoxFor(m => m.StartDate, new { @class = "admin-class-form-control", id = "StartDate", type = "date", @Value = Model.StartDate.HasValue ? Model.StartDate.Value.ToString("yyyy-MM-dd") : "" })
+                    @Html.ValidationMessageFor(m => m.StartDate, "", new { @class = "admin-class-form-error" })
+                </div>
+
+                <!-- Ngày kết thúc học -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.EndDate, "Ngày kết thúc học", new { @class = "admin-class-form-label" })
+                    @Html.TextBoxFor(m => m.EndDate, new { @class = "admin-class-form-control bg-light", id = "EndDate", type = "date", @readonly = "readonly", @Value = Model.EndDate.HasValue ? Model.EndDate.Value.ToString("yyyy-MM-dd") : "" })
+                    @Html.ValidationMessageFor(m => m.EndDate, "", new { @class = "admin-class-form-error" })
+                </div>
+
+                <!-- Thời gian bắt đầu đăng ký -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.RegistrationStartDate, "Thời gian bắt đầu đăng ký", new { @class = "admin-class-form-label" })
+                    @Html.TextBoxFor(m => m.RegistrationStartDate, new { @class = "admin-class-form-control", type = "date", @Value = Model.RegistrationStartDate.HasValue ? Model.RegistrationStartDate.Value.ToString("yyyy-MM-dd") : "" })
+                    @Html.ValidationMessageFor(m => m.RegistrationStartDate, "", new { @class = "admin-class-form-error" })
+                </div>
+
+                <!-- Thời gian kết thúc đăng ký -->
+                <div class="admin-class-form-group">
+                    @Html.LabelFor(m => m.RegistrationEndDate, "Thời gian kết thúc đăng ký", new { @class = "admin-class-form-label" })
+                    @Html.TextBoxFor(m => m.RegistrationEndDate, new { @class = "admin-class-form-control", type = "date", @Value = Model.RegistrationEndDate.HasValue ? Model.RegistrationEndDate.Value.ToString("yyyy-MM-dd") : "" })
+                    @Html.ValidationMessageFor(m => m.RegistrationEndDate, "", new { @class = "admin-class-form-error" })
+                </div>
+
+                <!-- Mô tả lịch học -->
+                <div class="admin-class-form-group admin-class-form-full">
+                    @Html.LabelFor(m => m.ScheduleDescription, "Mô tả lịch học", new { @class = "admin-class-form-label" })
+                    @Html.TextAreaFor(m => m.ScheduleDescription, new { @class = "admin-class-form-control admin-class-form-textarea", id = "ScheduleDescription", rows = "3", maxlength = "255" })
+                    @Html.ValidationMessageFor(m => m.ScheduleDescription, "", new { @class = "admin-class-form-error" })
+                </div>
+            </div>
+
+            <div class="admin-class-form-actions">
+                <a href="@Url.Action("Index", "Classes")" class="admin-class-btn admin-class-btn-cancel">
+                    <i class="glyphicon glyphicon-arrow-left"></i> Quay lại
+                </a>
+                <button type="submit" class="admin-class-btn admin-class-btn-submit">
+                    <i class="glyphicon glyphicon-floppy-disk"></i> Lưu thay đổi
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+                $(document).ready(function () {
+                    var courseInfo = { sessionsPerWeek: 0, hoursPerSession: 0, totalWeeks: 0 };
+
+                    // 1. Khi đổi Khóa học -> Gọi API lấy thông tin
+                    $('#CourseId').on('change', function () {
+                        var val = $(this).val();
+                        var cId = val ? val.toString() : '';
+                        var url = $(this).attr('data-url');
+
+                        if (cId && url) {
+                            $.getJSON(url, { courseId: parseInt(cId, 10) }, function (data=null) {
+                                if (data) {
+                                    courseInfo = data;
+                                    $('#scheduleDaysHint').text('Khóa học yêu cầu chọn đúng ' + courseInfo.sessionsPerWeek + ' buổi/tuần.');
+                                    updateCalculatedFields();
+                                }
+                            });
+                        }
+                    });
+
+                    // 2. Khi đổi Phòng học -> Lấy Capacity
+                    $('#RoomId').on('change', function () {
+                        var val = $(this).val();
+                        var rId = val ? val.toString() : '';
+                        var url = $(this).attr('data-url');
+
+                        if (rId && url) {
+                            $.getJSON(url, { roomId: parseInt(rId, 10) }, function (data=null) {
+                                if (data && data.capacity) {
+                                    $('#MaxCapacity').val(data.capacity);
+                                }
+                            });
+                        }
+                    });
+
+                    // 3. Lắng nghe sự kiện để tính toán tự động
+                    $('#DailyStartTimeStr, #ScheduleDays, #StartDate').on('input change', function () {
+                        updateCalculatedFields();
+                    });
+
+                    function updateCalculatedFields() {
+                        updateEndTime();
+                        updateEndDate();
+                        updateScheduleDesc();
+                    }
+
+                    function updateEndTime() {
+                        var val = $('#DailyStartTimeStr').val();
+                        var startTime = val ? val.toString() : '';
+
+                        if (!startTime || !courseInfo.hoursPerSession) return;
+
+                        var parts = startTime.split(':');
+                        if (parts.length < 2) return;
+
+                        var h = parseInt(parts[0], 10);
+                        var m = parseInt(parts[1], 10);
+                        if (isNaN(h) || isNaN(m)) return;
+
+                        var totalM = (h * 60) + m + Math.round(courseInfo.hoursPerSession * 60);
+                        var endH = Math.floor(totalM / 60) % 24;
+                        var endM = totalM % 60;
+
+                        var endStr = (endH < 10 ? '0' : '') + endH + ':' + (endM < 10 ? '0' : '') + endM;
+                        $('#DailyEndTimeStr').val(endStr);
+                    }
+
+                    function updateEndDate() {
+                        var valStart = $('#StartDate').val();
+                        var startDateStr = valStart ? valStart.toString() : '';
+
+                        var valDays = $('#ScheduleDays').val();
+                        var scheduleDaysStr = valDays ? valDays.toString() : '';
+
+                        if (!startDateStr || !scheduleDaysStr || !courseInfo.totalWeeks || !courseInfo.sessionsPerWeek) return;
+
+                        var targetDays = parseDays(scheduleDaysStr);
+                        if (targetDays.length === 0) return;
+
+                        var totalSessions = courseInfo.totalWeeks * courseInfo.sessionsPerWeek;
+                        var count = 0;
+                        var curr = new Date(startDateStr);
+                        var safety = 0;
+
+                        while (count < totalSessions && safety < 500) {
+                            var dayOfWeek = curr.getDay();
+                            if (targetDays.indexOf(dayOfWeek) !== -1) {
+                                count++;
+                                if (count === totalSessions) {
+                                    var yyyy = curr.getFullYear();
+                                    var monthNum = curr.getMonth() + 1;
+                                    var dayNum = curr.getDate();
+
+                                    var mm = (monthNum < 10 ? '0' : '') + monthNum;
+                                    var dd = (dayNum < 10 ? '0' : '') + dayNum;
+
+                                    $('#EndDate').val(yyyy + '-' + mm + '-' + dd);
+                                    break;
+                                }
+                            }
+                            curr.setDate(curr.getDate() + 1);
+                            safety++;
+                        }
+                    }
+
+                    function updateScheduleDesc() {
+                        var vDays = $('#ScheduleDays').val();
+                        var days = vDays ? vDays.toString() : '';
+
+                        var vStart = $('#DailyStartTimeStr').val();
+                        var start = vStart ? vStart.toString() : '';
+
+                        var vEnd = $('#DailyEndTimeStr').val();
+                        var end = vEnd ? vEnd.toString() : '';
+
+                        if (days && start && end) {
+                            $('#ScheduleDescription').val('Thứ ' + days + ' (' + start + ' - ' + end + ')');
+                        }
+                    }
+
+                    function parseDays(str='') {
+                        var res = [];
+                        var inputStr = str ? str.toString() : '';
+                        var tokens = inputStr.split(/[,;\s-]+/);
+
+                        for (var i = 0; i < tokens.length; i++) {
+                            var t = tokens[i].trim().toLowerCase();
+                            if (t === '2' || t === 'thu2' || t === 'thứ 2' || t === 't2' || t === 'mon') res.push(1);
+                            else if (t === '3' || t === 'thu3' || t === 'thứ 3' || t === 't3' || t === 'tue') res.push(2);
+                            else if (t === '4' || t === 'thu4' || t === 'thứ 4' || t === 't4' || t === 'wed') res.push(3);
+                            else if (t === '5' || t === 'thu5' || t === 'thứ 5' || t === 't5' || t === 'thu') res.push(4);
+                            else if (t === '6' || t === 'thu6' || t === 'thứ 6' || t === 't6' || t === 'fri') res.push(5);
+                            else if (t === '7' || t === 'thu7' || t === 'thứ 7' || t === 't7' || t === 'sat') res.push(6);
+                            else if (t === 'cn' || t === 'chunhat' || t === 'chủ nhật' || t === 'sun' || t === '8') res.push(0);
+                        }
+                        return res;
+                    }
+
+                    if ($('#CourseId').val()) $('#CourseId').trigger('change');
+                    if ($('#RoomId').val()) $('#RoomId').trigger('change');
+                });
+    </script>
+}

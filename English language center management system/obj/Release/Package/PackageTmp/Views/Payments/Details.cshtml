@@ -1,0 +1,77 @@
+﻿@model English_language_center_management_system.Models.Payment
+@using System
+@{
+    ViewBag.Title = "Chi tiết thanh toán";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var studentName = Model.Enrollment != null && Model.Enrollment.Student != null
+        ? (String.IsNullOrWhiteSpace(Model.Enrollment.Student.FullName) ? Model.Enrollment.Student.Username : Model.Enrollment.Student.FullName)
+        : "Chưa có thông tin học viên";
+
+    decimal tuitionFee = Model.Enrollment?.Class?.Course?.TuitionFee ?? 0;
+    decimal remainingBalance = Math.Max(tuitionFee - Model.AmountPaid, 0);
+
+    var statusText = "Chưa xác định";
+    var statusClass = "payment-details-status-default";
+    switch (Model.PaymentStatus)
+    {
+        case "Paid":
+        case "Completed": statusText = "Đã thanh toán"; statusClass = "payment-details-status-paid"; break;
+        case "Partial": statusText = "Thanh toán một phần"; statusClass = "payment-details-status-partial"; break;
+        case "Pending":
+        case "Unpaid": statusText = "Chưa thanh toán"; statusClass = "payment-details-status-pending"; break;
+        default: statusText = Model.PaymentStatus; break;
+    }
+}
+<div class="admin-payment-details-page">
+    <div class="payment-details-header">
+        <div>
+            <div class="payment-details-eyebrow">QUẢN LÝ TÀI CHÍNH</div>
+            <h2>Chi tiết thanh toán</h2>
+        </div>
+        <a href="@Url.Action("Index", "Payments")" class="payment-details-back">
+            <i class="glyphicon glyphicon-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <div class="payment-details-hero">
+        <div class="payment-details-hero-icon"><i class="glyphicon glyphicon-credit-card"></i></div>
+        <div class="payment-details-hero-content">
+            <span class="payment-details-code">GIAO DỊCH #@Model.Id</span>
+            <h3>@String.Format("{0:N0} VNĐ", Model.AmountPaid)</h3>
+            <p><i class="glyphicon glyphicon-file"></i> Biên lai: @(String.IsNullOrWhiteSpace(Model.ReceiptNumber) ? "Chưa có" : Model.ReceiptNumber)</p>
+        </div>
+        <div class="payment-details-hero-status">
+            <span class="payment-details-status @statusClass">@statusText</span>
+        </div>
+    </div>
+
+    <div class="payment-details-card payment-details-transaction">
+        <div class="payment-details-card-heading">
+            <div class="payment-details-section-icon icon-transaction"><i class="glyphicon glyphicon-list-alt"></i></div>
+            <div><h3>Thông tin giao dịch</h3></div>
+        </div>
+        <div class="payment-details-info-list">
+            <div class="payment-details-info-row">
+                <span>Ngày thanh toán</span>
+                <strong>@(Model.PaymentDate.HasValue ? Model.PaymentDate.Value.ToString("dd/MM/yyyy HH:mm") : "Chưa thanh toán")</strong>
+            </div>
+            <div class="payment-details-info-row">
+                <span>Trạng thái</span>
+                <strong><span class="payment-details-status @statusClass">@statusText</span></strong>
+            </div>
+            <div class="payment-details-info-row">
+                <span>Số dư ước tính (Còn nợ)</span>
+                <strong class="payment-details-money">@remainingBalance.ToString("N0") VNĐ</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="payment-details-actions">
+        <a href="@Url.Action("Edit", "Payments", new { id = Model.Id })" class="payment-details-btn payment-details-btn-edit">
+            <i class="glyphicon glyphicon-edit"></i> Sửa giao dịch
+        </a>
+        <a href="@Url.Action("Receipt", "Payments", new { id = Model.Id })" class="payment-details-btn payment-details-btn-print">
+            <i class="glyphicon glyphicon-print"></i> In biên lai
+        </a>
+    </div>
+</div>

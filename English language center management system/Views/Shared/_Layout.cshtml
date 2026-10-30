@@ -1,0 +1,619 @@
+﻿
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewBag.Title - Trung tâm Anh ngữ</title>
+
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <style>
+        .bi {
+            display: inline-block;
+            line-height: 1;
+            vertical-align: -0.125em;
+        }
+
+        a > .bi,
+        button > .bi {
+            flex-shrink: 0;
+        }
+
+        /* Logo trung tâm */
+        .public-navbar .brand-logo {
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+            padding: 4px 0;
+        }
+
+            .public-navbar .brand-logo img {
+                display: block;
+                width: 64px;
+                height: 64px;
+                object-fit: contain;
+            }
+
+        /* Thanh điều hướng */
+        .public-navbar {
+            background: #ffffff !important;
+            border-bottom: 1px solid #eeeeee;
+            position: relative;
+            z-index: 100;
+        }
+
+            .public-navbar .navbar-nav {
+                align-items: center;
+            }
+
+            .public-navbar .nav-link {
+                color: #252525 !important;
+                font-size: 15px;
+                font-weight: 500;
+                text-decoration: none;
+            }
+
+                .public-navbar .nav-link:hover {
+                    color: #c62828 !important;
+                }
+
+            /* Đăng nhập và đăng ký không highlight */
+            .public-navbar .auth-nav {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .public-navbar .auth-link {
+                color: #252525 !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 8px 10px !important;
+                font-size: 15px;
+                font-weight: 500;
+                text-decoration: none;
+            }
+
+                .public-navbar .auth-link:hover {
+                    color: #c62828 !important;
+                    background: transparent !important;
+                }
+
+                .public-navbar .auth-link:focus-visible {
+                    outline: 2px solid #c62828;
+                    outline-offset: 2px;
+                }
+
+            .public-navbar .user-greeting {
+                font-size: 14px;
+                color: #555555;
+            }
+
+        /* Footer */
+        .site-footer {
+            margin-top: 45px;
+            padding: 55px 0 20px;
+            background: #161c29;
+            color: #e5e7eb;
+        }
+
+            .site-footer .footer-grid {
+                display: grid;
+                grid-template-columns: 1.2fr 1fr 1fr;
+                gap: 35px;
+            }
+
+            .site-footer h3 {
+                color: #ffffff;
+                font-size: 19px;
+                font-weight: 700;
+                margin-bottom: 18px;
+            }
+
+            .site-footer p {
+                color: #cbd5e1;
+                line-height: 1.8;
+            }
+
+            .site-footer a {
+                color: #e5e7eb;
+                text-decoration: none;
+            }
+
+                .site-footer a:hover {
+                    color: #ff7777;
+                }
+
+            .site-footer .footer-link {
+                display: block;
+                margin-bottom: 12px;
+            }
+
+            .site-footer .footer-contact {
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                margin-bottom: 15px;
+            }
+
+                .site-footer .footer-contact i {
+                    color: #ff7777;
+                    margin-top: 4px;
+                }
+
+            .site-footer .footer-bottom {
+                margin-top: 35px;
+                padding-top: 20px;
+                border-top: 1px solid #374151;
+                text-align: center;
+                color: #9ca3af;
+                font-size: 13px;
+            }
+
+        #lien-he,
+        #gioi-thieu {
+            scroll-margin-top: 90px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Icon cổng giáo viên */
+        .teacher-portal .teacher-nav-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+            .teacher-portal .teacher-nav-icon > .bi {
+                font-size: 17px;
+            }
+
+        .teacher-portal .teacher-stat-icon > .bi,
+        .teacher-portal .teacher-panel-heading-icon > .bi,
+        .teacher-portal .teacher-welcome-icon > .bi {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: inherit;
+        }
+
+        .teacher-portal .teacher-support-icon > .bi {
+            font-size: 15px;
+        }
+
+        .teacher-portal .teacher-brand-mark > .bi {
+            color: #ffffff;
+            font-size: 24px;
+        }
+
+        .teacher-portal .teacher-icon-red {
+            color: #c62828;
+        }
+
+        .teacher-portal .teacher-icon-blue {
+            color: #376bc4;
+        }
+
+        .teacher-portal .teacher-icon-purple {
+            color: #7356c9;
+        }
+
+        .teacher-portal .teacher-icon-orange {
+            color: #bf7516;
+        }
+
+        .teacher-portal .tcr-btn > .bi,
+        .teacher-portal .tp-btn > .bi,
+        .teacher-portal .teacher-nav-link > .bi {
+            flex-shrink: 0;
+        }
+
+        @@media (max-width: 991px) {
+            .public-navbar .navbar-nav {
+                align-items: flex-start;
+                padding-top: 12px;
+            }
+
+            .public-navbar .auth-nav {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 4px;
+                padding: 8px 0;
+            }
+
+            .site-footer .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+        }
+
+        @@media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    @* THANH ĐIỀU HƯỚNG *@
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-white public-navbar">
+        <div class="container">
+
+            <a class="navbar-brand brand-logo"
+               href="@Url.Action("Index", "Home")"
+               aria-label="Về trang chủ">
+                <img src="@Url.Content("~/Uploads/Images/logo.png")"
+                     alt="Logo trung tâm Anh ngữ" />
+            </a>
+
+            <button type="button"
+                    class="navbar-toggler"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#mainNavbar"
+                    aria-controls="mainNavbar"
+                    aria-expanded="false"
+                    aria-label="Mở menu">
+
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse"
+                 id="mainNavbar">
+
+                <ul class="navbar-nav me-auto">
+
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="@Url.Action("Index", "Home")">
+                            Trang chủ
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="@Url.Action("Index", "Courses")">
+                            Khóa học
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="@Url.Action("Index", "Home")#lien-he">
+                            Liên hệ
+                        </a>
+                    </li>
+
+                </ul>
+
+                <div class="d-flex align-items-center gap-2 auth-nav">
+
+                    @if (Session["UserId"] == null)
+                    {
+                        <a href="@Url.Action("Login", "Auth")"
+                           class="nav-link auth-link">
+                            Đăng nhập
+                        </a>
+
+                        <a href="@Url.Action("Register", "Auth")"
+                           class="nav-link auth-link">
+                            Đăng ký
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="user-greeting">
+                            Xin chào, @Session["FullName"]
+                        </span>
+
+                        <a href="@Url.Action("Logout", "Auth")"
+                           class="nav-link auth-link">
+                            Đăng xuất
+                        </a>
+                    }
+
+                </div>
+
+            </div>
+        </div>
+    </nav>
+
+    @* NỘI DUNG TRANG *@
+
+    <main class="container body-content">
+        @RenderBody()
+    </main>
+
+    @* CHÂN TRANG - LIÊN HỆ *@
+
+    <footer id="lien-he" class="site-footer">
+        <div class="container">
+
+            <div class="footer-grid">
+
+                <div>
+                    <h3>Trung tâm Anh ngữ</h3>
+
+                    <p>
+                        Đồng hành cùng học viên trên hành trình
+                        nâng cao khả năng tiếng Anh thông qua
+                        các chương trình học phù hợp và
+                        hệ thống quản lý học tập thuận tiện.
+                    </p>
+                </div>
+
+                <div>
+                    <h3>Liên kết nhanh</h3>
+
+                    <a class="footer-link"
+                       href="@Url.Action("Index", "Home")">
+                        Trang chủ
+                    </a>
+
+                    <a class="footer-link"
+                       href="@Url.Action("Index", "Courses")">
+                        Khóa học
+                    </a>
+
+                    <a class="footer-link"
+                       href="@Url.Action("Index", "Home")#gioi-thieu">
+                        Giới thiệu trung tâm
+                    </a>
+
+                    
+                </div>
+
+                <div>
+                    <h3>Thông tin liên hệ</h3>
+
+                    <div class="footer-contact">
+                        <i class="bi bi-telephone-fill"
+                           aria-hidden="true"></i>
+
+                        <a href="tel:0847344459">
+                            0847344459
+                        </a>
+                    </div>
+
+                    <div class="footer-contact">
+                        <i class="bi bi-envelope-fill"
+                           aria-hidden="true"></i>
+
+                        <a href="mailto:minhnt23@uef.edu.vn">
+                            minhnt23@uef.edu.vn
+                        </a>
+                    </div>
+
+                    <div class="footer-contact">
+                        <i class="bi bi-facebook"
+                           aria-hidden="true"></i>
+
+                        <a href="https://www.facebook.com/tanminh.nguyen.9889?locale=vi_VN"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            Liên hệ qua Facebook
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="footer-bottom">
+                &copy; @DateTime.Now.Year -
+                Trung tâm Anh ngữ.
+                Hệ thống quản lý trung tâm Anh ngữ.
+            </div>
+
+        </div>
+    </footer>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+
+    @* CHUYỂN GLYPHICONS SANG BOOTSTRAP ICONS *@
+
+    <script>
+                (function () {
+                    "use strict";
+
+                    var glyphiconMap = {
+                        "glyphicon-adjust": "bi-circle-half",
+                        "glyphicon-alert": "bi-exclamation-triangle-fill",
+                        "glyphicon-arrow-down": "bi-arrow-down",
+                        "glyphicon-arrow-left": "bi-arrow-left",
+                        "glyphicon-arrow-right": "bi-arrow-right",
+                        "glyphicon-arrow-up": "bi-arrow-up",
+                        "glyphicon-book": "bi-book-half",
+                        "glyphicon-calendar": "bi-calendar3",
+                        "glyphicon-check": "bi-check2-square",
+                        "glyphicon-chevron-down": "bi-chevron-down",
+                        "glyphicon-chevron-left": "bi-chevron-left",
+                        "glyphicon-chevron-right": "bi-chevron-right",
+                        "glyphicon-chevron-up": "bi-chevron-up",
+                        "glyphicon-cloud-download": "bi-cloud-download",
+                        "glyphicon-cloud-upload": "bi-cloud-upload",
+                        "glyphicon-credit-card": "bi-credit-card-fill",
+                        "glyphicon-dashboard": "bi-speedometer2",
+                        "glyphicon-download": "bi-download",
+                        "glyphicon-download-alt": "bi-download",
+                        "glyphicon-edit": "bi-pencil-square",
+                        "glyphicon-education": "bi-mortarboard-fill",
+                        "glyphicon-envelope": "bi-envelope-fill",
+                        "glyphicon-exclamation-sign": "bi-exclamation-circle-fill",
+                        "glyphicon-eye-close": "bi-eye-slash-fill",
+                        "glyphicon-eye-open": "bi-eye-fill",
+                        "glyphicon-file": "bi-file-earmark",
+                        "glyphicon-filter": "bi-funnel-fill",
+                        "glyphicon-floppy-disk": "bi-floppy",
+                        "glyphicon-folder-close": "bi-folder",
+                        "glyphicon-folder-open": "bi-folder2-open",
+                        "glyphicon-home": "bi-house-fill",
+                        "glyphicon-inbox": "bi-inbox-fill",
+                        "glyphicon-info-sign": "bi-info-circle-fill",
+                        "glyphicon-list": "bi-list-ul",
+                        "glyphicon-list-alt": "bi-card-list",
+                        "glyphicon-lock": "bi-lock-fill",
+                        "glyphicon-log-in": "bi-box-arrow-in-right",
+                        "glyphicon-log-out": "bi-box-arrow-right",
+                        "glyphicon-map-marker": "bi-geo-alt-fill",
+                        "glyphicon-minus": "bi-dash-lg",
+                        "glyphicon-ok": "bi-check-lg",
+                        "glyphicon-ok-circle": "bi-check-circle",
+                        "glyphicon-ok-sign": "bi-check-circle-fill",
+                        "glyphicon-open": "bi-box-arrow-up-right",
+                        "glyphicon-pencil": "bi-pencil-fill",
+                        "glyphicon-plus": "bi-plus-lg",
+                        "glyphicon-plus-sign": "bi-plus-circle-fill",
+                        "glyphicon-print": "bi-printer-fill",
+                        "glyphicon-refresh": "bi-arrow-clockwise",
+                        "glyphicon-remove": "bi-x-lg",
+                        "glyphicon-remove-circle": "bi-x-circle",
+                        "glyphicon-remove-sign": "bi-x-octagon-fill",
+                        "glyphicon-search": "bi-search",
+                        "glyphicon-stats": "bi-bar-chart-line-fill",
+                        "glyphicon-tasks": "bi-list-check",
+                        "glyphicon-time": "bi-clock-fill",
+                        "glyphicon-trash": "bi-trash3-fill",
+                        "glyphicon-upload": "bi-upload",
+                        "glyphicon-user": "bi-person-fill",
+                        "glyphicon-usd": "bi-currency-dollar",
+                        "glyphicon-warning-sign": "bi-exclamation-triangle-fill"
+                    };
+
+                    function replaceGlyphicons() {
+                        var elements = document.querySelectorAll(".glyphicon");
+
+                        for (var i = 0; i < elements.length; i++) {
+                            var element = elements[i];
+                            var classes = Array.prototype.slice.call(
+                                element.classList
+                            );
+
+                            var oldGlyphClass = null;
+
+                            for (var j = 0; j < classes.length; j++) {
+                                if (classes[j].indexOf("glyphicon-") === 0) {
+                                    oldGlyphClass = classes[j];
+                                    break;
+                                }
+                            }
+
+                            if (!oldGlyphClass) {
+                                continue;
+                            }
+
+                            var newIconClass =
+                                glyphiconMap[oldGlyphClass] ||
+                                "bi-question-circle";
+
+                            var retainedClasses = classes.filter(function (name) {
+                                return name !== "glyphicon" &&
+                                    name.indexOf("glyphicon-") !== 0;
+                            });
+
+                            element.className = [
+                                "bi",
+                                newIconClass
+                            ].concat(retainedClasses).join(" ");
+
+                            element.setAttribute("aria-hidden", "true");
+                        }
+                    }
+
+                    var symbolMap = {
+                        "⌂": "bi-house-door-fill",
+                        "▦": "bi-grid-1x2-fill",
+                        "✓": "bi-check-circle-fill",
+                        "A+": "bi-journal-check",
+                        "📄": "bi-file-earmark-text-fill",
+                        "📚": "bi-journal-bookmark-fill",
+                        "◎": "bi-person-vcard-fill",
+                        "▣": "bi-collection-fill",
+                        "◷": "bi-clock-history",
+                        "▤": "bi-book-half",
+                        "↑": "bi-cloud-upload-fill",
+                        "⌕": "bi-search",
+                        "✎": "bi-pencil-square",
+                        "!": "bi-exclamation-triangle-fill",
+                        "+": "bi-plus-lg",
+                        "＋": "bi-plus-lg",
+                        "🎓": "bi-mortarboard-fill",
+                        "🔑": "bi-key-fill",
+                        "↗": "bi-box-arrow-up-right",
+                        "💳": "bi-credit-card-fill",
+                        "👤": "bi-person-fill",
+                        "✉": "bi-envelope-fill",
+                        "?": "bi-question-circle-fill",
+                        "EC": "bi-book-half"
+                    };
+
+                    function replaceIconSymbols() {
+                        var elements = document.querySelectorAll(
+                            ".teacher-portal [class*='icon']"
+                        );
+
+                        for (var i = 0; i < elements.length; i++) {
+                            var element = elements[i];
+
+                            if (element.children.length > 0) {
+                                continue;
+                            }
+
+                            var symbol = (element.textContent || "").trim();
+                            var iconClass = symbolMap[symbol];
+
+                            if (!iconClass) {
+                                continue;
+                            }
+
+                            var icon = document.createElement("i");
+
+                            icon.className = "bi " + iconClass;
+                            icon.setAttribute("aria-hidden", "true");
+
+                            element.textContent = "";
+                            element.appendChild(icon);
+                        }
+                    }
+
+                    function initializeIcons() {
+                        replaceGlyphicons();
+                        replaceIconSymbols();
+                    }
+
+                    if (document.readyState === "loading") {
+                        document.addEventListener(
+                            "DOMContentLoaded",
+                            initializeIcons
+                        );
+                    } else {
+                        initializeIcons();
+                    }
+                })();
+    </script>
+
+    @if (IsSectionDefined("Scripts"))
+    {
+        @RenderSection("Scripts", required: false)
+    }
+    else
+    {
+        @RenderSection("scripts", required: false)
+    }
+
+</body>
+</html>

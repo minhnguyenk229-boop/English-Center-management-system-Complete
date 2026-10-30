@@ -1,0 +1,1181 @@
+﻿@using System
+
+@{
+    ViewBag.Title = "Liên hệ";
+
+    string roleName = Session["RoleName"] as string;
+
+    bool isAuthenticated = Session["UserId"] != null;
+
+    string portalController = "Auth";
+    string portalAction = "Login";
+    string portalButtonText = "Đăng nhập";
+
+    if (isAuthenticated &&
+        string.Equals(roleName, "Student", StringComparison.OrdinalIgnoreCase))
+    {
+        Layout = "~/Views/Shared/_StudentLayout.cshtml";
+
+        portalController = "Home";
+        portalAction = "StudentDashboard";
+        portalButtonText = "Vào cổng học viên";
+    }
+    else if (isAuthenticated &&
+        string.Equals(roleName, "Teacher", StringComparison.OrdinalIgnoreCase))
+    {
+        Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+
+        portalController = "Home";
+        portalAction = "TeacherDashboard";
+        portalButtonText = "Vào cổng giáo viên";
+    }
+    else if (isAuthenticated &&
+        string.Equals(roleName, "Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+        portalController = "Home";
+        portalAction = "AdminDashboard";
+        portalButtonText = "Vào trang quản trị";
+    }
+    else
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml";
+    }
+}
+
+<style>
+    /* =========================================
+       ENGLISH CENTER - CONTACT PAGE
+    ========================================= */
+
+    .contact-page,
+    .contact-page * {
+        box-sizing: border-box;
+    }
+
+    .contact-page {
+        --contact-red: #c62828;
+        --contact-red-dark: #a61f24;
+        --contact-red-light: #fff0f0;
+        --contact-text: #202938;
+        --contact-muted: #748096;
+        --contact-border: #e5e9f0;
+        --contact-bg: #f5f7fb;
+        width: 100%;
+        padding-bottom: 42px;
+        color: var(--contact-text);
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+        .contact-page a {
+            text-decoration: none;
+        }
+
+        .contact-page .contact-breadcrumb {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 8px 0 24px;
+            color: #929bab;
+            font-size: 12px;
+        }
+
+            .contact-page .contact-breadcrumb a {
+                color: #687386;
+                transition: color .2s ease;
+            }
+
+                .contact-page .contact-breadcrumb a:hover {
+                    color: var(--contact-red);
+                }
+
+            .contact-page .contact-breadcrumb .current {
+                color: var(--contact-red);
+                font-weight: 750;
+            }
+
+        /* HERO */
+        .contact-page .contact-hero {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1.25fr) minmax(290px, .75fr);
+            align-items: center;
+            gap: 35px;
+            overflow: hidden;
+            padding: 42px;
+            margin-bottom: 34px;
+            border: 1px solid var(--contact-border);
+            border-radius: 22px;
+            background: linear-gradient( 120deg, #ffffff 0%, #fbfcff 58%, #fff0f0 100% );
+            box-shadow: 0 8px 28px rgba(25, 37, 57, .035);
+        }
+
+        .contact-page .contact-hero-content {
+            position: relative;
+            z-index: 1;
+            min-width: 0;
+        }
+
+        .contact-page .contact-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            color: var(--contact-red);
+            font-size: 10px;
+            font-weight: 850;
+            letter-spacing: 1.7px;
+            text-transform: uppercase;
+        }
+
+            .contact-page .contact-eyebrow::before {
+                display: block;
+                width: 22px;
+                height: 2px;
+                border-radius: 4px;
+                background: var(--contact-red);
+                content: "";
+            }
+
+        .contact-page .contact-hero h1 {
+            max-width: 670px;
+            margin: 0;
+            color: var(--contact-text);
+            font-size: clamp(30px, 4vw, 46px);
+            line-height: 1.2;
+            font-weight: 850;
+            letter-spacing: -.8px;
+        }
+
+            .contact-page .contact-hero h1 span {
+                display: block;
+                color: var(--contact-red);
+            }
+
+        .contact-page .contact-hero-description {
+            max-width: 610px;
+            margin: 18px 0 24px;
+            color: var(--contact-muted);
+            font-size: 14px;
+            line-height: 1.9;
+        }
+
+        .contact-page .contact-hero-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 11px;
+        }
+
+        .contact-page .contact-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            min-height: 46px;
+            padding: 12px 17px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 750;
+            line-height: 1.4;
+            transition: transform .2s ease, background .2s ease, border-color .2s ease;
+        }
+
+            .contact-page .contact-btn:hover {
+                transform: translateY(-2px);
+            }
+
+        .contact-page .contact-btn-primary {
+            background: var(--contact-red);
+            color: #ffffff;
+            box-shadow: 0 5px 14px rgba(198, 40, 40, .14);
+        }
+
+            .contact-page .contact-btn-primary:hover {
+                background: var(--contact-red-dark);
+                color: #ffffff;
+            }
+
+        .contact-page .contact-btn-secondary {
+            border-color: #dfe4ed;
+            background: #ffffff;
+            color: #475267;
+        }
+
+            .contact-page .contact-btn-secondary:hover {
+                border-color: #ecc4c4;
+                background: #fff8f8;
+                color: var(--contact-red);
+            }
+
+        /* HERO VISUAL */
+        .contact-page .contact-hero-visual {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            min-height: 300px;
+            padding: 18px;
+        }
+
+        .contact-page .contact-visual-circle {
+            position: absolute;
+            top: 13px;
+            right: 5px;
+            width: 230px;
+            height: 230px;
+            border: 1px solid rgba(198, 40, 40, .13);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .36);
+        }
+
+            .contact-page .contact-visual-circle::before {
+                position: absolute;
+                inset: 19px;
+                border: 1px dashed rgba(198, 40, 40, .18);
+                border-radius: 50%;
+                content: "";
+            }
+
+        .contact-page .contact-visual-card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 330px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, .9);
+            border-radius: 19px;
+            background: rgba(255, 255, 255, .94);
+            box-shadow: 0 16px 40px rgba(31, 41, 55, .09);
+        }
+
+        .contact-page .contact-visual-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 54px;
+            height: 54px;
+            margin-bottom: 19px;
+            border-radius: 16px;
+            background: linear-gradient(145deg, #e53935, #b71c1c);
+            color: #ffffff;
+            font-size: 25px;
+            box-shadow: 0 7px 17px rgba(198, 40, 40, .2);
+        }
+
+        .contact-page .contact-visual-card > span {
+            display: block;
+            margin-bottom: 8px;
+            color: #939bab;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.3px;
+            text-transform: uppercase;
+        }
+
+        .contact-page .contact-visual-card h2 {
+            margin: 0 0 10px;
+            color: var(--contact-text);
+            font-size: 21px;
+            font-weight: 850;
+            line-height: 1.45;
+        }
+
+        .contact-page .contact-visual-card p {
+            margin: 0;
+            color: var(--contact-muted);
+            font-size: 12px;
+            line-height: 1.85;
+        }
+
+        .contact-page .contact-visual-divider {
+            height: 1px;
+            margin: 18px 0;
+            background: #edf0f5;
+        }
+
+        .contact-page .contact-visual-note {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: #566176;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+            .contact-page .contact-visual-note i {
+                color: #198754;
+                font-size: 16px;
+            }
+
+        /* SECTION HEADING */
+        .contact-page .contact-section {
+            margin-bottom: 38px;
+        }
+
+        .contact-page .contact-section-heading {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 21px;
+        }
+
+            .contact-page .contact-section-heading h2 {
+                margin: 0 0 8px;
+                color: var(--contact-text);
+                font-size: 25px;
+                font-weight: 850;
+                line-height: 1.4;
+            }
+
+            .contact-page .contact-section-heading p {
+                max-width: 700px;
+                margin: 0;
+                color: var(--contact-muted);
+                font-size: 13px;
+                line-height: 1.8;
+            }
+
+        .contact-page .contact-section-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            background: var(--contact-red-light);
+            color: var(--contact-red);
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        /* CONTACT OPTIONS */
+        .contact-page .contact-options-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .contact-page .contact-option-card {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 250px;
+            padding: 24px;
+            border: 1px solid var(--contact-border);
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 4px 15px rgba(25, 37, 57, .025);
+            transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+        }
+
+            .contact-page .contact-option-card:hover {
+                transform: translateY(-4px);
+                border-color: #eccaca;
+                box-shadow: 0 12px 28px rgba(25, 37, 57, .07);
+            }
+
+        .contact-page .contact-option-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            margin-bottom: 19px;
+            border-radius: 14px;
+            font-size: 21px;
+        }
+
+            .contact-page .contact-option-icon.red {
+                background: #fff0f0;
+                color: #c62828;
+            }
+
+            .contact-page .contact-option-icon.blue {
+                background: #eef5ff;
+                color: #3478d4;
+            }
+
+            .contact-page .contact-option-icon.green {
+                background: #eaf8f0;
+                color: #198754;
+            }
+
+        .contact-page .contact-option-card h3 {
+            margin: 0 0 9px;
+            color: #263247;
+            font-size: 16px;
+            font-weight: 800;
+            line-height: 1.5;
+        }
+
+        .contact-page .contact-option-card p {
+            flex: 1;
+            margin: 0 0 20px;
+            color: var(--contact-muted);
+            font-size: 12px;
+            line-height: 1.9;
+        }
+
+        .contact-page .contact-option-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            align-self: flex-start;
+            color: var(--contact-red);
+            font-size: 12px;
+            font-weight: 800;
+            transition: gap .2s ease;
+        }
+
+            .contact-page .contact-option-link:hover {
+                gap: 12px;
+                color: var(--contact-red-dark);
+            }
+
+        /* SUPPORT JOURNEY */
+        .contact-page .contact-journey {
+            display: grid;
+            grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+            gap: 25px;
+            margin-bottom: 38px;
+        }
+
+        .contact-page .contact-journey-intro {
+            padding: 30px;
+            border-radius: 17px;
+            background: #202938;
+            color: #ffffff;
+        }
+
+            .contact-page .contact-journey-intro .contact-eyebrow {
+                color: #ffb3b3;
+            }
+
+                .contact-page .contact-journey-intro .contact-eyebrow::before {
+                    background: #ff8d8d;
+                }
+
+            .contact-page .contact-journey-intro h2 {
+                margin: 0 0 12px;
+                color: #ffffff;
+                font-size: 24px;
+                font-weight: 850;
+                line-height: 1.45;
+            }
+
+            .contact-page .contact-journey-intro p {
+                margin: 0 0 21px;
+                color: #c3ccda;
+                font-size: 12px;
+                line-height: 1.9;
+            }
+
+            .contact-page .contact-journey-intro .contact-btn-secondary {
+                border-color: rgba(255, 255, 255, .22);
+                background: transparent;
+                color: #ffffff;
+            }
+
+                .contact-page .contact-journey-intro .contact-btn-secondary:hover {
+                    border-color: rgba(255, 255, 255, .45);
+                    background: rgba(255, 255, 255, .07);
+                    color: #ffffff;
+                }
+
+        .contact-page .contact-journey-steps {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 13px;
+            padding: 23px;
+            border: 1px solid var(--contact-border);
+            border-radius: 17px;
+            background: #ffffff;
+        }
+
+        .contact-page .contact-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 12px 8px;
+        }
+
+        .contact-page .contact-step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+            border: 1px solid #f1d0d0;
+            border-radius: 11px;
+            background: #fff4f4;
+            color: var(--contact-red);
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .contact-page .contact-step h3 {
+            margin: 1px 0 5px;
+            color: #344057;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .contact-page .contact-step p {
+            margin: 0;
+            color: #8690a1;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        /* FAQ */
+        .contact-page .contact-faq {
+            overflow: hidden;
+            border: 1px solid var(--contact-border);
+            border-radius: 16px;
+            background: #ffffff;
+        }
+
+            .contact-page .contact-faq details {
+                border-bottom: 1px solid #edf0f5;
+            }
+
+                .contact-page .contact-faq details:last-child {
+                    border-bottom: none;
+                }
+
+            .contact-page .contact-faq summary {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 16px;
+                padding: 19px 22px;
+                color: #344057;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 800;
+                list-style: none;
+            }
+
+                .contact-page .contact-faq summary::-webkit-details-marker {
+                    display: none;
+                }
+
+                .contact-page .contact-faq summary::after {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 29px;
+                    height: 29px;
+                    flex-shrink: 0;
+                    border-radius: 8px;
+                    background: #f2f4f8;
+                    color: #657084;
+                    font-size: 16px;
+                    content: "+";
+                    transition: background .2s ease;
+                }
+
+            .contact-page .contact-faq details[open] summary {
+                color: var(--contact-red);
+            }
+
+                .contact-page .contact-faq details[open] summary::after {
+                    background: #fff0f0;
+                    color: var(--contact-red);
+                    content: "−";
+                }
+
+        .contact-page .contact-faq-answer {
+            padding: 0 22px 20px;
+            color: var(--contact-muted);
+            font-size: 12px;
+            line-height: 1.9;
+        }
+
+            .contact-page .contact-faq-answer a {
+                color: var(--contact-red);
+                font-weight: 750;
+            }
+
+        /* BOTTOM CTA */
+        .contact-page .contact-bottom-cta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 27px 30px;
+            border: 1px solid #f0d6d6;
+            border-radius: 17px;
+            background: linear-gradient(110deg, #fff0f0, #ffffff);
+        }
+
+            .contact-page .contact-bottom-cta h2 {
+                margin: 0 0 7px;
+                color: #273247;
+                font-size: 20px;
+                font-weight: 850;
+                line-height: 1.5;
+            }
+
+            .contact-page .contact-bottom-cta p {
+                margin: 0;
+                color: var(--contact-muted);
+                font-size: 12px;
+                line-height: 1.8;
+            }
+
+        .contact-page .contact-bottom-actions {
+            display: flex;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+    /* RESPONSIVE */
+    @@media (max-width: 1000px) {
+        .contact-page .contact-hero {
+            grid-template-columns: minmax(0, 1fr) minmax(250px, .8fr);
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .contact-page .contact-options-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .contact-page .contact-journey {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    @@media (max-width: 650px) {
+        .contact-page {
+            padding-bottom: 25px;
+        }
+
+            .contact-page .contact-breadcrumb {
+                margin-top: 5px;
+                margin-bottom: 17px;
+            }
+
+            .contact-page .contact-hero {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 10px;
+                padding: 25px 19px;
+                border-radius: 16px;
+            }
+
+                .contact-page .contact-hero h1 {
+                    font-size: 30px;
+                    letter-spacing: -.4px;
+                }
+
+            .contact-page .contact-hero-description {
+                margin: 14px 0 19px;
+                font-size: 13px;
+            }
+
+            .contact-page .contact-hero-visual {
+                min-height: 245px;
+                padding: 10px 5px;
+            }
+
+            .contact-page .contact-visual-circle {
+                top: 5px;
+                right: 6%;
+                width: 205px;
+                height: 205px;
+            }
+
+            .contact-page .contact-visual-card {
+                max-width: 350px;
+                padding: 20px;
+            }
+
+            .contact-page .contact-section-heading {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+                .contact-page .contact-section-heading h2 {
+                    font-size: 22px;
+                }
+
+            .contact-page .contact-options-grid {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 12px;
+            }
+
+            .contact-page .contact-option-card {
+                min-height: auto;
+                padding: 20px;
+            }
+
+                .contact-page .contact-option-card p {
+                    margin-bottom: 15px;
+                }
+
+            .contact-page .contact-journey-intro {
+                padding: 24px 20px;
+            }
+
+            .contact-page .contact-journey-steps {
+                padding: 14px;
+            }
+
+            .contact-page .contact-faq summary {
+                padding: 16px;
+                font-size: 12px;
+            }
+
+            .contact-page .contact-faq-answer {
+                padding: 0 16px 17px;
+            }
+
+            .contact-page .contact-bottom-cta {
+                align-items: stretch;
+                flex-direction: column;
+                padding: 23px 19px;
+            }
+
+            .contact-page .contact-bottom-actions {
+                width: 100%;
+            }
+
+                .contact-page .contact-bottom-actions .contact-btn {
+                    flex: 1;
+                }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .contact-page *,
+        .contact-page *::before,
+        .contact-page *::after {
+            scroll-behavior: auto !important;
+            transition: none !important;
+        }
+    }
+</style>
+
+<div class="contact-page">
+
+    <!-- BREADCRUMB -->
+    <div class="contact-breadcrumb">
+
+        <a href="@Url.Action("Index", "Home")">
+            <i class="bi bi-house-door"></i>
+            Trang chủ
+        </a>
+
+        <i class="bi bi-chevron-right"></i>
+
+        <span class="current">Liên hệ</span>
+
+    </div>
+
+    <!-- HERO -->
+    <section class="contact-hero">
+
+        <div class="contact-hero-content">
+
+            <div class="contact-eyebrow">
+                WE'RE HERE TO HELP
+            </div>
+
+            <h1>
+                Kết nối cùng
+                <span>English Center</span>
+            </h1>
+
+            <p class="contact-hero-description">
+                Bạn đang tìm khóa học phù hợp, muốn tìm hiểu thêm về trung tâm
+                hoặc cần truy cập khu vực học tập? Hãy bắt đầu từ lựa chọn phù
+                hợp bên dưới để tìm đúng thông tin bạn cần.
+            </p>
+
+            <div class="contact-hero-actions">
+
+                @Html.ActionLink(
+                    "Khám phá khóa học",
+                    "Index",
+                    "Courses",
+                    null,
+                    new { @class = "contact-btn contact-btn-primary" }
+                )
+
+                <a href="#contact-options"
+                   class="contact-btn contact-btn-secondary">
+                    <i class="bi bi-chat-square-text"></i>
+                    Xem các mục hỗ trợ
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="contact-hero-visual">
+
+            <div class="contact-visual-circle"></div>
+
+            <div class="contact-visual-card">
+
+                <div class="contact-visual-icon">
+                    <i class="bi bi-chat-dots-fill"></i>
+                </div>
+
+                <span>English Center</span>
+
+                <h2>
+                    Mỗi hành trình học tập bắt đầu từ một kết nối.
+                </h2>
+
+                <p>
+                    Tìm hiểu chương trình học, thông tin trung tâm và các
+                    tiện ích dành cho học viên ngay trên hệ thống.
+                </p>
+
+                <div class="contact-visual-divider"></div>
+
+                <div class="contact-visual-note">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Thông tin khóa học tập trung
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- CONTACT OPTIONS -->
+    <section id="contact-options" class="contact-section">
+
+        <div class="contact-section-heading">
+
+            <div>
+                <div class="contact-eyebrow">
+                    HOW CAN WE HELP?
+                </div>
+
+                <h2>Bạn cần tìm hiểu điều gì?</h2>
+
+                <p>
+                    Chọn một mục bên dưới để tiếp tục đến đúng khu vực
+                    thông tin của English Center.
+                </p>
+            </div>
+
+            <span class="contact-section-tag">
+                <i class="bi bi-compass"></i>
+                Hướng dẫn nhanh
+            </span>
+
+        </div>
+
+        <div class="contact-options-grid">
+
+            <!-- COURSE -->
+            <article class="contact-option-card">
+
+                <div class="contact-option-icon red">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+
+                <h3>Tư vấn khóa học</h3>
+
+                <p>
+                    Xem danh sách chương trình, trình độ, thời lượng,
+                    học phí và thông tin chi tiết của từng khóa học.
+                </p>
+
+                <a class="contact-option-link"
+                   href="@Url.Action("Index", "Courses")">
+
+                    Khám phá khóa học
+                    <i class="bi bi-arrow-right"></i>
+
+                </a>
+
+            </article>
+
+            <!-- ABOUT -->
+            <article class="contact-option-card">
+
+                <div class="contact-option-icon blue">
+                    <i class="bi bi-building"></i>
+                </div>
+
+                <h3>Tìm hiểu trung tâm</h3>
+
+                <p>
+                    Xem thêm thông tin giới thiệu và định hướng hoạt động
+                    của English Center.
+                </p>
+
+                <a class="contact-option-link"
+                   href="@Url.Action("About", "Home")">
+
+                    Tìm hiểu thêm
+                    <i class="bi bi-arrow-right"></i>
+
+                </a>
+
+            </article>
+
+            <!-- ACCOUNT -->
+            <article class="contact-option-card">
+
+                <div class="contact-option-icon green">
+                    <i class="bi bi-person-workspace"></i>
+                </div>
+
+                <h3>Khu vực tài khoản</h3>
+
+                <p>
+                    @if (isAuthenticated)
+                    {
+                        <text>
+                            Tiếp tục vào khu vực dành cho tài khoản của bạn
+                            để theo dõi các thông tin học tập hoặc quản lý.
+                        </text>
+                    }
+                    else
+                    {
+                        <text>
+                            Đăng nhập để truy cập các chức năng và thông tin
+                            được cung cấp theo tài khoản của bạn.
+                        </text>
+                    }
+                </p>
+
+                <a class="contact-option-link"
+                   href="@Url.Action(portalAction, portalController)">
+
+                    @portalButtonText
+                    <i class="bi bi-arrow-right"></i>
+
+                </a>
+
+            </article>
+
+        </div>
+
+    </section>
+
+    <!-- SUPPORT JOURNEY -->
+    <section class="contact-journey">
+
+        <div class="contact-journey-intro">
+
+            <div class="contact-eyebrow">
+                YOUR NEXT STEP
+            </div>
+
+            <h2>
+                Bắt đầu từ nhu cầu của bạn
+            </h2>
+
+            <p>
+                Bạn không cần tìm kiếm ở nhiều nơi. Hãy chọn nội dung
+                muốn tìm hiểu, xem thông tin liên quan và tiếp tục sử dụng
+                khu vực phù hợp trên hệ thống.
+            </p>
+
+            @Html.ActionLink(
+                "Xem danh sách khóa học",
+                "Index",
+                "Courses",
+                null,
+                new { @class = "contact-btn contact-btn-secondary" }
+            )
+
+        </div>
+
+        <div class="contact-journey-steps">
+
+            <div class="contact-step">
+
+                <div class="contact-step-number">01</div>
+
+                <div>
+                    <h3>Xác định nội dung cần tìm</h3>
+
+                    <p>
+                        Khóa học, thông tin trung tâm hay tài khoản học tập.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="contact-step">
+
+                <div class="contact-step-number">02</div>
+
+                <div>
+                    <h3>Truy cập đúng khu vực</h3>
+
+                    <p>
+                        Sử dụng các liên kết trực tiếp để xem thông tin
+                        tương ứng với nhu cầu của bạn.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="contact-step">
+
+                <div class="contact-step-number">03</div>
+
+                <div>
+                    <h3>Tiếp tục hành trình học tập</h3>
+
+                    <p>
+                        Khám phá chương trình học hoặc quay lại khu vực
+                        tài khoản để sử dụng các chức năng phù hợp.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- FAQ -->
+    <section class="contact-section">
+
+        <div class="contact-section-heading">
+
+            <div>
+                <div class="contact-eyebrow">
+                    QUICK ANSWERS
+                </div>
+
+                <h2>Câu hỏi thường gặp</h2>
+
+                <p>
+                    Một số hướng dẫn nhanh khi sử dụng hệ thống English Center.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="contact-faq">
+
+            <details>
+                <summary>
+                    Tôi muốn xem các khóa học và học phí thì vào đâu?
+                </summary>
+
+                <div class="contact-faq-answer">
+                    Bạn có thể mở
+                    <a href="@Url.Action("Index", "Courses")">
+                        Danh sách khóa học
+                    </a>
+                    để xem trình độ, thời lượng, học phí và trang chi tiết
+                    của từng khóa học.
+                </div>
+            </details>
+
+            <details>
+                <summary>
+                    Tôi đã có tài khoản, làm sao để tiếp tục?
+                </summary>
+
+                <div class="contact-faq-answer">
+                    @if (isAuthenticated)
+                    {
+                        <text>
+                            Bạn đang đăng nhập. Hãy truy cập
+                            <a href="@Url.Action(portalAction, portalController)">
+                                @portalButtonText
+                            </a>
+                            để tiếp tục sử dụng các chức năng dành cho tài khoản.
+                        </text>
+                    }
+                    else
+                    {
+                        <text>
+                            Bạn có thể
+                            <a href="@Url.Action("Login", "Auth")">
+                                đăng nhập
+                            </a>
+                            để vào khu vực dành cho tài khoản của mình.
+                        </text>
+                    }
+                </div>
+            </details>
+
+            <details>
+                <summary>
+                    Tôi muốn tìm hiểu thêm về English Center thì làm thế nào?
+                </summary>
+
+                <div class="contact-faq-answer">
+                    Truy cập trang
+                    <a href="@Url.Action("About", "Home")">
+                        Giới thiệu
+                    </a>
+                    để xem thông tin tổng quan về trung tâm.
+                </div>
+            </details>
+
+            <details>
+                <summary>
+                    Tôi có thể xem thông tin lớp học sau khi đăng nhập không?
+                </summary>
+
+                <div class="contact-faq-answer">
+                    Các chức năng được hiển thị tùy theo vai trò tài khoản.
+                    Hãy truy cập khu vực tài khoản để xem những thông tin
+                    và chức năng được cung cấp cho bạn.
+                </div>
+            </details>
+
+        </div>
+
+    </section>
+
+    <!-- BOTTOM CTA -->
+    <section class="contact-bottom-cta">
+
+        <div>
+            <h2>Sẵn sàng bắt đầu hành trình tiếng Anh?</h2>
+
+            <p>
+                Khám phá các khóa học và lựa chọn chương trình phù hợp
+                với mục tiêu của bạn.
+            </p>
+        </div>
+
+        <div class="contact-bottom-actions">
+
+            @Html.ActionLink(
+                "Khám phá khóa học",
+                "Index",
+                "Courses",
+                null,
+                new { @class = "contact-btn contact-btn-primary" }
+            )
+
+            @Html.ActionLink(
+                "Về trang chủ",
+                "Index",
+                "Home",
+                null,
+                new { @class = "contact-btn contact-btn-secondary" }
+            )
+
+        </div>
+
+    </section>
+
+</div>

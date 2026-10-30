@@ -1,0 +1,51 @@
+﻿@model English_language_center_management_system.Models.Enrollment
+@using System
+@{
+    ViewBag.Title = "Xác nhận xóa ghi danh";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var studentName = Model.Student?.FullName ?? Model.Student?.Username ?? "Chưa rõ";
+    var className = Model.Class?.ClassName ?? "Không có thông tin lớp";
+}
+<div class="admin-enrollment-delete-page">
+    <div class="enrollment-delete-header">
+        <div>
+            <div class="enrollment-delete-eyebrow">QUẢN LÝ ĐÀO TẠO</div>
+            <h2>Xác nhận xóa ghi danh</h2>
+            <p>Kiểm tra kỹ trước khi xóa để tránh mất dữ liệu liên quan.</p>
+        </div>
+        <div class="enrollment-delete-header-icon"><i class="glyphicon glyphicon-trash"></i></div>
+    </div>
+
+    <div class="enrollment-delete-card">
+        <div class="enrollment-delete-warning">
+            <div class="enrollment-delete-warning-icon"><i class="glyphicon glyphicon-exclamation-sign"></i></div>
+            <div>
+                <h3>Bạn đang chuẩn bị xóa đơn ghi danh #@Model.Id</h3>
+                <p>
+                    <strong>CẢNH BÁO BẢO MẬT KẾ TOÁN:</strong> Hệ thống sẽ <b>từ chối xóa</b> bản ghi này nếu như nó đã phát sinh các phiếu thu học phí bên phần Quản lý Tài chính, bất kể là đã thanh toán đủ hay nợ.
+                </p>
+            </div>
+        </div>
+
+        <div class="enrollment-delete-profile">
+            <div class="enrollment-delete-profile-info">
+                <span class="enrollment-delete-record-id">HỌC VIÊN</span>
+                <h3>@studentName</h3>
+                <p><i class="glyphicon glyphicon-education"></i> Lớp: @className</p>
+            </div>
+        </div>
+
+        @using (Html.BeginForm("Delete", "Enrollments", new { id = Model.Id }, FormMethod.Post, new { @class = "enrollment-delete-form" }))
+        {
+            @Html.AntiForgeryToken()
+            <div class="enrollment-delete-actions">
+                <a href="@Url.Action("Index", "Enrollments")" class="enrollment-delete-btn enrollment-delete-cancel">
+                    <i class="glyphicon glyphicon-arrow-left"></i> Quay lại
+                </a>
+                <button type="submit" class="enrollment-delete-btn enrollment-delete-submit" onclick="return confirm('Bạn có chắc chắn muốn xóa ghi danh #@Model.Id không?');">
+                    <i class="glyphicon glyphicon-trash"></i> Xác nhận xóa
+                </button>
+            </div>
+        }
+    </div>
+</div>

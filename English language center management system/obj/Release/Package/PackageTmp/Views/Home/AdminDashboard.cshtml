@@ -1,0 +1,492 @@
+﻿@using System
+@using System.Collections.Generic
+@using System.Linq
+@using English_language_center_management_system.Models.ViewModels.Home
+
+@model AdminDashboardViewModel
+
+@{
+    ViewBag.Title = "Dashboard thống kê";
+
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var monthlyRevenue = Model.MonthlyRevenue
+        ?? new List<MonthlyRevenuePointViewModel>();
+
+    var nearCapacityClasses = Model.ClassesNearCapacity
+        ?? new List<AdminClassCapacityViewModel>();
+
+    var recentEnrollments = Model.RecentEnrollments
+        ?? new List<English_language_center_management_system.Models.Enrollment>();
+
+    var recentPayments = Model.RecentPayments
+        ?? new List<English_language_center_management_system.Models.Payment>();
+
+    decimal maxRevenue = monthlyRevenue.Any()
+        ? monthlyRevenue.Max(r => r.Revenue)
+        : 0m;
+}
+
+<div class="admin-dashboard">
+
+    <section class="admin-welcome-banner">
+
+        <div>
+            <span class="admin-eyebrow">EXECUTIVE OVERVIEW</span>
+
+            <h1>Dashboard & báo cáo vận hành</h1>
+
+            <p>
+                Theo dõi hoạt động trung tâm, doanh thu, học viên
+                và tình trạng sức chứa của các lớp.
+            </p>
+        </div>
+
+        <div class="admin-welcome-icon">▦</div>
+
+    </section>
+
+    <!-- THẺ THỐNG KÊ -->
+    <section class="admin-stat-grid">
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-top">
+                <span class="admin-stat-icon red">₫</span>
+                <span class="admin-stat-label">TỔNG DOANH THU</span>
+            </div>
+
+            <strong class="admin-stat-number admin-revenue-number">
+                @Model.TotalRevenue.ToString("N0")
+            </strong>
+
+            <span class="admin-stat-description">VNĐ · Các khoản đã thanh toán</span>
+        </article>
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-top">
+                <span class="admin-stat-icon blue">♙</span>
+                <span class="admin-stat-label">HỌC VIÊN ĐANG HỌC</span>
+            </div>
+
+            <strong class="admin-stat-number">
+                @Model.ActiveStudents
+            </strong>
+
+            <span class="admin-stat-description">
+                @Model.TotalStudents học viên có hồ sơ
+            </span>
+        </article>
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-top">
+                <span class="admin-stat-icon purple">▤</span>
+                <span class="admin-stat-label">KHÓA HỌC</span>
+            </div>
+
+            <strong class="admin-stat-number">
+                @Model.TotalCourses
+            </strong>
+
+            <span class="admin-stat-description">
+                @Model.TotalTeachers giáo viên trong trung tâm
+            </span>
+        </article>
+
+        <article class="admin-stat-card">
+            <div class="admin-stat-top">
+                <span class="admin-stat-icon orange">▣</span>
+                <span class="admin-stat-label">LỚP ĐANG MỞ / HỌC</span>
+            </div>
+
+            <strong class="admin-stat-number">
+                @Model.ActiveClasses
+            </strong>
+
+            <span class="admin-stat-description">
+                @Model.PendingEnrollments đơn chờ duyệt
+            </span>
+        </article>
+
+    </section>
+
+    <!-- BIỂU ĐỒ DOANH THU VÀ BÁO CÁO NHANH -->
+    <section class="admin-analysis-grid">
+
+        <article class="admin-panel">
+
+            <div class="admin-panel-heading">
+                <div>
+                    <span class="admin-panel-eyebrow">FINANCIAL OVERVIEW</span>
+                    <h2>Doanh thu theo tháng</h2>
+                    <p>Dữ liệu 6 tháng gần nhất, chỉ tính thanh toán thành công.</p>
+                </div>
+            </div>
+
+            <div class="admin-chart-legend">
+                <span class="admin-chart-dot"></span>
+                Doanh thu (VNĐ)
+            </div>
+
+            <div class="admin-chart">
+
+                @foreach (var point in monthlyRevenue)
+                {
+                    double barHeight = maxRevenue > 0
+                        ? (double)(point.Revenue / maxRevenue) * 100.0
+                        : 0.0;
+
+                    <div class="admin-chart-column">
+
+                        <div class="admin-chart-value">
+                            @(point.Revenue > 0
+                                ? point.Revenue.ToString("N0")
+                                : "—")
+                        </div>
+
+                        <div class="admin-chart-track">
+                            <div class="admin-chart-bar"
+                                 style="height: @(barHeight.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;">
+                            </div>
+                        </div>
+
+                        <span class="admin-chart-month">
+                            @point.MonthLabel
+                        </span>
+
+                    </div>
+                }
+
+            </div>
+
+            <div class="admin-chart-footer">
+                Tổng doanh thu toàn thời gian:
+                <strong>@Model.TotalRevenue.ToString("N0") VNĐ</strong>
+            </div>
+
+        </article>
+
+        <article class="admin-panel admin-report-panel">
+
+            <div class="admin-panel-heading">
+                <div>
+                    <span class="admin-panel-eyebrow">QUICK ACCESS</span>
+                    <h2>Truy cập nhanh</h2>
+                    <p>Mở các phân hệ quản lý của trung tâm.</p>
+                </div>
+            </div>
+
+            <div class="admin-quick-link-list">
+
+                <a href="@Url.Action("Index", "Users")"
+                   class="admin-quick-link">
+                    <span class="admin-quick-icon blue">♙</span>
+                    <span>
+                        <strong>Quản lý người dùng</strong>
+                        <small>@Model.TotalUsers tài khoản</small>
+                    </span>
+                    <b>›</b>
+                </a>
+
+                <a href="@Url.Action("AdminIndex", "Courses")"
+                   class="admin-quick-link">
+                    <span class="admin-quick-icon red">▤</span>
+                    <span>
+                        <strong>Khóa học</strong>
+                        <small>Danh mục chương trình học</small>
+                    </span>
+                    <b>›</b>
+                </a>
+
+                <a href="@Url.Action("Index", "Enrollments")"
+                   class="admin-quick-link">
+                    <span class="admin-quick-icon orange">✓</span>
+                    <span>
+                        <strong>Quản lý ghi danh</strong>
+                        <small>@Model.PendingEnrollments đơn chờ duyệt</small>
+                    </span>
+                    <b>›</b>
+                </a>
+
+                <a href="@Url.Action("Index", "Payments")"
+                   class="admin-quick-link">
+                    <span class="admin-quick-icon green">₫</span>
+                    <span>
+                        <strong>Quản lý học phí</strong>
+                        <small>Giao dịch và biên lai</small>
+                    </span>
+                    <b>›</b>
+                </a>
+
+            </div>
+
+            <a href="@Url.Action("Index", "Reports")"
+               class="admin-report-button">
+                Mở phân hệ báo cáo →
+            </a>
+
+        </article>
+
+    </section>
+
+    <!-- CẢNH BÁO LỚP GẦN ĐẦY -->
+    <section class="admin-panel admin-capacity-panel">
+
+        <div class="admin-panel-heading admin-panel-heading-inline">
+            <div>
+                <span class="admin-panel-eyebrow">CAPACITY MONITORING</span>
+                <h2>Cảnh báo lớp học sắp đầy</h2>
+                <p>Các lớp đã sử dụng từ 80% sức chứa trở lên.</p>
+            </div>
+
+            <a href="@Url.Action("Index", "Classes")"
+               class="admin-text-link">
+                Xem tất cả lớp học →
+            </a>
+        </div>
+
+        @if (nearCapacityClasses.Any())
+        {
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>LỚP HỌC</th>
+                            <th>KHÓA HỌC</th>
+                            <th>PHÒNG</th>
+                            <th>SĨ SỐ</th>
+                            <th>SỨC CHỨA</th>
+                            <th>TỶ LỆ</th>
+                            <th>TRẠNG THÁI</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in nearCapacityClasses)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.ClassName</strong>
+                                </td>
+
+                                <td>@item.CourseName</td>
+
+                                <td>@item.Room</td>
+
+                                <td>@item.EnrolledCount</td>
+
+                                <td>@item.MaxCapacity</td>
+
+                                <td>
+                                    <div class="admin-capacity-cell">
+                                        <div class="admin-capacity-progress">
+                                            <span style="width: @item.OccupancyPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                                        </div>
+
+                                        <strong>
+                                            @item.OccupancyPercent.ToString("0.#")%
+                                        </strong>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    @if (item.OccupancyPercent >= 100)
+                                    {
+                                        <span class="admin-status-badge full">
+                                            Đạt sức chứa
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="admin-status-badge warning">
+                                            Sắp đầy
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="admin-empty-state">
+                <span>✓</span>
+                <strong>Chưa có lớp nào gần đầy</strong>
+                <p>Hiện chưa có lớp nào đạt ngưỡng 80% sức chứa.</p>
+            </div>
+        }
+
+    </section>
+
+    <!-- ĐƠN GHI DANH VÀ THANH TOÁN MỚI NHẤT -->
+    <section class="admin-recent-grid">
+
+        <article class="admin-panel">
+
+            <div class="admin-panel-heading admin-panel-heading-inline">
+                <div>
+                    <span class="admin-panel-eyebrow">LATEST ENROLLMENTS</span>
+                    <h2>Ghi danh mới nhất</h2>
+                </div>
+
+                <a href="@Url.Action("Index", "Enrollments")"
+                   class="admin-text-link">
+                    Xem tất cả →
+                </a>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>HỌC VIÊN</th>
+                            <th>LỚP</th>
+                            <th>NGÀY ĐĂNG KÝ</th>
+                            <th>TRẠNG THÁI</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (recentEnrollments.Any())
+                        {
+                            foreach (var e in recentEnrollments)
+                            {
+                                <tr>
+                                    <td>
+                                        @(e.Student != null
+                                            ? e.Student.FullName
+                                            : "N/A")
+                                    </td>
+
+                                    <td>
+                                        @(e.Class != null
+                                            ? e.Class.ClassName
+                                            : "N/A")
+                                    </td>
+
+                                    <td>@e.EnrollmentDate.ToString("dd/MM/yyyy")</td>
+
+                                    <td>
+                                        @if (e.Status == "Pending")
+                                        {
+                                            <span class="admin-status-badge warning">
+                                                Chờ duyệt
+                                            </span>
+                                        }
+                                        else if (
+                                            e.Status == "Approved" ||
+                                            e.Status == "Active" ||
+                                            e.Status == "Confirmed" ||
+                                            e.Status == "Studying")
+                                        {
+                                            <span class="admin-status-badge success">
+                                                Đã duyệt / Đang học
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="admin-status-badge neutral">
+                                                @e.Status
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="admin-table-empty">
+                                    Chưa có dữ liệu ghi danh.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </article>
+
+        <article class="admin-panel">
+
+            <div class="admin-panel-heading admin-panel-heading-inline">
+                <div>
+                    <span class="admin-panel-eyebrow">LATEST PAYMENTS</span>
+                    <h2>Giao dịch gần đây</h2>
+                </div>
+
+                <a href="@Url.Action("Index", "Payments")"
+                   class="admin-text-link">
+                    Xem tất cả →
+                </a>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>BIÊN LAI</th>
+                            <th>HỌC VIÊN</th>
+                            <th>SỐ TIỀN</th>
+                            <th>TRẠNG THÁI</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (recentPayments.Any())
+                        {
+                            foreach (var p in recentPayments)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@p.ReceiptNumber</strong>
+                                    </td>
+
+                                    <td>
+                                        @(p.Enrollment != null &&
+                                          p.Enrollment.Student != null
+                                            ? p.Enrollment.Student.FullName
+                                            : "N/A")
+                                    </td>
+
+                                    <td class="admin-money">
+                                        @p.AmountPaid.ToString("N0") VNĐ
+                                    </td>
+
+                                    <td>
+                                        @if (
+                                            p.PaymentStatus == "Paid" ||
+                                            p.PaymentStatus == "Completed")
+                                        {
+                                            <span class="admin-status-badge success">
+                                                Đã thanh toán
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="admin-status-badge warning">
+                                                @p.PaymentStatus
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="admin-table-empty">
+                                    Chưa có giao dịch thanh toán.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </article>
+
+    </section>
+
+</div>

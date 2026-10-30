@@ -1,0 +1,930 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Reports.PrintableReportViewModel
+
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using English_language_center_management_system.Models
+@using English_language_center_management_system.Models.ViewModels.Reports
+
+@{
+    Layout = null;
+
+    ViewBag.Title = "In báo cáo doanh thu";
+
+    var courseSummaries = Model.CourseSummaries
+        ?? new List<CourseRevenueSummaryItem>();
+
+    var paymentRecords = Model.PaymentRecords
+        ?? new List<Payment>();
+
+    var courseFilterName =
+        String.IsNullOrWhiteSpace(Model.CourseFilterName)
+        ? "Tất cả khóa học"
+        : Model.CourseFilterName;
+
+    var methodSummaries = paymentRecords
+        .GroupBy(p => String.IsNullOrWhiteSpace(p.PaymentMethod)
+            ? "Khác"
+            : p.PaymentMethod)
+        .Select(g => new
+        {
+            PaymentMethod = g.Key,
+            TransactionCount = g.Count(),
+            TotalAmount = g.Sum(p => p.AmountPaid)
+        })
+        .OrderByDescending(g => g.TotalAmount)
+        .ToList();
+
+    int paidCount = paymentRecords.Count(p =>
+        p.PaymentStatus == "Paid" ||
+        p.PaymentStatus == "Completed");
+
+    int partialCount = paymentRecords.Count(p =>
+        p.PaymentStatus == "Partial");
+
+    int pendingCount = paymentRecords.Count(p =>
+        p.PaymentStatus == "Pending");
+
+    decimal paidAmount = paymentRecords
+        .Where(p =>
+            p.PaymentStatus == "Paid" ||
+            p.PaymentStatus == "Completed")
+        .Sum(p => p.AmountPaid);
+
+    Func<string, string> methodLabel = method =>
+    {
+        switch (method)
+        {
+            case "Cash": return "Tiền mặt";
+            case "Bank Transfer": return "Chuyển khoản";
+            case "Credit Card": return "Thẻ tín dụng";
+            default:
+                return String.IsNullOrWhiteSpace(method)
+                    ? "Khác" : method;
+        }
+    };
+
+    Func<string, string> statusLabel = status =>
+    {
+        switch (status)
+        {
+            case "Paid": return "Đã thanh toán";
+            case "Completed": return "Hoàn tất";
+            case "Partial": return "Thanh toán một phần";
+            case "Pending": return "Chờ thanh toán";
+            default:
+                return String.IsNullOrWhiteSpace(status)
+                    ? "Chưa xác định" : status;
+        }
+    };
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1" />
+
+    <title>@Model.ReportTitle</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 25px;
+            background: #eef1f5;
+            color: #263244;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .report-toolbar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 0 auto 22px;
+        }
+
+            .report-toolbar a,
+            .report-toolbar button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 42px;
+                padding: 10px 17px;
+                border: 1px solid #d8dee8;
+                border-radius: 8px;
+                background: #fff;
+                color: #344054;
+                font-family: inherit;
+                font-size: 12px;
+                font-weight: 700;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+            .report-toolbar .report-print-button {
+                border-color: #c62828;
+                background: #c62828;
+                color: #fff;
+            }
+
+        .report-paper {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 38px;
+            border: 1px solid #e1e5eb;
+            background: #fff;
+            box-shadow: 0 8px 30px rgba(30, 41, 59, 0.07);
+        }
+
+        .report-brand {
+            padding-bottom: 22px;
+            border-bottom: 3px solid #c62828;
+            text-align: center;
+        }
+
+            .report-brand h1 {
+                margin: 0 0 6px;
+                color: #263244;
+                font-size: 22px;
+                font-weight: 800;
+                letter-spacing: 1px;
+            }
+
+            .report-brand p {
+                margin: 0;
+                color: #778295;
+                font-size: 11px;
+            }
+
+        .report-title {
+            margin: 28px 0 9px;
+            color: #263244;
+            font-size: 23px;
+            font-weight: 800;
+            line-height: 1.5;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .report-subtitle {
+            margin-bottom: 25px;
+            color: #778295;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .report-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 25px;
+            margin-bottom: 25px;
+            padding: 17px 19px;
+            border: 1px solid #e6eaf0;
+            border-radius: 9px;
+            background: #fafbfc;
+        }
+
+        .report-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+            .report-meta-item span {
+                color: #8490a1;
+                font-size: 10px;
+            }
+
+            .report-meta-item strong {
+                color: #344054;
+                font-size: 12px;
+                overflow-wrap: anywhere;
+            }
+
+        .report-overview {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .report-overview-card {
+            padding: 15px 13px;
+            border: 1px solid #e7eaf0;
+            border-radius: 9px;
+            background: #fff;
+        }
+
+            .report-overview-card span {
+                display: block;
+                margin-bottom: 8px;
+                color: #778295;
+                font-size: 10px;
+                line-height: 1.5;
+            }
+
+            .report-overview-card strong {
+                display: block;
+                color: #263244;
+                font-size: 19px;
+                font-weight: 800;
+                line-height: 1.5;
+                overflow-wrap: anywhere;
+            }
+
+            .report-overview-card .revenue-value {
+                color: #168044;
+                font-size: 17px;
+            }
+
+        .report-section {
+            margin-top: 28px;
+        }
+
+        .report-section-title {
+            margin: 0 0 7px;
+            color: #263244;
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+        .report-section-description {
+            margin: 0 0 14px;
+            color: #8490a1;
+            font-size: 10px;
+            line-height: 1.7;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+
+            .report-table thead {
+                display: table-header-group;
+            }
+
+            .report-table th {
+                padding: 10px 9px;
+                border: 1px solid #dfe4eb;
+                background: #f1f4f8;
+                color: #344054;
+                font-size: 9px;
+                font-weight: 800;
+                text-align: left;
+                text-transform: uppercase;
+            }
+
+            .report-table td {
+                padding: 9px;
+                border: 1px solid #e3e7ed;
+                color: #536074;
+                vertical-align: top;
+                overflow-wrap: anywhere;
+            }
+
+            .report-table tbody tr:nth-child(even) {
+                background: #fafbfc;
+            }
+
+            .report-table tfoot td {
+                background: #f5f7fa;
+                color: #263244;
+                font-weight: 800;
+            }
+
+        .report-number {
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .report-money {
+            color: #168044;
+            font-weight: 800;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .report-total-money {
+            color: #168044;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .report-method-summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .report-method-card {
+            padding: 14px;
+            border: 1px solid #e3e7ed;
+            border-radius: 8px;
+        }
+
+            .report-method-card span {
+                display: block;
+                margin-bottom: 7px;
+                color: #778295;
+                font-size: 10px;
+            }
+
+            .report-method-card strong {
+                display: block;
+                color: #168044;
+                font-size: 16px;
+                overflow-wrap: anywhere;
+            }
+
+            .report-method-card small {
+                display: block;
+                margin-top: 6px;
+                color: #8490a1;
+                font-size: 10px;
+            }
+
+        .report-status {
+            display: inline-block;
+            padding: 4px 7px;
+            border-radius: 12px;
+            background: #f0f2f5;
+            color: #536074;
+            font-size: 9px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .report-status-paid {
+            background: #e7f8ed;
+            color: #168044;
+        }
+
+        .report-status-partial {
+            background: #fff3df;
+            color: #9a6500;
+        }
+
+        .report-status-pending {
+            background: #fff0f0;
+            color: #b42318;
+        }
+
+        .report-empty {
+            padding: 20px;
+            border: 1px dashed #d8dee8;
+            color: #8490a1;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .report-note {
+            margin-top: 25px;
+            padding: 13px 15px;
+            border: 1px solid #e3e7ed;
+            border-radius: 8px;
+            color: #778295;
+            font-size: 10px;
+            line-height: 1.8;
+        }
+
+        .report-signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 45px;
+            margin-top: 55px;
+            text-align: center;
+        }
+
+        .report-signature strong {
+            display: block;
+            color: #344054;
+            font-size: 11px;
+        }
+
+        .report-signature span {
+            display: block;
+            margin-top: 5px;
+            color: #8490a1;
+            font-size: 10px;
+        }
+
+        .report-signature-space {
+            height: 80px;
+        }
+
+        .report-footer {
+            margin-top: 35px;
+            padding-top: 13px;
+            border-top: 1px solid #e3e7ed;
+            color: #929bab;
+            font-size: 9px;
+            text-align: center;
+        }
+
+        @@page {
+            size: A4 landscape;
+            margin: 12mm;
+        }
+
+        @@media (max-width: 700px) {
+            body {
+                padding: 10px;
+            }
+
+            .report-paper {
+                padding: 18px;
+            }
+
+            .report-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .report-overview {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .report-method-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @@media print {
+            body {
+                padding: 0;
+                background: #fff;
+                color: #000;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .report-paper {
+                width: 100%;
+                max-width: none;
+                margin: 0;
+                padding: 0;
+                border: none;
+                box-shadow: none;
+            }
+
+            .report-section {
+                page-break-inside: auto;
+                break-inside: auto;
+            }
+
+            .report-overview,
+            .report-meta,
+            .report-method-summary,
+            .report-signatures {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .report-table tr {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .report-table th,
+            .report-table td {
+                padding: 7px;
+            }
+
+            .report-note {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="report-toolbar no-print">
+        <a href="@Url.Action("Index", "Reports",
+            new {
+                fromDate = Model.FromDate.HasValue
+                    ? Model.FromDate.Value.ToString("yyyy-MM-dd")
+                    : "",
+                toDate = Model.ToDate.HasValue
+                    ? Model.ToDate.Value.ToString("yyyy-MM-dd")
+                    : ""
+            })">
+            ← Quay lại báo cáo
+        </a>
+
+        <button type="button"
+                class="report-print-button"
+                onclick="window.print()">
+            In / Lưu PDF
+        </button>
+
+        <button type="button"
+                onclick="window.close()">
+            Đóng trang
+        </button>
+    </div>
+
+    <main class="report-paper">
+
+        <!-- Branding -->
+        <header class="report-brand">
+            <h1>ENGLISH LANGUAGE CENTER</h1>
+            <p>TRUNG TÂM ANH NGỮ</p>
+            <p>BÁO CÁO NỘI BỘ</p>
+        </header>
+
+        <h2 class="report-title">
+            @Model.ReportTitle
+        </h2>
+
+        <div class="report-subtitle">
+            BÁO CÁO ĐƯỢC TẠO TỪ HỆ THỐNG QUẢN LÝ TRUNG TÂM
+        </div>
+
+        <!-- Metadata -->
+        <div class="report-meta">
+
+            <div class="report-meta-item">
+                <span>Thời gian bắt đầu</span>
+                <strong>
+                    @(Model.FromDate.HasValue
+                        ? Model.FromDate.Value.ToString("dd/MM/yyyy")
+                        : "Không xác định")
+                </strong>
+            </div>
+
+            <div class="report-meta-item">
+                <span>Thời gian kết thúc</span>
+                <strong>
+                    @(Model.ToDate.HasValue
+                        ? Model.ToDate.Value.ToString("dd/MM/yyyy")
+                        : "Không xác định")
+                </strong>
+            </div>
+
+            <div class="report-meta-item">
+                <span>Phạm vi khóa học</span>
+                <strong>@courseFilterName</strong>
+            </div>
+
+            <div class="report-meta-item">
+                <span>Người lập báo cáo</span>
+                <strong>@Model.GeneratedBy</strong>
+            </div>
+
+            <div class="report-meta-item">
+                <span>Ngày xuất báo cáo</span>
+                <strong>
+                    @Model.GeneratedDate.ToString("dd/MM/yyyy HH:mm")
+                </strong>
+            </div>
+
+            <div class="report-meta-item">
+                <span>Tổng số giao dịch</span>
+                <strong>@Model.TotalTransactions</strong>
+            </div>
+
+        </div>
+
+        <!-- Overview -->
+        <section class="report-section">
+
+            <h3 class="report-section-title">
+                1. TỔNG QUAN TÀI CHÍNH
+            </h3>
+
+            <div class="report-overview">
+
+                <div class="report-overview-card">
+                    <span>Tổng tiền ghi nhận trong kỳ</span>
+
+                    <strong class="revenue-value">
+                        @Model.TotalRevenue.ToString("N0") VNĐ
+                    </strong>
+                </div>
+
+                <div class="report-overview-card">
+                    <span>Giao dịch Paid / Completed</span>
+
+                    <strong>@paidCount</strong>
+                </div>
+
+                <div class="report-overview-card">
+                    <span>Giao dịch thanh toán một phần</span>
+
+                    <strong>@partialCount</strong>
+                </div>
+
+                <div class="report-overview-card">
+                    <span>Giao dịch chờ thanh toán</span>
+
+                    <strong>@pendingCount</strong>
+                </div>
+
+            </div>
+
+            <p class="report-section-description">
+                Tổng số tiền theo trạng thái Paid hoặc Completed:
+                <strong>@paidAmount.ToString("N0") VNĐ</strong>.
+                Tổng tiền ghi nhận bao gồm tất cả giao dịch trong kết quả lọc,
+                không chỉ các giao dịch đã hoàn tất.
+            </p>
+
+        </section>
+
+        <!-- Course revenue -->
+        <section class="report-section">
+
+            <h3 class="report-section-title">
+                2. DOANH THU THEO KHÓA HỌC
+            </h3>
+
+            <p class="report-section-description">
+                Thống kê số lớp, lượt ghi danh và số tiền giao dịch theo khóa học.
+            </p>
+
+            @if (courseSummaries.Any())
+            {
+                <table class="report-table">
+
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">STT</th>
+                            <th>Tên khóa học</th>
+                            <th style="width: 12%;">Số lớp</th>
+                            <th style="width: 14%;">Lượt ghi danh</th>
+                            <th style="width: 24%;">Doanh thu (VNĐ)</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @{
+                            int index = 0;
+                        }
+
+                        @foreach (var item in courseSummaries)
+                        {
+                            index++;
+
+                            <tr>
+                                <td class="report-number">@index</td>
+                                <td><strong>@item.CourseName</strong></td>
+                                <td class="report-number">@item.TotalClasses</td>
+                                <td class="report-number">@item.TotalEnrollments</td>
+
+                                <td class="report-money">
+                                    @item.TotalRevenue.ToString("N0")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                    <tfoot>
+                        <tr>
+                            <td colspan="4">TỔNG CỘNG</td>
+
+                            <td class="report-money">
+                                @Model.TotalRevenue.ToString("N0")
+                            </td>
+                        </tr>
+                    </tfoot>
+
+                </table>
+            }
+            else
+            {
+                <div class="report-empty">
+                    Không có dữ liệu doanh thu hoặc ghi danh theo khóa học
+                    trong khoảng thời gian đã chọn.
+                </div>
+            }
+
+        </section>
+
+        <!-- Payment methods -->
+        <section class="report-section">
+
+            <h3 class="report-section-title">
+                3. THỐNG KÊ THEO PHƯƠNG THỨC THANH TOÁN
+            </h3>
+
+            @if (methodSummaries.Any())
+            {
+                <div class="report-method-summary">
+
+                    @foreach (var item in methodSummaries)
+                    {
+                        <div class="report-method-card">
+
+                            <span>@methodLabel(item.PaymentMethod)</span>
+
+                            <strong>
+                                @item.TotalAmount.ToString("N0") VNĐ
+                            </strong>
+
+                            <small>
+                                @item.TransactionCount giao dịch
+                            </small>
+                        </div>
+                    }
+
+                </div>
+            }
+            else
+            {
+                <div class="report-empty">
+                    Không có giao dịch trong kỳ báo cáo.
+                </div>
+            }
+
+        </section>
+
+        <!-- Transaction details -->
+        <section class="report-section">
+
+            <h3 class="report-section-title">
+                4. CHI TIẾT GIAO DỊCH
+            </h3>
+
+            <p class="report-section-description">
+                Danh sách các giao dịch thanh toán theo khoảng thời gian
+                và phạm vi khóa học đã chọn.
+            </p>
+
+            @if (paymentRecords.Any())
+            {
+                <table class="report-table">
+
+                    <thead>
+                        <tr>
+                            <th>Mã</th>
+                            <th>Biên lai</th>
+                            <th>Học viên</th>
+                            <th>Lớp / Khóa học</th>
+                            <th>Ngày thanh toán</th>
+                            <th>Phương thức</th>
+                            <th>Trạng thái</th>
+                            <th style="text-align: right;">Số tiền (VNĐ)</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var payment in paymentRecords)
+                        {
+                            var studentName =
+                                payment.Enrollment != null &&
+                                payment.Enrollment.Student != null
+                                ? payment.Enrollment.Student.FullName
+                                : "Chưa xác định";
+
+                            var className =
+                                payment.Enrollment != null &&
+                                payment.Enrollment.Class != null
+                                ? payment.Enrollment.Class.ClassName
+                                : "Chưa xác định";
+
+                            var courseName =
+                                payment.Enrollment != null &&
+                                payment.Enrollment.Class != null &&
+                                payment.Enrollment.Class.Course != null
+                                ? payment.Enrollment.Class.Course.CourseName
+                                : "Chưa xác định";
+
+                            <tr>
+                                <td class="report-number">
+                                    #@payment.Id
+                                </td>
+
+                                <td>
+                                    @(String.IsNullOrWhiteSpace(payment.ReceiptNumber)
+                                        ? "Không có mã"
+                                        : payment.ReceiptNumber)
+                                </td>
+
+                                <td>@studentName</td>
+
+                                <td>
+                                    <strong>@className</strong>
+                                    <br />
+                                    <span>@courseName</span>
+                                </td>
+
+                                <td>
+                                    @(payment.PaymentDate.HasValue ? payment.PaymentDate.Value.ToString("dd/MM/yyyy") : "Chưa cập nhật")
+                                    <br />
+                                    @(payment.PaymentDate.HasValue ? payment.PaymentDate.Value.ToString("HH:mm") : "Chưa cập nhật")
+                                </td>
+
+                                <td>@methodLabel(payment.PaymentMethod)</td>
+
+                                <td>
+                                    <span class="report-status
+                                        @(payment.PaymentStatus == "Paid" ||
+                                          payment.PaymentStatus == "Completed"
+                                            ? "report-status-paid"
+                                            : payment.PaymentStatus == "Partial"
+                                                ? "report-status-partial"
+                                                : payment.PaymentStatus == "Pending"
+                                                    ? "report-status-pending"
+                                                    : "")">
+                                        @statusLabel(payment.PaymentStatus)
+                                    </span>
+                                </td>
+
+                                <td class="report-money">
+                                    @payment.AmountPaid.ToString("N0")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                    <tfoot>
+                        <tr>
+                            <td colspan="7">TỔNG CỘNG</td>
+
+                            <td class="report-money">
+                                @Model.TotalRevenue.ToString("N0")
+                            </td>
+                        </tr>
+                    </tfoot>
+
+                </table>
+            }
+            else
+            {
+                <div class="report-empty">
+                    Không có giao dịch trong kỳ báo cáo.
+                </div>
+            }
+
+        </section>
+
+        <!-- Note -->
+        <div class="report-note">
+            <strong>Lưu ý:</strong>
+            Số liệu trong báo cáo được lấy từ dữ liệu đang lưu trong hệ thống.
+            Doanh thu ghi nhận là tổng AmountPaid của các giao dịch được lọc.
+            Số tiền này không tự động khẳng định rằng mọi khoản học phí
+            đã được thanh toán đầy đủ.
+        </div>
+
+        <!-- Signatures -->
+        <div class="report-signatures">
+
+            <div>
+                <div class="report-signature">
+                    <strong>NGƯỜI LẬP BÁO CÁO</strong>
+                    <span>(Ký và ghi rõ họ tên)</span>
+                </div>
+
+                <div class="report-signature-space"></div>
+
+                <strong>@Model.GeneratedBy</strong>
+            </div>
+
+            <div>
+                <div class="report-signature">
+                    <strong>GIÁM ĐỐC TRUNG TÂM</strong>
+                    <span>(Ký và ghi rõ họ tên)</span>
+                </div>
+
+                <div class="report-signature-space"></div>
+
+                <strong>(Ký và ghi rõ họ tên)</strong>
+            </div>
+
+        </div>
+
+        <footer class="report-footer">
+            BÁO CÁO NỘI BỘ — Ngày xuất:
+            @Model.GeneratedDate.ToString("dd/MM/yyyy HH:mm")
+            — English Language Center
+        </footer>
+
+    </main>
+
+    <script>
+                window.onload = function () {
+                    window.print();
+                };
+    </script>
+
+</body>
+</html>

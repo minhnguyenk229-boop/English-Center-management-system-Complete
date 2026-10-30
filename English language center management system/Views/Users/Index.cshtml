@@ -1,0 +1,1174 @@
+﻿@using System
+@using System.Linq
+@using System.Collections.Generic
+@using English_language_center_management_system.Models
+@using English_language_center_management_system.Models.ViewModels.Users
+
+@model UserIndexViewModel
+
+@{
+    ViewBag.Title = "Quản lý người dùng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var users = Model.Users ?? new List<User>();
+    var roles = Model.Roles ?? new List<Role>();
+}
+
+<style>
+    /* =========================================
+       ADMIN USERS - GIAO DIỆN QUẢN LÝ TÀI KHOẢN
+       ========================================= */
+
+    .admin-users-page {
+        width: 100%;
+        max-width: 1700px;
+        margin: 0 auto;
+        color: #263247;
+    }
+
+        .admin-users-page,
+        .admin-users-page * {
+            box-sizing: border-box;
+        }
+
+            /* Tiêu đề trang */
+
+            .admin-users-page .admin-users-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 20px;
+                margin-bottom: 22px;
+            }
+
+            .admin-users-page .admin-users-eyebrow {
+                display: block;
+                margin-bottom: 8px;
+                color: #c62828;
+                font-size: 10px;
+                font-weight: 850;
+                letter-spacing: 1.4px;
+            }
+
+            .admin-users-page .admin-users-header h1 {
+                margin: 0 0 8px;
+                color: #263247;
+                font-size: 28px;
+                font-weight: 850;
+                line-height: 1.35;
+            }
+
+            .admin-users-page .admin-users-header p {
+                margin: 0;
+                color: #718096;
+                font-size: 13px;
+                line-height: 1.75;
+            }
+
+            /* Nút hành động */
+
+            .admin-users-page .admin-users-primary-btn,
+            .admin-users-page .admin-users-reset-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                min-height: 41px;
+                padding: 10px 15px;
+                border: 1px solid transparent;
+                border-radius: 8px;
+                font-family: inherit;
+                font-size: 12px;
+                font-weight: 800;
+                line-height: 1.4;
+                text-align: center;
+                text-decoration: none;
+                white-space: nowrap;
+                cursor: pointer;
+                transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+            }
+
+            .admin-users-page .admin-users-primary-btn {
+                border-color: #c62828;
+                background: #c62828;
+                color: #ffffff;
+                box-shadow: 0 3px 9px rgba(198, 40, 40, 0.10);
+            }
+
+                .admin-users-page .admin-users-primary-btn:hover {
+                    border-color: #a61f24;
+                    background: #a61f24;
+                    color: #ffffff;
+                    text-decoration: none;
+                    box-shadow: 0 5px 12px rgba(198, 40, 40, 0.15);
+                }
+
+            .admin-users-page .admin-users-reset-btn {
+                border-color: #dfe4ec;
+                background: #ffffff;
+                color: #596579;
+            }
+
+                .admin-users-page .admin-users-reset-btn:hover {
+                    border-color: #efcaca;
+                    background: #fff5f5;
+                    color: #c62828;
+                    text-decoration: none;
+                }
+
+                .admin-users-page .admin-users-primary-btn .bi,
+                .admin-users-page .admin-users-reset-btn .bi {
+                    font-size: 14px;
+                    line-height: 1;
+                }
+
+            /* =========================================
+       4 THẺ THỐNG KÊ - CÙNG MỘT HÀNG
+       ========================================= */
+
+            .admin-users-page .admin-users-summary {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 16px;
+                width: 100%;
+                margin: 0 0 24px;
+            }
+
+            .admin-users-page .admin-users-summary-card {
+                display: flex;
+                align-items: center;
+                gap: 13px;
+                min-width: 0;
+                min-height: 106px;
+                padding: 19px 20px;
+                border: 1px solid #e6eaf0;
+                border-radius: 12px;
+                background: #ffffff;
+                box-shadow: 0 4px 15px rgba(26, 42, 70, 0.035);
+                transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+            }
+
+                .admin-users-page .admin-users-summary-card:hover {
+                    transform: translateY(-2px);
+                    border-color: #e7d6d6;
+                    box-shadow: 0 7px 20px rgba(26, 42, 70, 0.065);
+                }
+
+            .admin-users-page .admin-users-summary-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 47px;
+                height: 47px;
+                flex-shrink: 0;
+                border-radius: 12px;
+                background: #fff0f0;
+                color: #c62828;
+                font-size: 21px;
+            }
+
+            .admin-users-page .admin-users-summary-card:nth-child(2)
+            .admin-users-summary-icon {
+                background: #edf5ff;
+                color: #2563a6;
+            }
+
+            .admin-users-page .admin-users-summary-card:nth-child(3)
+            .admin-users-summary-icon {
+                background: #f2edff;
+                color: #7252b8;
+            }
+
+            .admin-users-page .admin-users-summary-card:nth-child(4)
+            .admin-users-summary-icon {
+                background: #eaf8f0;
+                color: #16814e;
+            }
+
+            .admin-users-page .admin-users-summary-icon .bi {
+                font-size: 21px;
+                line-height: 1;
+            }
+
+            .admin-users-page .admin-users-summary-info {
+                min-width: 0;
+            }
+
+            .admin-users-page .admin-users-summary-card strong {
+                display: block;
+                margin: 0 0 4px;
+                color: #263247;
+                font-size: 27px;
+                font-weight: 850;
+                line-height: 1.2;
+            }
+
+            .admin-users-page .admin-users-summary-label {
+                display: block;
+                color: #7b8596;
+                font-size: 11px;
+                font-weight: 700;
+                line-height: 1.5;
+                overflow-wrap: anywhere;
+            }
+
+            /* =========================================
+       KHUNG DANH SÁCH TÀI KHOẢN
+       ========================================= */
+
+            .admin-users-page .admin-users-panel {
+                min-width: 0;
+                overflow: hidden;
+                border: 1px solid #e6eaf0;
+                border-radius: 14px;
+                background: #ffffff;
+                box-shadow: 0 4px 16px rgba(26, 42, 70, 0.035);
+            }
+
+            .admin-users-page .admin-users-panel-heading {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding: 22px 23px 18px;
+                border-bottom: 1px solid #edf0f5;
+            }
+
+            .admin-users-page .admin-users-panel-heading-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 43px;
+                height: 43px;
+                flex-shrink: 0;
+                border-radius: 11px;
+                background: #fff0f0;
+                color: #c62828;
+                font-size: 19px;
+            }
+
+            .admin-users-page .admin-users-panel-heading h2 {
+                margin: 0 0 6px;
+                color: #263247;
+                font-size: 17px;
+                font-weight: 850;
+                line-height: 1.5;
+            }
+
+            .admin-users-page .admin-users-panel-heading p {
+                margin: 0;
+                color: #8993a3;
+                font-size: 12px;
+                line-height: 1.7;
+            }
+
+            /* =========================================
+       BỘ LỌC
+       ========================================= */
+
+            .admin-users-page .admin-users-filter-form {
+                display: grid;
+                grid-template-columns: minmax(210px, 1.45fr) minmax(155px, 0.9fr) minmax(140px, 0.8fr) minmax(175px, 1.05fr);
+                align-items: end;
+                gap: 15px;
+                padding: 21px 23px 18px;
+                border-bottom: 1px solid #edf0f5;
+            }
+
+            .admin-users-page .admin-users-filter-field {
+                min-width: 0;
+            }
+
+                .admin-users-page .admin-users-filter-field label {
+                    display: block;
+                    margin-bottom: 8px;
+                    color: #4f5b6d;
+                    font-size: 11px;
+                    font-weight: 800;
+                }
+
+            .admin-users-page .admin-users-input {
+                display: block;
+                width: 100%;
+                min-width: 0;
+                min-height: 43px;
+                padding: 10px 12px;
+                border: 1px solid #d8dee8;
+                border-radius: 8px;
+                background: #ffffff;
+                color: #263247;
+                font-family: inherit;
+                font-size: 12px;
+                outline: none;
+                transition: border-color 0.18s ease, box-shadow 0.18s ease;
+            }
+
+                .admin-users-page .admin-users-input:focus {
+                    border-color: #c62828;
+                    box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.08);
+                }
+
+                .admin-users-page .admin-users-input::placeholder {
+                    color: #a1a9b7;
+                }
+
+            /* Ba nút nằm ngang trong cùng hàng */
+
+            .admin-users-page .admin-users-filter-actions {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 9px;
+                grid-column: 1 / -1;
+                margin-top: 1px;
+                padding-top: 16px;
+                border-top: 1px solid #f0f2f6;
+            }
+
+                .admin-users-page .admin-users-filter-actions .admin-users-primary-btn,
+                .admin-users-page .admin-users-filter-actions .admin-users-reset-btn {
+                    flex: 0 0 auto;
+                }
+
+            /* =========================================
+       THANH THÔNG TIN BẢNG
+       ========================================= */
+
+            .admin-users-page .admin-users-table-toolbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 17px 23px;
+                color: #718096;
+                font-size: 12px;
+            }
+
+                .admin-users-page .admin-users-table-toolbar strong {
+                    color: #263247;
+                    font-weight: 850;
+                }
+
+            .admin-users-page .admin-users-result-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 7px 10px;
+                border: 1px solid #e6eaf0;
+                border-radius: 7px;
+                background: #f7f8fb;
+                color: #687386;
+                font-size: 11px;
+                font-weight: 750;
+                white-space: nowrap;
+            }
+
+                .admin-users-page .admin-users-result-badge .bi {
+                    color: #c62828;
+                }
+
+            /* =========================================
+       BẢNG TÀI KHOẢN
+       ========================================= */
+
+            .admin-users-page .admin-users-table-wrap {
+                width: 100%;
+                overflow-x: auto;
+            }
+
+            .admin-users-page .admin-users-table {
+                width: 100%;
+                min-width: 1050px;
+                margin: 0;
+                border-collapse: collapse;
+                background: #ffffff;
+            }
+
+                .admin-users-page .admin-users-table thead {
+                    background: #f7f8fb;
+                }
+
+                .admin-users-page .admin-users-table th {
+                    padding: 14px 15px;
+                    border-bottom: 1px solid #e9edf3;
+                    color: #7c8798;
+                    font-size: 10px;
+                    font-weight: 850;
+                    letter-spacing: 0.35px;
+                    text-align: left;
+                    white-space: nowrap;
+                }
+
+                .admin-users-page .admin-users-table td {
+                    padding: 15px;
+                    border-top: 1px solid #edf0f5;
+                    color: #596579;
+                    font-size: 12px;
+                    vertical-align: middle;
+                }
+
+                .admin-users-page .admin-users-table tbody tr:hover {
+                    background: #fffafa;
+                }
+
+            .admin-users-page .admin-users-id {
+                color: #8993a3;
+                font-size: 11px;
+                font-weight: 750;
+            }
+
+            .admin-users-page .admin-users-person {
+                display: flex;
+                align-items: center;
+                gap: 11px;
+                min-width: 175px;
+            }
+
+            .admin-users-page .admin-users-avatar {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 38px;
+                height: 38px;
+                flex-shrink: 0;
+                overflow: hidden;
+                border-radius: 50%;
+                background: #fff0f0;
+                color: #c62828;
+                font-size: 14px;
+                font-weight: 850;
+            }
+
+            .admin-users-page .admin-users-person strong {
+                display: block;
+                margin-bottom: 4px;
+                color: #263247;
+                font-size: 12px;
+                font-weight: 800;
+            }
+
+            .admin-users-page .admin-users-person small {
+                color: #929bad;
+                font-size: 11px;
+            }
+
+            .admin-users-page .admin-users-email {
+                overflow-wrap: anywhere;
+            }
+
+            .admin-users-page .admin-role-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                padding: 6px 9px;
+                border-radius: 7px;
+                font-size: 10px;
+                font-weight: 800;
+                white-space: nowrap;
+            }
+
+            .admin-users-page .admin-role-admin {
+                color: #a61f24;
+                background: #fff0f0;
+            }
+
+            .admin-users-page .admin-role-teacher {
+                color: #2458ad;
+                background: #ecf4ff;
+            }
+
+            .admin-users-page .admin-role-student {
+                color: #187345;
+                background: #eaf9f0;
+            }
+
+            .admin-users-page .admin-users-actions {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .admin-users-page .admin-users-action {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+                min-width: 38px;
+                min-height: 30px;
+                padding: 7px 9px;
+                border-radius: 6px;
+                font-size: 10px;
+                font-weight: 800;
+                text-decoration: none;
+                white-space: nowrap;
+                transition: filter 0.18s ease;
+            }
+
+                .admin-users-page .admin-users-action.view {
+                    color: #2458ad;
+                    background: #ecf4ff;
+                }
+
+                .admin-users-page .admin-users-action.edit {
+                    color: #946000;
+                    background: #fff4dd;
+                }
+
+                .admin-users-page .admin-users-action.delete {
+                    color: #b42329;
+                    background: #fff0f0;
+                }
+
+                .admin-users-page .admin-users-action:hover {
+                    filter: brightness(0.96);
+                    text-decoration: none;
+                }
+
+            /* Không có kết quả */
+
+            .admin-users-page .admin-users-empty {
+                padding: 48px 20px;
+                text-align: center;
+            }
+
+                .admin-users-page .admin-users-empty > span {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 52px;
+                    height: 52px;
+                    margin: 0 auto 13px;
+                    border-radius: 14px;
+                    background: #f5f6f9;
+                    color: #8a94a5;
+                    font-size: 23px;
+                }
+
+                .admin-users-page .admin-users-empty strong {
+                    display: block;
+                    color: #263247;
+                    font-size: 14px;
+                    font-weight: 850;
+                }
+
+                .admin-users-page .admin-users-empty p {
+                    margin: 7px 0 0;
+                    color: #8993a3;
+                    font-size: 12px;
+                    line-height: 1.75;
+                }
+
+            /* Thông báo */
+
+            .admin-users-page .admin-users-alert {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 14px 18px;
+                margin-bottom: 20px;
+                border-radius: 9px;
+                font-size: 13px;
+                line-height: 1.7;
+            }
+
+                .admin-users-page .admin-users-alert .bi {
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                    font-size: 16px;
+                }
+
+                .admin-users-page .admin-users-alert.success {
+                    color: #187345;
+                    background: #ecfdf3;
+                    border: 1px solid #b7ebcb;
+                }
+
+                .admin-users-page .admin-users-alert.error {
+                    color: #b91c1c;
+                    background: #fef2f2;
+                    border: 1px solid #fecaca;
+                }
+
+    /* =========================================
+       RESPONSIVE
+       ========================================= */
+
+    @@media (max-width: 1100px) {
+        .admin-users-page .admin-users-summary {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 11px;
+        }
+
+        .admin-users-page .admin-users-summary-card {
+            gap: 10px;
+            padding: 15px 13px;
+        }
+
+        .admin-users-page .admin-users-summary-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+        }
+
+        .admin-users-page .admin-users-summary-card strong {
+            font-size: 24px;
+        }
+
+        .admin-users-page .admin-users-filter-form {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 760px) {
+        .admin-users-page .admin-users-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+            .admin-users-page .admin-users-header h1 {
+                font-size: 24px;
+            }
+
+        .admin-users-page .admin-users-summary {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .admin-users-page .admin-users-filter-form {
+            grid-template-columns: minmax(0, 1fr);
+            padding: 18px 16px;
+        }
+
+        .admin-users-page .admin-users-filter-actions {
+            grid-column: auto;
+            align-items: stretch;
+        }
+
+            .admin-users-page .admin-users-filter-actions .admin-users-primary-btn,
+            .admin-users-page .admin-users-filter-actions .admin-users-reset-btn {
+                flex: 1 1 auto;
+            }
+
+        .admin-users-page .admin-users-panel-heading {
+            padding: 18px 16px;
+        }
+
+        .admin-users-page .admin-users-table-toolbar {
+            padding: 15px 16px;
+        }
+    }
+
+    @@media (max-width: 420px) {
+        .admin-users-page .admin-users-summary {
+            gap: 9px;
+        }
+
+        .admin-users-page .admin-users-summary-card {
+            align-items: flex-start;
+            flex-direction: column;
+            min-height: 125px;
+            padding: 13px;
+        }
+
+            .admin-users-page .admin-users-summary-card strong {
+                font-size: 25px;
+            }
+
+        .admin-users-page .admin-users-filter-actions {
+            flex-direction: column;
+        }
+
+            .admin-users-page .admin-users-filter-actions .admin-users-primary-btn,
+            .admin-users-page .admin-users-filter-actions .admin-users-reset-btn {
+                width: 100%;
+            }
+    }
+</style>
+
+<div class="admin-users-page">
+
+    @* =========================================
+        TIÊU ĐỀ TRANG
+        ========================================= *@
+
+    <section class="admin-users-header">
+
+        <div>
+            <span class="admin-users-eyebrow">
+                USER MANAGEMENT
+            </span>
+
+            <h1>Quản lý người dùng</h1>
+
+            <p>
+                Theo dõi tài khoản học viên, giáo viên và quản trị viên
+                trong hệ thống.
+            </p>
+        </div>
+
+    </section>
+
+    @* =========================================
+        THÔNG BÁO
+        ========================================= *@
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="admin-users-alert success" role="status">
+            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="admin-users-alert error" role="alert">
+            <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
+    @* =========================================
+        4 THẺ THỐNG KÊ
+        ========================================= *@
+
+    <section class="admin-users-summary">
+
+        <article class="admin-users-summary-card">
+
+            <span class="admin-users-summary-icon">
+                <i class="bi bi-mortarboard-fill" aria-hidden="true"></i>
+            </span>
+
+            <div class="admin-users-summary-info">
+                <strong>@Model.TotalStudents</strong>
+                <span class="admin-users-summary-label">
+                    Tổng học sinh
+                </span>
+            </div>
+
+        </article>
+
+        <article class="admin-users-summary-card">
+
+            <span class="admin-users-summary-icon">
+                <i class="bi bi-person-video3" aria-hidden="true"></i>
+            </span>
+
+            <div class="admin-users-summary-info">
+                <strong>@Model.TotalTeachers</strong>
+                <span class="admin-users-summary-label">
+                    Tổng giáo viên
+                </span>
+            </div>
+
+        </article>
+
+        <article class="admin-users-summary-card">
+
+            <span class="admin-users-summary-icon">
+                <i class="bi bi-shield-lock-fill" aria-hidden="true"></i>
+            </span>
+
+            <div class="admin-users-summary-info">
+                <strong>@Model.TotalAdmins</strong>
+                <span class="admin-users-summary-label">
+                    Tổng quản trị viên
+                </span>
+            </div>
+
+        </article>
+
+        <article class="admin-users-summary-card">
+
+            <span class="admin-users-summary-icon">
+                <i class="bi bi-people-fill" aria-hidden="true"></i>
+            </span>
+
+            <div class="admin-users-summary-info">
+                <strong>@users.Count</strong>
+                <span class="admin-users-summary-label">
+                    Tài khoản trong kết quả
+                </span>
+            </div>
+
+        </article>
+
+    </section>
+
+    @* =========================================
+        KHUNG DANH SÁCH TÀI KHOẢN
+        ========================================= *@
+
+    <section class="admin-users-panel">
+
+        <div class="admin-users-panel-heading">
+
+            <span class="admin-users-panel-heading-icon">
+                <i class="bi bi-person-lines-fill" aria-hidden="true"></i>
+            </span>
+
+            <div>
+                <h2>Danh sách tài khoản</h2>
+                <p>
+                    Tìm theo tên, email, số điện thoại hoặc tên đăng nhập.
+                </p>
+            </div>
+
+        </div>
+
+        @* BỘ LỌC *@
+
+        <form method="get"
+              action="@Url.Action("Index", "Users")"
+              class="admin-users-filter-form">
+
+            <div class="admin-users-filter-field">
+
+                <label for="searchTerm">
+                    Tìm kiếm
+                </label>
+
+                <input type="text"
+                       id="searchTerm"
+                       name="searchTerm"
+                       value="@Model.SearchTerm"
+                       class="admin-users-input"
+                       placeholder="Tên, username, email, số điện thoại..."
+                       maxlength="200" />
+
+            </div>
+
+            <div class="admin-users-filter-field">
+
+                <label for="roleId">
+                    Lọc theo vai trò
+                </label>
+
+                <select id="roleId"
+                        name="roleId"
+                        class="admin-users-input">
+
+                    <option value="">
+                        Tất cả vai trò
+                    </option>
+
+                    @foreach (var role in roles)
+                    {
+                        if (Model.SelectedRoleId == role.Id)
+                        {
+                            <option value="@role.Id" selected="selected">
+                                @role.Name
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="@role.Id">
+                                @role.Name
+                            </option>
+                        }
+                    }
+
+                </select>
+
+            </div>
+
+            <div class="admin-users-filter-field">
+
+                <label for="sortBy">
+                    Sắp xếp theo
+                </label>
+
+                <select id="sortBy"
+                        name="sortBy"
+                        class="admin-users-input">
+
+                    <option value="name"
+                            @(Model.SortBy == "name" ? "selected" : "")>
+                        Theo tên
+                    </option>
+
+                    <option value="id"
+                            @(Model.SortBy == "id" ? "selected" : "")>
+                        Theo ID
+                    </option>
+
+                    <option value="created_at"
+                            @(Model.SortBy == "created_at" ? "selected" : "")>
+                        Theo ngày tạo
+                    </option>
+
+                </select>
+
+            </div>
+
+            <div class="admin-users-filter-field">
+
+                <label for="sortOrder">
+                    Thứ tự
+                </label>
+
+                <select id="sortOrder"
+                        name="sortOrder"
+                        class="admin-users-input">
+
+                    <option value="asc"
+                            @(Model.SortOrder == "asc" ? "selected" : "")>
+                        Tăng dần (A-Z / Cũ nhất)
+                    </option>
+
+                    <option value="desc"
+                            @(Model.SortOrder == "desc" ? "selected" : "")>
+                        Giảm dần (Z-A / Mới nhất)
+                    </option>
+
+                </select>
+
+            </div>
+
+            @* BA NÚT CÙNG MỘT HÀNG:
+                ÁP DỤNG - XÓA BỘ LỌC - THÊM NGƯỜI DÙNG *@
+
+            <div class="admin-users-filter-actions">
+
+                <button type="submit"
+                        class="admin-users-primary-btn">
+
+                    <i class="bi bi-funnel-fill" aria-hidden="true"></i>
+                    Áp dụng
+
+                </button>
+
+                <a href="@Url.Action("Index", "Users")"
+                   class="admin-users-reset-btn">
+
+                    <i class="bi bi-arrow-counterclockwise"
+                       aria-hidden="true"></i>
+
+                    Xóa bộ lọc
+
+                </a>
+
+                <a href="@Url.Action("Create", "Users")"
+                   class="admin-users-primary-btn">
+
+                    <i class="bi bi-person-plus-fill"
+                       aria-hidden="true"></i>
+
+                    Thêm người dùng
+
+                </a>
+
+            </div>
+
+        </form>
+
+        @* THANH THÔNG TIN *@
+
+        <div class="admin-users-table-toolbar">
+
+            <span>
+                Hiển thị
+                <strong>@users.Count</strong>
+                tài khoản phù hợp
+            </span>
+
+            <span class="admin-users-result-badge">
+                <i class="bi bi-list-check" aria-hidden="true"></i>
+                Kết quả hiện tại
+            </span>
+
+        </div>
+
+        @* BẢNG NGƯỜI DÙNG *@
+
+        <div class="admin-users-table-wrap">
+
+            <table class="admin-users-table">
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Thông tin người dùng</th>
+                        <th>Email</th>
+                        <th>Số điện thoại</th>
+                        <th>Vai trò</th>
+                        <th>Ngày tạo</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @if (users.Any())
+                    {
+                        foreach (var user in users)
+                        {
+                            var roleName = user.Role != null
+                                ? user.Role.Name
+                                : "Chưa xác định";
+
+                            var roleClass =
+                                roleName.Equals(
+                                    "Admin",
+                                    StringComparison.OrdinalIgnoreCase) ||
+                                roleName.Equals(
+                                    "Administrator",
+                                    StringComparison.OrdinalIgnoreCase) ||
+                                roleName.Equals(
+                                    "Quản trị viên",
+                                    StringComparison.OrdinalIgnoreCase)
+                                ? "admin-role-badge admin-role-admin"
+
+                                : roleName.Equals(
+                                    "Teacher",
+                                    StringComparison.OrdinalIgnoreCase) ||
+                                  roleName.Equals(
+                                    "Giáo viên",
+                                    StringComparison.OrdinalIgnoreCase)
+                                ? "admin-role-badge admin-role-teacher"
+
+                                : "admin-role-badge admin-role-student";
+
+                            string avatarUrl =
+                                user.TeacherProfile?.AvatarUrl
+                                ?? user.StudentProfile?.AvatarUrl;
+
+                            <tr>
+
+                                <td>
+                                    <span class="admin-users-id">
+                                        #@user.Id
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="admin-users-person">
+
+                                        @if (!string.IsNullOrWhiteSpace(avatarUrl))
+                                        {
+                                            <img src="@Url.Content(avatarUrl)"
+                                                 alt="Ảnh đại diện"
+                                                 class="admin-users-avatar"
+                                                 style="object-fit:cover;" />
+                                        }
+                                        else
+                                        {
+                                            <span class="admin-users-avatar">
+                                                @(string.IsNullOrWhiteSpace(user.FullName)
+                                                    ? "?"
+                                                    : user.FullName.Trim()
+                                                        .Substring(0, 1)
+                                                        .ToUpperInvariant())
+                                            </span>
+                                        }
+
+                                        <div>
+                                            <strong>
+                                                @user.FullName
+                                            </strong>
+
+                                            <small>
+                                                @@user.Username
+                                            </small>
+                                        </div>
+
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="admin-users-email">
+                                        @user.Email
+                                    </span>
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(user.Phone)
+                                        ? "Chưa cập nhật"
+                                        : user.Phone)
+                                </td>
+
+                                <td>
+                                    <span class="@roleClass">
+                                        @roleName
+                                    </span>
+                                </td>
+
+                                <td>
+                                    @user.CreatedAt.ToString("dd/MM/yyyy")
+                                </td>
+
+                                <td>
+                                    <div class="admin-users-actions">
+
+                                        <a href="@Url.Action("Details", "Users", new { id = user.Id })"
+                                           class="admin-users-action view"
+                                           title="Xem chi tiết">
+
+                                            <i class="bi bi-eye-fill"
+                                               aria-hidden="true"></i>
+                                            Xem
+
+                                        </a>
+
+                                        <a href="@Url.Action("Edit", "Users", new { id = user.Id })"
+                                           class="admin-users-action edit"
+                                           title="Chỉnh sửa">
+
+                                            <i class="bi bi-pencil-square"
+                                               aria-hidden="true"></i>
+                                            Sửa
+
+                                        </a>
+
+                                        <a href="@Url.Action("Delete", "Users", new { id = user.Id })"
+                                           class="admin-users-action delete"
+                                           title="Xóa tài khoản">
+
+                                            <i class="bi bi-trash3-fill"
+                                               aria-hidden="true"></i>
+                                            Xóa
+
+                                        </a>
+
+                                    </div>
+                                </td>
+
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7">
+
+                                <div class="admin-users-empty">
+
+                                    <span>
+                                        <i class="bi bi-person-x-fill"
+                                           aria-hidden="true"></i>
+                                    </span>
+
+                                    <strong>
+                                        Không tìm thấy người dùng
+                                    </strong>
+
+                                    <p>
+                                        Thử thay đổi từ khóa hoặc bỏ bộ lọc
+                                        để xem các tài khoản khác.
+                                    </p>
+
+                                </div>
+
+                            </td>
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</div>

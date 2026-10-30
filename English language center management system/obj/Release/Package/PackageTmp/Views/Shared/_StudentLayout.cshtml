@@ -1,0 +1,610 @@
+﻿@{
+    Layout = null;
+
+    string currentController = Convert.ToString(
+        ViewContext.RouteData.Values["controller"]);
+
+    string currentAction = Convert.ToString(
+        ViewContext.RouteData.Values["action"]);
+
+    string studentName = Session["FullName"] as string;
+
+    if (string.IsNullOrWhiteSpace(studentName))
+    {
+        studentName = Session["Username"] as string;
+    }
+
+    if (string.IsNullOrWhiteSpace(studentName))
+    {
+        studentName = "Học viên";
+    }
+
+    string studentInitial =
+        studentName.Substring(0, 1).ToUpperInvariant();
+
+    bool isDashboard =
+        currentController == "Home" &&
+        currentAction == "StudentDashboard";
+
+    bool isTimetable =
+        currentController == "ClassSessions" &&
+        currentAction == "StudentTimetable";
+
+    bool isEnrollment =
+        currentController == "Enrollments" &&
+        (currentAction == "StudentEnroll" ||
+         currentAction == "StudentEnrollList");
+
+    bool isProgress =
+        currentController == "Attendances" &&
+        currentAction == "StudentProgress";
+
+    bool isResources =
+        currentController == "Assignments" &&
+        currentAction == "StudentLearningResources";
+
+    bool isPayments =
+        currentController == "Payments" &&
+        currentAction == "StudentPayments";
+
+    bool isProfile =
+        currentController == "Profiles" &&
+        currentAction == "StudentProfile";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewBag.Title - English Center | Student Portal</title>
+
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <style>
+        /* Khung chung theo phong cách Admin */
+        .student-role-layout {
+            min-height: 100vh;
+        }
+
+            .student-role-layout .admin-sidebar {
+                z-index: 20;
+                overflow-y: auto;
+            }
+
+            .student-role-layout .admin-main {
+                display: flex;
+                flex: 1;
+                flex-direction: column;
+                min-width: 0;
+            }
+
+            .student-role-layout .admin-content {
+                min-width: 0;
+                flex: 1;
+            }
+
+            .student-role-layout .admin-sidebar-user > div {
+                min-width: 0;
+            }
+
+            .student-role-layout .admin-sidebar-user strong {
+                display: block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .student-role-layout .admin-nav-link.is-active {
+                border-color: #f1d6d6;
+                background: linear-gradient(100deg, #fff0f0, #fff8f8);
+                color: #b42329;
+                font-weight: 800;
+                box-shadow: inset 3px 0 0 #c62828;
+            }
+
+                .student-role-layout .admin-nav-link.is-active > .bi {
+                    color: #c62828;
+                }
+
+            .student-role-layout .admin-role-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 12px;
+                border-radius: 9px;
+                background: #fff0f0;
+                color: #b91f1f;
+                font-size: 11px;
+                font-weight: 800;
+                white-space: nowrap;
+            }
+
+        /* Các view học viên dùng .student-portal */
+        .role-content-student {
+            width: 100%;
+            min-width: 0;
+        }
+
+            .role-content-student .student-portal {
+                display: block !important;
+                width: 100% !important;
+                max-width: none !important;
+                min-width: 0 !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: transparent !important;
+                grid-template-columns: minmax(0, 1fr) !important;
+                gap: 0 !important;
+            }
+
+            .role-content-student .student-sidebar {
+                display: none !important;
+            }
+
+            .role-content-student .student-main {
+                display: block !important;
+                width: 100% !important;
+                max-width: none !important;
+                min-width: 0 !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .role-content-student .student-topbar,
+            .role-content-student .student-footer {
+                display: none !important;
+            }
+
+            .role-content-student .student-content {
+                width: 100% !important;
+                max-width: none !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* Trang Bài tập & Tài liệu có cấu trúc .slr-* riêng */
+            .role-content-student.page-Assignments-StudentLearningResources .slr-page {
+                width: 100% !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
+            }
+
+            .role-content-student.page-Assignments-StudentLearningResources .slr-shell {
+                display: block !important;
+                width: 100% !important;
+                min-height: 0 !important;
+            }
+
+            .role-content-student.page-Assignments-StudentLearningResources .slr-sidebar,
+            .role-content-student.page-Assignments-StudentLearningResources .slr-topbar,
+            .role-content-student.page-Assignments-StudentLearningResources .slr-footer {
+                display: none !important;
+            }
+
+            .role-content-student.page-Assignments-StudentLearningResources .slr-main {
+                display: block !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+            }
+
+            .role-content-student.page-Assignments-StudentLearningResources .slr-content {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* Trang Hồ sơ cá nhân dùng .sp-* riêng.
+           Giới hạn CSS theo action để không ảnh hưởng StudentPayments. */
+            .role-content-student.page-Profiles-StudentProfile .sp-page {
+                width: 100% !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
+            }
+
+            .role-content-student.page-Profiles-StudentProfile .sp-shell {
+                display: block !important;
+                width: 100% !important;
+                min-height: 0 !important;
+            }
+
+            .role-content-student.page-Profiles-StudentProfile .sp-sidebar,
+            .role-content-student.page-Profiles-StudentProfile .sp-topbar,
+            .role-content-student.page-Profiles-StudentProfile .sp-footer {
+                display: none !important;
+            }
+
+            .role-content-student.page-Profiles-StudentProfile .sp-main {
+                display: block !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+            }
+
+            .role-content-student.page-Profiles-StudentProfile .sp-content {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+        /* Responsive */
+        @@media (max-width: 767px) {
+            .student-role-layout .admin-sidebar {
+                width: 72px;
+                min-width: 72px;
+                padding-right: 9px;
+                padding-left: 9px;
+            }
+
+            .student-role-layout .admin-brand {
+                justify-content: center;
+                gap: 0;
+                padding-right: 0;
+                padding-left: 0;
+            }
+
+                .student-role-layout .admin-brand > span:last-child,
+                .student-role-layout .admin-sidebar-caption,
+                .student-role-layout .admin-sidebar-user > div,
+                .student-role-layout .admin-sidebar-bottom .admin-logout-link {
+                    display: none;
+                }
+
+            .student-role-layout .admin-navigation {
+                gap: 7px;
+            }
+
+            .student-role-layout .admin-nav-link {
+                justify-content: center;
+                gap: 0;
+                padding: 0;
+                overflow: hidden;
+                font-size: 0;
+            }
+
+                .student-role-layout .admin-nav-link > .bi {
+                    width: auto;
+                    min-width: 0;
+                    font-size: 18px;
+                }
+
+            .student-role-layout .admin-sidebar-user {
+                justify-content: center;
+            }
+
+            .student-role-layout .admin-content {
+                padding: 16px 12px;
+            }
+
+            .student-role-layout .admin-topbar {
+                padding: 12px 15px;
+                gap: 10px;
+            }
+
+            .student-role-layout .admin-role-label {
+                padding: 7px 9px;
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body class="admin-body student-role-layout">
+
+    <div class="admin-shell">
+
+        <!-- SIDEBAR DÙNG CHUNG -->
+        <aside class="admin-sidebar">
+
+            <a href="@Url.Action("StudentDashboard", "Home")"
+               class="admin-brand">
+
+                <span class="admin-brand-mark">
+                    <i class="bi bi-book-half"></i>
+                </span>
+
+                <span>
+                    ELC MANAGEMENT
+                    <small>STUDENT PORTAL</small>
+                </span>
+
+            </a>
+
+            <div class="admin-sidebar-caption">
+                KHÔNG GIAN HỌC TẬP
+            </div>
+
+            <nav class="admin-navigation">
+
+                <a href="@Url.Action("StudentDashboard", "Home")"
+                   class="admin-nav-link @(isDashboard ? "is-active" : "")">
+
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    Dashboard
+                </a>
+
+                <a href="@Url.Action("StudentTimetable", "ClassSessions")"
+                   class="admin-nav-link @(isTimetable ? "is-active" : "")">
+
+                    <i class="bi bi-calendar3-week-fill"></i>
+                    Thời khóa biểu
+                </a>
+
+                <a href="@Url.Action("StudentEnroll", "Enrollments")"
+                   class="admin-nav-link @(isEnrollment ? "is-active" : "")">
+
+                    <i class="bi bi-journal-plus"></i>
+                    Đăng ký lớp học
+                </a>
+
+                <a href="@Url.Action("StudentProgress", "Attendances")"
+                   class="admin-nav-link @(isProgress ? "is-active" : "")">
+
+                    <i class="bi bi-graph-up-arrow"></i>
+                    Tiến độ học tập
+                </a>
+
+                <a href="@Url.Action("StudentLearningResources", "Assignments")"
+                   class="admin-nav-link @(isResources ? "is-active" : "")">
+
+                    <i class="bi bi-journal-bookmark-fill"></i>
+                    Bài tập &amp; Tài liệu
+                </a>
+
+                <a href="@Url.Action("StudentPayments", "Payments")"
+                   class="admin-nav-link @(isPayments ? "is-active" : "")">
+
+                    <i class="bi bi-wallet2"></i>
+                    Học phí &amp; Hóa đơn
+                </a>
+
+                <a href="@Url.Action("StudentProfile", "Profiles")"
+                   class="admin-nav-link @(isProfile ? "is-active" : "")">
+
+                    <i class="bi bi-person-vcard-fill"></i>
+                    Hồ sơ cá nhân
+                </a>
+
+            </nav>
+
+            <div class="admin-sidebar-bottom">
+
+                <div class="admin-sidebar-user">
+                    <span class="admin-avatar">@studentInitial</span>
+
+                    <div>
+                        <strong>@studentName</strong>
+                        <small>Học viên</small>
+                    </div>
+                </div>
+
+                <a href="@Url.Action("Contact", "Home")"
+                   class="admin-logout-link"
+                   style="color:#667085;">
+
+                    <i class="bi bi-headset"></i>
+                    Liên hệ hỗ trợ
+                </a>
+
+                <a href="@Url.Action("Logout", "Auth")"
+                   class="admin-logout-link">
+
+                    <i class="bi bi-box-arrow-right"></i>
+                    Đăng xuất
+                </a>
+
+            </div>
+
+        </aside>
+
+        <!-- MAIN -->
+        <div class="admin-main">
+
+            <header class="admin-topbar">
+
+                <div>
+                    <span>ENGLISH LANGUAGE CENTER</span>
+                    <strong>@(ViewBag.Title ?? "Cổng học viên")</strong>
+                </div>
+
+                <div class="admin-role-label">
+                    <i class="bi bi-person-circle"></i>
+                    Học viên
+                </div>
+
+            </header>
+
+            <main class="admin-content">
+
+                <div class="role-content-student page-@currentController-@currentAction">
+
+                    @RenderBody()
+
+                </div>
+
+            </main>
+
+            <footer class="admin-footer">
+                © @DateTime.Now.Year English Center
+                · Hệ thống quản lý trung tâm Anh ngữ
+            </footer>
+
+        </div>
+
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+
+    <script>
+                (function () {
+                    "use strict";
+
+                    var iconMap = {
+                        "glyphicon-adjust": "bi-circle-half",
+                        "glyphicon-alert": "bi-exclamation-triangle-fill",
+                        "glyphicon-arrow-down": "bi-arrow-down",
+                        "glyphicon-arrow-left": "bi-arrow-left",
+                        "glyphicon-arrow-right": "bi-arrow-right",
+                        "glyphicon-arrow-up": "bi-arrow-up",
+                        "glyphicon-book": "bi-book-half",
+                        "glyphicon-calendar": "bi-calendar3",
+                        "glyphicon-check": "bi-check2-square",
+                        "glyphicon-chevron-down": "bi-chevron-down",
+                        "glyphicon-chevron-left": "bi-chevron-left",
+                        "glyphicon-chevron-right": "bi-chevron-right",
+                        "glyphicon-chevron-up": "bi-chevron-up",
+                        "glyphicon-cloud-download": "bi-cloud-download",
+                        "glyphicon-cloud-upload": "bi-cloud-upload",
+                        "glyphicon-credit-card": "bi-credit-card-fill",
+                        "glyphicon-dashboard": "bi-speedometer2",
+                        "glyphicon-download": "bi-download",
+                        "glyphicon-download-alt": "bi-download",
+                        "glyphicon-edit": "bi-pencil-square",
+                        "glyphicon-education": "bi-mortarboard-fill",
+                        "glyphicon-envelope": "bi-envelope-fill",
+                        "glyphicon-exclamation-sign": "bi-exclamation-circle-fill",
+                        "glyphicon-eye-close": "bi-eye-slash-fill",
+                        "glyphicon-eye-open": "bi-eye-fill",
+                        "glyphicon-file": "bi-file-earmark",
+                        "glyphicon-filter": "bi-funnel-fill",
+                        "glyphicon-floppy-disk": "bi-floppy",
+                        "glyphicon-folder-close": "bi-folder",
+                        "glyphicon-folder-open": "bi-folder2-open",
+                        "glyphicon-home": "bi-house-fill",
+                        "glyphicon-inbox": "bi-inbox-fill",
+                        "glyphicon-info-sign": "bi-info-circle-fill",
+                        "glyphicon-list": "bi-list-ul",
+                        "glyphicon-list-alt": "bi-card-list",
+                        "glyphicon-lock": "bi-lock-fill",
+                        "glyphicon-log-in": "bi-box-arrow-in-right",
+                        "glyphicon-log-out": "bi-box-arrow-right",
+                        "glyphicon-map-marker": "bi-geo-alt-fill",
+                        "glyphicon-minus": "bi-dash-lg",
+                        "glyphicon-ok": "bi-check-lg",
+                        "glyphicon-ok-circle": "bi-check-circle",
+                        "glyphicon-ok-sign": "bi-check-circle-fill",
+                        "glyphicon-open": "bi-box-arrow-up-right",
+                        "glyphicon-pencil": "bi-pencil-fill",
+                        "glyphicon-plus": "bi-plus-lg",
+                        "glyphicon-plus-sign": "bi-plus-circle-fill",
+                        "glyphicon-print": "bi-printer-fill",
+                        "glyphicon-refresh": "bi-arrow-clockwise",
+                        "glyphicon-remove": "bi-x-lg",
+                        "glyphicon-remove-circle": "bi-x-circle",
+                        "glyphicon-remove-sign": "bi-x-octagon-fill",
+                        "glyphicon-search": "bi-search",
+                        "glyphicon-stats": "bi-bar-chart-line-fill",
+                        "glyphicon-tasks": "bi-list-check",
+                        "glyphicon-time": "bi-clock-fill",
+                        "glyphicon-trash": "bi-trash3-fill",
+                        "glyphicon-upload": "bi-upload",
+                        "glyphicon-user": "bi-person-fill",
+                        "glyphicon-usd": "bi-currency-dollar",
+                        "glyphicon-warning-sign": "bi-exclamation-triangle-fill"
+                    };
+
+                    document.querySelectorAll(".role-content-student .glyphicon").forEach(function (element) {
+                        var oldClass = Array.prototype.slice.call(element.classList).find(function (name) {
+                            return name.indexOf("glyphicon-") === 0;
+                        });
+
+                        if (!oldClass) {
+                            return;
+                        }
+
+                        var replacement = iconMap[oldClass] || "bi-question-circle";
+
+                        var keepClasses = Array.prototype.slice.call(element.classList).filter(function (name) {
+                            return name !== "glyphicon" && name.indexOf("glyphicon-") !== 0;
+                        });
+
+                        element.className = ["bi", replacement].concat(keepClasses).join(" ");
+                        element.setAttribute("aria-hidden", "true");
+                    });
+
+                    var symbols = {
+                        "⌂": "bi-house-door-fill",
+                        "▦": "bi-grid-1x2-fill",
+                        "＋": "bi-plus-lg",
+                        "▤": "bi-book-half",
+                        "▣": "bi-collection-fill",
+                        "₫": "bi-cash-coin",
+                        "◎": "bi-person-vcard-fill",
+                        "◷": "bi-clock-history",
+                        "♧": "bi-bell-fill",
+                        "♙": "bi-person-fill",
+                        "♟": "bi-person-fill",
+                        "✓": "bi-check-circle-fill",
+                        "↑": "bi-cloud-upload-fill",
+                        "⌕": "bi-search",
+                        "✎": "bi-pencil-square",
+                        "📅": "bi-calendar3",
+                        "📚": "bi-journal-bookmark-fill",
+                        "📄": "bi-file-earmark-text-fill",
+                        "🎓": "bi-mortarboard-fill",
+                        "💳": "bi-credit-card-fill",
+                        "👤": "bi-person-fill",
+                        "✉": "bi-envelope-fill",
+                        "?": "bi-question-circle-fill"
+                    };
+
+                    var iconSelector = [
+                        ".student-nav-icon",
+                        ".student-stat-icon",
+                        ".student-panel-heading-icon",
+                        ".student-notification-icon",
+                        ".student-empty-icon",
+                        ".student-support-icon"
+                    ].map(function (selector) {
+                        return ".role-content-student " + selector;
+                    }).join(", ");
+
+                    document.querySelectorAll(iconSelector).forEach(function (container) {
+                        if (container.children.length > 0) {
+                            return;
+                        }
+
+                        var symbol = (container.textContent || "").trim();
+                        var iconName = symbols[symbol];
+
+                        if (!iconName) {
+                            return;
+                        }
+
+                        var icon = document.createElement("i");
+                        icon.className = "bi " + iconName;
+                        icon.setAttribute("aria-hidden", "true");
+
+                        container.textContent = "";
+                        container.appendChild(icon);
+                    });
+                })();
+    </script>
+
+    @if (IsSectionDefined("Scripts"))
+    {
+        @RenderSection("Scripts", required: false)
+    }
+    else if (IsSectionDefined("scripts"))
+    {
+        @RenderSection("scripts", required: false)
+    }
+
+</body>
+</html>

@@ -1,0 +1,596 @@
+﻿
+@model English_language_center_management_system.Models.Payment
+
+@using System
+
+@{
+    ViewBag.Title = "Biên lai thu học phí";
+    Layout = null;
+
+    var studentName = Model.Enrollment != null &&
+                      Model.Enrollment.Student != null
+        ? (String.IsNullOrWhiteSpace(Model.Enrollment.Student.FullName)
+            ? Model.Enrollment.Student.Username
+            : Model.Enrollment.Student.FullName)
+        : "Chưa có thông tin học viên";
+
+    var username = Model.Enrollment != null &&
+                   Model.Enrollment.Student != null
+        ? Model.Enrollment.Student.Username
+        : "Chưa xác định";
+
+    var email = Model.Enrollment != null &&
+                Model.Enrollment.Student != null
+        ? Model.Enrollment.Student.Email
+        : "Chưa cập nhật";
+
+    var className = Model.Enrollment != null &&
+                    Model.Enrollment.Class != null
+        ? Model.Enrollment.Class.ClassName
+        : "Chưa xác định";
+
+    var courseName = Model.Enrollment != null &&
+                     Model.Enrollment.Class != null &&
+                     Model.Enrollment.Class.Course != null
+        ? Model.Enrollment.Class.Course.CourseName
+        : "Chưa xác định";
+
+    var tuitionFee = Model.Enrollment != null &&
+                     Model.Enrollment.Class != null &&
+                     Model.Enrollment.Class.Course != null
+        ? Model.Enrollment.Class.Course.TuitionFee
+        : 0;
+
+    var methodText = Model.PaymentMethod;
+
+    switch (Model.PaymentMethod)
+    {
+        case "Cash":
+            methodText = "Tiền mặt";
+            break;
+        case "Bank Transfer":
+            methodText = "Chuyển khoản";
+            break;
+        case "Credit Card":
+            methodText = "Thẻ tín dụng";
+            break;
+        default:
+            methodText = String.IsNullOrWhiteSpace(Model.PaymentMethod)
+                ? "Chưa xác định"
+                : Model.PaymentMethod;
+            break;
+    }
+
+    var statusText = "Chưa xác định";
+
+    switch (Model.PaymentStatus)
+    {
+        case "Paid":
+            statusText = "Đã thanh toán";
+            break;
+        case "Completed":
+            statusText = "Hoàn tất";
+            break;
+        case "Partial":
+            statusText = "Thanh toán một phần";
+            break;
+        case "Pending":
+            statusText = "Chờ thanh toán";
+            break;
+        default:
+            statusText = String.IsNullOrWhiteSpace(Model.PaymentStatus)
+                ? "Chưa xác định"
+                : Model.PaymentStatus;
+            break;
+    }
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Biên lai - @Model.ReceiptNumber</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 28px;
+            background: #f2f4f7;
+            color: #263244;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .receipt-toolbar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 0 auto 24px;
+        }
+
+            .receipt-toolbar a,
+            .receipt-toolbar button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                min-height: 42px;
+                padding: 10px 17px;
+                border: 1px solid #d5dbe5;
+                border-radius: 8px;
+                background: #fff;
+                color: #344054;
+                font-family: inherit;
+                font-size: 13px;
+                font-weight: 700;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+            .receipt-toolbar .receipt-print-btn {
+                border-color: #c62828;
+                background: #c62828;
+                color: #fff;
+            }
+
+                .receipt-toolbar .receipt-print-btn:hover {
+                    background: #a91f1f;
+                }
+
+        .receipt-paper {
+            width: 100%;
+            max-width: 800px;
+            min-height: 970px;
+            margin: 0 auto;
+            padding: 52px 55px;
+            border: 1px solid #e1e5eb;
+            background: #fff;
+            box-shadow: 0 8px 30px rgba(30, 41, 59, 0.08);
+        }
+
+        .receipt-top-line {
+            height: 5px;
+            margin-bottom: 31px;
+            border-radius: 4px;
+            background: #c62828;
+        }
+
+        .receipt-brand {
+            text-align: center;
+        }
+
+            .receipt-brand h1 {
+                margin: 0 0 7px;
+                color: #263244;
+                font-size: 23px;
+                font-weight: 800;
+                letter-spacing: 1px;
+            }
+
+            .receipt-brand p {
+                margin: 0;
+                color: #7b8798;
+                font-size: 12px;
+            }
+
+        .receipt-title {
+            margin: 34px 0 10px;
+            color: #c62828;
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .receipt-subtitle {
+            margin-bottom: 29px;
+            color: #7b8798;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .receipt-number-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            padding: 16px 18px;
+            border: 1px solid #e7eaf0;
+            border-radius: 9px;
+            background: #fafbfc;
+        }
+
+        .receipt-number-label {
+            color: #778295;
+            font-size: 12px;
+        }
+
+        .receipt-number-value {
+            margin-top: 4px;
+            color: #263244;
+            font-size: 17px;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        .receipt-number-date {
+            flex-shrink: 0;
+            text-align: right;
+        }
+
+            .receipt-number-date span {
+                display: block;
+                color: #778295;
+                font-size: 11px;
+            }
+
+            .receipt-number-date strong {
+                display: block;
+                margin-top: 4px;
+                color: #344054;
+                font-size: 12px;
+            }
+
+        .receipt-section {
+            margin-top: 29px;
+        }
+
+        .receipt-section-title {
+            margin: 0 0 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e6eaf0;
+            color: #263244;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .receipt-info-row {
+            display: grid;
+            grid-template-columns: 170px minmax(0, 1fr);
+            gap: 20px;
+            padding: 10px 0;
+            border-bottom: 1px dashed #e6eaf0;
+        }
+
+            .receipt-info-row:last-child {
+                border-bottom: none;
+            }
+
+            .receipt-info-row span {
+                color: #788498;
+                font-size: 12px;
+            }
+
+            .receipt-info-row strong {
+                color: #344054;
+                font-size: 13px;
+                text-align: right;
+                overflow-wrap: anywhere;
+            }
+
+        .receipt-amount-box {
+            margin-top: 30px;
+            padding: 22px;
+            border: 1px solid #dce7df;
+            border-radius: 10px;
+            background: #f6fbf7;
+            text-align: center;
+        }
+
+        .receipt-amount-label {
+            color: #728579;
+            font-size: 12px;
+        }
+
+        .receipt-amount-value {
+            margin-top: 8px;
+            color: #168044;
+            font-size: 29px;
+            font-weight: 800;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+        }
+
+        .receipt-amount-status {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 11px;
+            border-radius: 20px;
+            background: #e1f3e7;
+            color: #168044;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .receipt-note {
+            margin-top: 26px;
+            color: #778295;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        .receipt-signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 55px;
+            text-align: center;
+        }
+
+        .receipt-signature strong {
+            display: block;
+            color: #344054;
+            font-size: 12px;
+        }
+
+        .receipt-signature span {
+            display: block;
+            margin-top: 5px;
+            color: #929bab;
+            font-size: 10px;
+        }
+
+        .receipt-signature-space {
+            height: 75px;
+        }
+
+        .receipt-footer {
+            margin-top: 38px;
+            padding-top: 16px;
+            border-top: 1px solid #e7eaf0;
+            color: #8994a4;
+            font-size: 10px;
+            text-align: center;
+        }
+
+        @@media (max-width: 700px) {
+            body {
+                padding: 12px;
+            }
+
+            .receipt-paper {
+                min-height: auto;
+                padding: 28px 20px;
+            }
+
+            .receipt-brand h1 {
+                font-size: 19px;
+            }
+
+            .receipt-title {
+                font-size: 21px;
+            }
+
+            .receipt-number-box {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .receipt-number-date {
+                text-align: left;
+            }
+
+            .receipt-info-row {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
+
+                .receipt-info-row strong {
+                    text-align: left;
+                }
+
+            .receipt-signatures {
+                gap: 15px;
+            }
+        }
+
+        @@media print {
+            @@page {
+                size: A4;
+                margin: 15mm;
+            }
+
+            body {
+                padding: 0;
+                background: #fff;
+                color: #000;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .receipt-toolbar {
+                display: none !important;
+            }
+
+            .receipt-paper {
+                width: 100%;
+                max-width: none;
+                min-height: auto;
+                margin: 0;
+                padding: 10px 5px;
+                border: none;
+                box-shadow: none;
+            }
+
+            .receipt-section,
+            .receipt-amount-box,
+            .receipt-signatures {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="receipt-toolbar">
+        <a href="@Url.Action("Details", "Payments", new { id = Model.Id })">
+            ← Quay lại chi tiết
+        </a>
+
+        <button type="button"
+                class="receipt-print-btn"
+                onclick="window.print();">
+            In biên lai
+        </button>
+    </div>
+
+    <main class="receipt-paper">
+
+        <div class="receipt-top-line"></div>
+
+        <header class="receipt-brand">
+            <h1>ENGLISH LANGUAGE CENTER</h1>
+            <p>TRUNG TÂM ANH NGỮ</p>
+            <p>PHIẾU THU HỌC PHÍ</p>
+        </header>
+
+        <h2 class="receipt-title">Biên lai thanh toán</h2>
+
+        <div class="receipt-subtitle">
+            PAYMENT RECEIPT
+        </div>
+
+        <div class="receipt-number-box">
+            <div>
+                <div class="receipt-number-label">Mã biên lai</div>
+                <div class="receipt-number-value">
+                    @Model.ReceiptNumber
+                </div>
+            </div>
+
+            <div class="receipt-number-date">
+                <span>Ngày thanh toán</span>
+                <strong>
+                    @(Model.PaymentDate.HasValue ? Model.PaymentDate.Value.ToString("dd/MM/yyyy HH:mm") : "Chưa cập nhật")
+                </strong>
+            </div>
+        </div>
+
+        <section class="receipt-section">
+            <h3 class="receipt-section-title">
+                THÔNG TIN NGƯỜI NỘP
+            </h3>
+
+            <div class="receipt-info-row">
+                <span>Họ và tên học viên</span>
+                <strong>@studentName</strong>
+            </div>
+
+            <div class="receipt-info-row">
+                <span>Tài khoản</span>
+                <strong>@username</strong>
+            </div>
+
+            <div class="receipt-info-row">
+                <span>Email</span>
+                <strong>@email</strong>
+            </div>
+        </section>
+
+        <section class="receipt-section">
+            <h3 class="receipt-section-title">
+                THÔNG TIN KHÓA HỌC
+            </h3>
+
+            <div class="receipt-info-row">
+                <span>Khóa học</span>
+                <strong>@courseName</strong>
+            </div>
+
+            <div class="receipt-info-row">
+                <span>Lớp học</span>
+                <strong>@className</strong>
+            </div>
+
+            <div class="receipt-info-row">
+                <span>Mã ghi danh</span>
+                <strong>
+                    @(Model.Enrollment != null
+                        ? "#" + Model.Enrollment.Id
+                        : "Chưa xác định")
+                </strong>
+            </div>
+
+            <div class="receipt-info-row">
+                <span>Học phí khóa học</span>
+                <strong>@tuitionFee.ToString("N0") VNĐ</strong>
+            </div>
+        </section>
+
+        <section class="receipt-section">
+            <h3 class="receipt-section-title">
+                CHI TIẾT THANH TOÁN
+            </h3>
+
+            <div class="receipt-info-row">
+                <span>Mã giao dịch</span>
+                <strong>#@Model.Id</strong>
+            </div>
+
+            <div class="receipt-info-row">
+                <span>Phương thức thanh toán</span>
+                <strong>@methodText</strong>
+            </div>
+
+            <div class="receipt-info-row">
+                <span>Trạng thái giao dịch</span>
+                <strong>@statusText</strong>
+            </div>
+        </section>
+
+        <div class="receipt-amount-box">
+            <div class="receipt-amount-label">
+                SỐ TIỀN GIAO DỊCH
+            </div>
+
+            <div class="receipt-amount-value">
+                @Model.AmountPaid.ToString("N0") VNĐ
+            </div>
+
+            <div class="receipt-amount-status">
+                @statusText
+            </div>
+        </div>
+
+        <div class="receipt-note">
+            <strong>Lưu ý:</strong>
+            Biên lai này thể hiện số tiền và trạng thái được lưu trong hệ thống.
+            Với giao dịch đang chờ thanh toán hoặc thanh toán một phần,
+            vui lòng đối chiếu trạng thái thực tế trước khi xác nhận đã thu đủ học phí.
+        </div>
+
+        <div class="receipt-signatures">
+
+            <div class="receipt-signature">
+                <strong>NGƯỜI NỘP TIỀN</strong>
+                <span>(Ký và ghi rõ họ tên)</span>
+                <div class="receipt-signature-space"></div>
+            </div>
+
+            <div class="receipt-signature">
+                <strong>NGƯỜI THU TIỀN</strong>
+                <span>(Ký và ghi rõ họ tên)</span>
+                <div class="receipt-signature-space"></div>
+            </div>
+
+        </div>
+
+        <footer class="receipt-footer">
+            Biên lai được tạo từ hệ thống quản lý trung tâm Anh ngữ.
+            Mã biên lai: @Model.ReceiptNumber
+        </footer>
+
+    </main>
+
+</body>
+</html>

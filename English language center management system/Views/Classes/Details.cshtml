@@ -1,0 +1,343 @@
+﻿@model English_language_center_management_system.Models.Class
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using English_language_center_management_system.Models
+
+@{
+    ViewBag.Title = "Chi tiết lớp học";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var enrollments = ViewBag.Enrollments as IEnumerable<Enrollment> ?? Enumerable.Empty<Enrollment>();
+    var enrolledCount = enrollments.Count(e => e.Status == "Active" || e.Status == "Approved" || e.Status == "Studying");
+    var pendingCount = enrollments.Count(e => e.Status == "Pending");
+    var availableSeats = Math.Max(Model.MaxCapacity - enrolledCount, 0);
+    var capacityPercent = Model.MaxCapacity > 0 ? Math.Min(100, enrolledCount * 100.0 / Model.MaxCapacity) : 0;
+
+    var statusText = "Không xác định";
+    var statusClass = "status-default";
+    switch (Model.Status)
+    {
+        case "Mở đăng ký":
+        case "Open":
+            statusText = "Mở đăng ký";
+            statusClass = "status-open";
+            break;
+        case "Đã đủ sĩ số":
+        case "Full":
+            statusText = "Đã đủ sĩ số";
+            statusClass = "status-full";
+            break;
+        case "Đang học":
+        case "Studying":
+            statusText = "Đang học";
+            statusClass = "status-studying";
+            break;
+        case "Đã hoàn thành":
+        case "Completed":
+            statusText = "Đã hoàn thành";
+            statusClass = "status-completed";
+            break;
+        case "Đã đóng":
+        case "Closed":
+            statusText = "Đã đóng";
+            statusClass = "status-closed";
+            break;
+    }
+
+    Func<string, string> enrollmentStatusLabel = status =>
+    {
+        switch (status)
+        {
+            case "Pending": return "Chờ duyệt";
+            case "Confirmed": return "Đã xác nhận";
+            case "Active": return "Đang hoạt động";
+            case "Approved": return "Đã duyệt";
+            case "Studying": return "Đang học";
+            case "Completed": return "Hoàn thành";
+            case "Withdrawn": return "Đã rút";
+            default: return String.IsNullOrWhiteSpace(status) ? "Chưa xác định" : status;
+        }
+    };
+}
+
+<div class="admin-class-details-page">
+    <div class="admin-class-details-heading">
+        <div>
+            <div class="admin-class-details-eyebrow">QUẢN LÝ ĐÀO TẠO</div>
+            <h2>Chi tiết lớp học</h2>
+            <p>Xem thông tin lớp, giáo viên phụ trách và danh sách học viên.</p>
+        </div>
+        <a href="@Url.Action("Index", "Classes")" class="admin-class-details-back">
+            <i class="glyphicon glyphicon-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="admin-class-details-alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="admin-class-details-alert alert-error">@TempData["ErrorMessage"]</div>
+    }
+
+    <!-- Thông tin tổng quan -->
+    <div class="admin-class-details-hero">
+        <div class="admin-class-details-hero-icon">
+            <i class="glyphicon glyphicon-education"></i>
+        </div>
+        <div class="admin-class-details-hero-content">
+            <div class="admin-class-details-code">MÃ LỚP #@Model.Id</div>
+            <h3>@Model.ClassName</h3>
+            <div class="admin-class-details-hero-meta">
+                <span>
+                    <i class="glyphicon glyphicon-book"></i>
+                    @(Model.Course != null ? Model.Course.CourseName : "Chưa có khóa học")
+                </span>
+                <span>
+                    <i class="glyphicon glyphicon-map-marker"></i>
+                    @(Model.Room != null && !String.IsNullOrWhiteSpace(Model.Room.RoomName) ? Model.Room.RoomName : "Chưa xếp phòng")
+                </span>
+            </div>
+        </div>
+        <div class="admin-class-details-hero-status">
+            <span class="admin-class-details-status @statusClass">@statusText</span>
+        </div>
+    </div>
+
+    <!-- Thống kê sĩ số -->
+    <div class="admin-class-details-stats">
+        <div class="admin-class-details-stat">
+            <div class="admin-class-details-stat-icon stat-students">
+                <i class="glyphicon glyphicon-user"></i>
+            </div>
+            <div>
+                <div class="admin-class-details-stat-label">Học viên đang học</div>
+                <div class="admin-class-details-stat-value">@enrolledCount <small>/ @Model.MaxCapacity</small></div>
+            </div>
+        </div>
+        <div class="admin-class-details-stat">
+            <div class="admin-class-details-stat-icon stat-seats">
+                <i class="glyphicon glyphicon-ok-circle"></i>
+            </div>
+            <div>
+                <div class="admin-class-details-stat-label">Chỗ còn trống</div>
+                <div class="admin-class-details-stat-value">@availableSeats</div>
+            </div>
+        </div>
+        <div class="admin-class-details-stat">
+            <div class="admin-class-details-stat-icon stat-pending">
+                <i class="glyphicon glyphicon-time"></i>
+            </div>
+            <div>
+                <div class="admin-class-details-stat-label">Chờ duyệt</div>
+                <div class="admin-class-details-stat-value">@pendingCount</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thanh tiến độ sĩ số -->
+    <div class="admin-class-details-card admin-class-details-capacity-card">
+        <div class="admin-class-details-card-heading">
+            <div>
+                <h3>Tình trạng sĩ số</h3>
+                <p>Theo số học viên có trạng thái ghi danh đang hoạt động.</p>
+            </div>
+            <strong>@capacityPercent.ToString("0")%</strong>
+        </div>
+        <div class="admin-class-details-progress">
+            <div class="admin-class-details-progress-bar" style="width: @(capacityPercent.ToString("0"))%;"></div>
+        </div>
+        <div class="admin-class-details-progress-caption">
+            <span>@enrolledCount học viên đã ghi danh</span>
+            <span>Sức chứa tối đa: @Model.MaxCapacity</span>
+        </div>
+    </div>
+
+    <!-- Thông tin khóa học và giáo viên -->
+    <div class="admin-class-details-columns">
+        <div class="admin-class-details-card">
+            <div class="admin-class-details-card-heading">
+                <div class="admin-class-details-section-icon"><i class="glyphicon glyphicon-book"></i></div>
+                <div>
+                    <h3>Thông tin khóa học</h3>
+                    <p>Thông tin chương trình đào tạo của lớp.</p>
+                </div>
+            </div>
+            @if (Model.Course != null)
+            {
+                <div class="admin-class-details-info-list">
+                    <div class="admin-class-details-info-row">
+                        <span>Tên khóa học</span>
+                        <strong>@Model.Course.CourseName</strong>
+                    </div>
+                    <div class="admin-class-details-info-row">
+                        <span>Trình độ</span>
+                        <strong>@Model.Course.Level</strong>
+                    </div>
+                    <div class="admin-class-details-info-row">
+                        <span>Thời lượng</span>
+                        <strong>@Model.Course.Duration giờ (@Model.Course.TotalWeeks tuần)</strong>
+                    </div>
+                    <div class="admin-class-details-info-row">
+                        <span>Học phí</span>
+                        <strong>@String.Format("{0:N0} đ", Model.Course.TuitionFee)</strong>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="admin-class-details-empty">Chưa có thông tin khóa học.</div>
+            }
+        </div>
+
+        <div class="admin-class-details-card">
+            <div class="admin-class-details-card-heading">
+                <div class="admin-class-details-section-icon teacher-icon"><i class="glyphicon glyphicon-user"></i></div>
+                <div>
+                    <h3>Giáo viên phụ trách</h3>
+                    <p>Thông tin người phụ trách lớp học.</p>
+                </div>
+            </div>
+            @if (Model.Teacher != null)
+            {
+                <div class="admin-class-details-teacher">
+                    <div class="admin-class-details-avatar">
+                        @(!String.IsNullOrWhiteSpace(Model.Teacher.FullName) ? Model.Teacher.FullName.Substring(0, 1).ToUpper() : "G")
+                    </div>
+                    <div class="admin-class-details-teacher-name">
+                        <strong>@(String.IsNullOrWhiteSpace(Model.Teacher.FullName) ? Model.Teacher.Username : Model.Teacher.FullName)</strong>
+                        <span>Giáo viên</span>
+                    </div>
+                </div>
+                <div class="admin-class-details-info-list">
+                    <div class="admin-class-details-info-row">
+                        <span>Tài khoản</span>
+                        <strong>@Model.Teacher.Username</strong>
+                    </div>
+                    <div class="admin-class-details-info-row">
+                        <span>Email</span>
+                        <strong class="admin-class-details-email">@Model.Teacher.Email</strong>
+                    </div>
+                    <div class="admin-class-details-info-row">
+                        <span>Số điện thoại</span>
+                        <strong>@(String.IsNullOrWhiteSpace(Model.Teacher.Phone) ? "Chưa cập nhật" : Model.Teacher.Phone)</strong>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="admin-class-details-unassigned">
+                    <i class="glyphicon glyphicon-info-sign"></i>
+                    <div>
+                        <strong>Chưa phân công giáo viên</strong>
+                        <p>Hãy chỉnh sửa lớp để phân công giáo viên phụ trách.</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Lịch học & Khung thời gian chi tiết -->
+    <div class="admin-class-details-card admin-class-details-schedule">
+        <div class="admin-class-details-card-heading">
+            <div class="admin-class-details-section-icon schedule-icon"><i class="glyphicon glyphicon-calendar"></i></div>
+            <div>
+                <h3>Lịch học & Khung thời gian</h3>
+                <p>Thời gian học, ngày mở đăng ký và lịch diễn ra bài giảng.</p>
+            </div>
+        </div>
+        <div class="admin-class-details-info-list" style="margin-top: 15px;">
+            <div class="admin-class-details-info-row">
+                <span>Thứ học & Giờ học:</span>
+                <strong>
+                    @(Model.DailyStartTime.HasValue && Model.DailyEndTime.HasValue
+                        ? $"Thứ {Model.ScheduleDays} ({Model.DailyStartTime.Value:hh\\:mm} - {Model.DailyEndTime.Value:hh\\:mm})"
+                        : (Model.ScheduleDescription ?? "Chưa cập nhật"))
+                </strong>
+            </div>
+            <div class="admin-class-details-info-row">
+                <span>Ngày bắt đầu - kết thúc học:</span>
+                <strong>
+                    @(Model.StartDate.HasValue ? Model.StartDate.Value.ToString("dd/MM/yyyy") : "—")
+                    đến
+                    @(Model.EndDate.HasValue ? Model.EndDate.Value.ToString("dd/MM/yyyy") : "—")
+                </strong>
+            </div>
+            <div class="admin-class-details-info-row">
+                <span>Thời gian mở đăng ký:</span>
+                <strong>
+                    @(Model.RegistrationStartDate.HasValue ? Model.RegistrationStartDate.Value.ToString("dd/MM/yyyy") : "—")
+                    đến
+                    @(Model.RegistrationEndDate.HasValue ? Model.RegistrationEndDate.Value.ToString("dd/MM/yyyy") : "—")
+                </strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách học viên -->
+    <div class="admin-class-details-card admin-class-details-enrollments">
+        <div class="admin-class-details-card-heading">
+            <div>
+                <h3>Danh sách học viên</h3>
+                <p>Có @enrollments.Count() lượt ghi danh trong lớp này.</p>
+            </div>
+        </div>
+        @if (enrollments.Any())
+        {
+            <div class="admin-class-details-table-wrap">
+                <table class="admin-class-details-table">
+                    <thead>
+                        <tr>
+                            <th>Học viên</th>
+                            <th>Email</th>
+                            <th>Ngày ghi danh</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in enrollments.OrderByDescending(e => e.EnrollmentDate))
+                        {
+                            <tr>
+                                <td>
+                                    <div class="admin-class-details-student">
+                                        <div class="admin-class-details-student-avatar">
+                                            @(!String.IsNullOrWhiteSpace(item.Student?.FullName) ? item.Student.FullName.Substring(0, 1).ToUpper() : "H")
+                                        </div>
+                                        <div>
+                                            <strong>@(item.Student != null ? item.Student.FullName : "Học viên #" + item.StudentId)</strong>
+                                            <small>Mã học viên: @item.StudentId</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@(item.Student != null ? item.Student.Email : "—")</td>
+                                <td>@item.EnrollmentDate.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <span class="admin-class-details-enrollment-status">@enrollmentStatusLabel(item.Status)</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="admin-class-details-empty admin-class-details-empty-large">
+                <i class="glyphicon glyphicon-user"></i>
+                <strong>Chưa có học viên ghi danh</strong>
+                <span>Danh sách học viên sẽ xuất hiện tại đây sau khi có đăng ký.</span>
+            </div>
+        }
+    </div>
+
+    <!-- Nút thao tác -->
+    <div class="admin-class-details-actions">
+        <a href="@Url.Action("Index", "Classes")" class="admin-class-details-action secondary-action">
+            <i class="glyphicon glyphicon-arrow-left"></i> Quay lại danh sách
+        </a>
+        <a href="@Url.Action("Edit", "Classes", new { id = Model.Id })" class="admin-class-details-action primary-action">
+            <i class="glyphicon glyphicon-edit"></i> Chỉnh sửa lớp học
+        </a>
+    </div>
+</div>

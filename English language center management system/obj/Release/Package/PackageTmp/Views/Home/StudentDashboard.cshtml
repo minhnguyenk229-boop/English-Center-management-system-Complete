@@ -1,0 +1,642 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Home.StudentDashboardViewModel
+
+@using System.Collections.Generic
+@using System.Linq
+@using English_language_center_management_system.Models
+
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewBag.Title = "Dashboard học viên";
+
+    var studentName =
+        Model.StudentInfo != null &&
+        !string.IsNullOrWhiteSpace(Model.StudentInfo.FullName)
+        ? Model.StudentInfo.FullName
+        : "Học viên";
+
+    var studentInitial = studentName.Substring(0, 1).ToUpper();
+
+    var activeEnrollments = Model.ActiveEnrollments
+        ?? new List<Enrollment>();
+
+    var upcomingSessions = Model.UpcomingSessions
+        ?? new List<ClassSession>();
+
+    var recentNotifications = Model.RecentNotifications
+        ?? new List<Notification>();
+
+    var recentScores = Model.RecentScores
+        ?? new List<AssessmentScore>();
+
+    var nextSession = upcomingSessions.FirstOrDefault();
+
+    var unreadCount = recentNotifications.Count(n => !n.IsRead);
+}
+
+<div class="student-portal" id="student-dashboard">
+
+    @* SIDEBAR *@
+    <aside class="student-sidebar">
+
+        <a class="student-brand"
+           href="@Url.Action("StudentDashboard", "Home")">
+
+            <span class="student-brand-mark">EC</span>
+
+            <span class="student-brand-text">
+                ELC PORTAL
+                <small>STUDENT SPACE</small>
+            </span>
+
+        </a>
+
+        <div class="student-sidebar-caption">
+            KHÔNG GIAN HỌC TẬP
+        </div>
+
+        <nav class="student-side-nav">
+
+            <a href="#student-dashboard"
+               class="student-nav-link is-active">
+                <span class="student-nav-icon">⌂</span>
+                Dashboard
+            </a>
+
+            <a href="@Url.Action("StudentTimetable", "ClassSessions")"
+               class="student-nav-link">
+                <span class="student-nav-icon">▦</span>
+                Thời khóa biểu
+            </a>
+
+            <a href="@Url.Action("StudentEnroll", "Enrollments")" class="student-nav-link">
+                <span class="student-nav-icon">＋</span>
+                Đăng ký lớp học
+            </a>
+
+            <a href="@Url.Action("StudentProgress", "Attendances")"
+               class="student-nav-link">
+                <span class="student-nav-icon">▤</span>
+                Kết quả học tập
+            </a>
+
+            <a href="@Url.Action("StudentLearningResources", "Assignments")"
+               class="student-nav-link">
+                <span class="student-nav-icon">▣</span>
+                Bài tập &amp; Tài liệu
+            </a>
+
+            @* ĐÃ SỬA: MỞ TRANG HỌC PHÍ RIÊNG *@
+            <a href="@Url.Action("StudentPayments", "Payments")"
+               class="student-nav-link">
+                <span class="student-nav-icon">₫</span>
+                Học phí &amp; hóa đơn
+            </a>
+
+            <a href="@Url.Action("StudentProfile", "Profiles")"
+               class="student-nav-link">
+                <span class="student-nav-icon">◎</span>
+                Hồ sơ cá nhân
+            </a>
+
+        </nav>
+
+        <div class="student-sidebar-bottom">
+
+            <div class="student-support-card">
+                <span class="student-support-icon">?</span>
+
+                <strong>Cần hỗ trợ?</strong>
+
+                <p>
+                    Liên hệ trung tâm khi bạn cần giải đáp.
+                </p>
+
+                @Html.ActionLink(
+                    "Liên hệ trung tâm →",
+                    "Contact",
+                    "Home",
+                    null,
+                    new { @class = "student-support-link" }
+                )
+            </div>
+
+            @Html.ActionLink(
+                "↪ Đăng xuất",
+                "Logout",
+                "Auth",
+                null,
+                new { @class = "student-logout-link" }
+            )
+
+        </div>
+
+    </aside>
+
+    @* KHU VỰC NỘI DUNG CHÍNH *@
+    <div class="student-main">
+
+        @* TOP BAR *@
+        <header class="student-topbar">
+
+            <div class="student-topbar-title">
+                <span>CỔNG HỌC VIÊN</span>
+                <strong>Dashboard</strong>
+            </div>
+
+            <div class="student-topbar-actions">
+
+                <a href="#student-notifications"
+                   class="student-notification-button"
+                   aria-label="Xem thông báo">
+                    ♧
+                    <span>@unreadCount</span>
+                </a>
+
+                <div class="student-topbar-user">
+
+                    <span class="student-avatar-small">
+                        @studentInitial
+                    </span>
+
+                    <span class="student-topbar-user-info">
+                        <strong>@studentName</strong>
+                        <small>Học viên</small>
+                    </span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <main class="student-content">
+
+            <div class="student-breadcrumb">
+                Trang chủ <span>/</span> Cổng học viên
+            </div>
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger">
+                    @TempData["ErrorMessage"]
+                </div>
+            }
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success">
+                    @TempData["SuccessMessage"]
+                </div>
+            }
+
+            @* LỜI CHÀO *@
+            <section class="student-welcome">
+
+                <div class="student-avatar-large">
+                    @studentInitial
+                </div>
+
+                <div class="student-welcome-content">
+
+                    <span class="student-welcome-kicker">
+                        YOUR LEARNING JOURNEY
+                    </span>
+
+                    <h1>Xin chào, @studentName!</h1>
+
+                    <p>
+                        Chào mừng bạn quay lại. Hãy theo dõi
+                        lịch học, khóa học và kết quả học tập
+                        của mình tại đây.
+                    </p>
+
+                    <div class="student-welcome-tags">
+                        <span>Học viên English Center</span>
+                        <span>
+                            @Model.TotalCertificates chứng chỉ
+                        </span>
+                    </div>
+
+                </div>
+
+                <div class="student-welcome-action">
+                    @Html.ActionLink(
+                        "Khám phá khóa học",
+                        "Index",
+                        "Courses",
+                        null,
+                        new { @class = "btn btn-primary" }
+                    )
+                </div>
+
+            </section>
+
+            @* CÁC THẺ THỐNG KÊ *@
+            <section class="student-stat-grid">
+
+                <article class="student-stat-card">
+
+                    <div class="student-stat-top">
+                        <span class="student-stat-icon icon-red">▣</span>
+                        <span class="student-stat-label">
+                            LỚP ĐANG HỌC
+                        </span>
+                    </div>
+
+                    <strong class="student-stat-number">
+                        @Model.TotalEnrolledClasses
+                    </strong>
+
+                    <span class="student-stat-description">
+                        Lớp đã được duyệt hoặc đang học
+                    </span>
+
+                </article>
+
+                <article class="student-stat-card">
+
+                    <div class="student-stat-top">
+                        <span class="student-stat-icon icon-blue">◷</span>
+                        <span class="student-stat-label">
+                            BUỔI HỌC TIẾP THEO
+                        </span>
+                    </div>
+
+                    @if (nextSession != null)
+                    {
+                        <strong class="student-stat-number student-stat-number-small">
+                            @nextSession.SessionDate.ToString("dd/MM/yyyy")
+                        </strong>
+
+                        <span class="student-stat-description">
+                            Bắt đầu lúc
+                            @nextSession.StartTime.ToString(@"hh\:mm")
+                        </span>
+                    }
+                    else
+                    {
+                        <strong class="student-stat-number student-stat-number-small">
+                            Chưa có lịch
+                        </strong>
+
+                        <span class="student-stat-description">
+                            Lịch học sắp tới sẽ được cập nhật tại đây.
+                        </span>
+                    }
+
+                </article>
+
+                <article class="student-stat-card" id="student-tuition">
+
+                    <div class="student-stat-top">
+                        <span class="student-stat-icon icon-orange">₫</span>
+                        <span class="student-stat-label">
+                            HỌC PHÍ CÒN LẠI
+                        </span>
+                    </div>
+
+                    <strong class="student-stat-number student-stat-number-small">
+                        @Model.OutstandingBalance.ToString("N0") VNĐ
+                    </strong>
+
+                    <span class="student-stat-description">
+                        Số tiền ước tính của các lớp đã duyệt/đang học
+                    </span>
+
+                </article>
+
+            </section>
+
+            @* LƯỚI NỘI DUNG *@
+            <div class="student-dashboard-grid">
+
+                @* KHÓA HỌC ĐANG THAM GIA *@
+                <section class="student-panel student-panel-courses"
+                         id="student-courses">
+
+                    <div class="student-panel-heading">
+
+                        <div>
+                            <span class="student-panel-eyebrow">
+                                LEARNING
+                            </span>
+
+                            <h2>Khóa học của tôi</h2>
+
+                            <p>
+                                Các lớp học đã được duyệt hoặc đang học.
+                            </p>
+                        </div>
+
+                        @Html.ActionLink(
+                            "Tìm khóa học →",
+                            "Index",
+                            "Courses",
+                            null,
+                            new { @class = "student-panel-link" }
+                        )
+
+                    </div>
+
+                    @if (activeEnrollments.Any())
+                    {
+                        <div class="student-enrolled-grid">
+
+                            @foreach (var enrollment in activeEnrollments)
+                            {
+                                var course = enrollment.Class != null
+                                    ? enrollment.Class.Course
+                                    : null;
+
+                                var className = enrollment.Class != null
+                                    ? enrollment.Class.ClassName
+                                    : "Lớp học";
+
+                                var statusLabel =
+                                    enrollment.Status == "Active"
+                                    ? "Đang học"
+                                    : enrollment.Status == "Approved"
+                                        ? "Đã duyệt"
+                                        : enrollment.Status;
+
+                                <article class="student-course-card">
+
+                                    <div class="student-course-card-top">
+
+                                        <span class="student-course-level">
+                                            @(course != null
+                                                ? course.Level
+                                                : "Khóa học")
+                                        </span>
+
+                                        <span class="student-course-status">
+                                            @statusLabel
+                                        </span>
+
+                                    </div>
+
+                                    <h3>
+                                        @(course != null
+                                            ? course.CourseName
+                                            : className)
+                                    </h3>
+
+                                    <p class="student-class-name">
+                                        Lớp: @className
+                                    </p>
+
+                                    @if (enrollment.Class != null)
+                                    {
+                                        <div class="student-course-meta">
+
+                                            <span>
+                                                ▦
+                                                @(string.IsNullOrWhiteSpace(
+                                                    enrollment.Class.ScheduleDescription)
+                                                    ? "Lịch học đang cập nhật"
+                                                    : enrollment.Class.ScheduleDescription)
+                                            </span>
+
+                                            <span>
+                                                <i class="bi bi-geo-alt"></i>
+                                                @(enrollment.Class.Room != null
+                                                && !string.IsNullOrWhiteSpace(enrollment.Class.Room.RoomName)
+                                                ? enrollment.Class.Room.RoomName
+                                                : "Chưa xếp phòng")
+                                            </span>
+
+                                        </div>
+                                    }
+
+                                    @if (course != null)
+                                    {
+                                        @Html.ActionLink(
+                                            "Xem khóa học →",
+                                            "Details",
+                                            "Courses",
+                                            new { id = course.Id },
+                                            new { @class = "student-course-link" }
+                                        )
+                                    }
+
+                                </article>
+                            }
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="student-empty-state">
+
+                            <div class="student-empty-icon">▣</div>
+
+                            <h3>Bạn chưa có lớp học nào</h3>
+
+                            <p>
+                                Khám phá danh mục để tìm lớp học phù hợp
+                                với trình độ và mục tiêu của bạn.
+                            </p>
+
+                            @Html.ActionLink(
+                                "Khám phá khóa học",
+                                "Index",
+                                "Courses",
+                                null,
+                                new { @class = "btn btn-primary" }
+                            )
+
+                        </div>
+                    }
+
+                </section>
+
+                @* THÔNG BÁO *@
+                <section class="student-panel" id="student-notifications">
+
+                    <div class="student-panel-heading">
+
+                        <div>
+                            <span class="student-panel-eyebrow">
+                                UPDATES
+                            </span>
+
+                            <h2>Thông báo mới</h2>
+
+                            <p>
+                                @unreadCount thông báo chưa đọc
+                            </p>
+                        </div>
+
+                        <span class="student-panel-heading-icon">♧</span>
+
+                    </div>
+
+                    @if (recentNotifications.Any())
+                    {
+                        <div class="student-notification-list">
+
+                            @foreach (var notification in recentNotifications)
+                            {
+                                var notificationIcon =
+                                    notification.Type == "Payment_Deadline"
+                                    ? "₫"
+                                    : notification.Type == "Score_Release"
+                                        ? "✓"
+                                        : notification.Type == "Class_Schedule"
+                                            ? "◷"
+                                            : "i";
+
+                                <article class="student-notification-item">
+
+                                    <span class="student-notification-icon">
+                                        @notificationIcon
+                                    </span>
+
+                                    <div class="student-notification-content">
+
+                                        <div class="student-notification-title-row">
+
+                                            <strong>@notification.Title</strong>
+
+                                            @if (!notification.IsRead)
+                                            {
+                                                <span class="student-unread-dot"
+                                                      title="Chưa đọc"></span>
+                                            }
+
+                                        </div>
+
+                                        <p>@notification.Message</p>
+
+                                        <small>
+                                            @notification.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                        </small>
+
+                                    </div>
+
+                                </article>
+                            }
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="student-empty-state student-empty-state-compact">
+                            <div class="student-empty-icon">♧</div>
+                            <p>Hiện chưa có thông báo mới.</p>
+                        </div>
+                    }
+
+                </section>
+
+                @* THỜI KHÓA BIỂU *@
+                <section class="student-panel" id="student-schedule">
+
+                    <div class="student-panel-heading">
+
+                        <div>
+                            <span class="student-panel-eyebrow">
+                                YOUR SCHEDULE
+                            </span>
+
+                            <h2>Lịch học sắp tới</h2>
+
+                            <p>
+                                Danh sách các buổi học gần nhất.
+                            </p>
+                        </div>
+
+                        <span class="student-panel-heading-icon">◷</span>
+
+                    </div>
+
+                    @if (upcomingSessions.Any())
+                    {
+                        <div class="student-schedule-list">
+
+                            @foreach (var session in upcomingSessions)
+                            {
+                                var sessionClass = session.Class;
+
+                                var sessionCourse =
+                                    sessionClass != null
+                                    ? sessionClass.Course
+                                    : null;
+
+                                var sessionTitle =
+                                    sessionCourse != null
+                                    ? sessionCourse.CourseName
+                                    : sessionClass != null
+                                        ? sessionClass.ClassName
+                                        : "Buổi học";
+
+                                var roomName =
+            !string.IsNullOrWhiteSpace(session.Room?.RoomName)
+            ? session.Room.RoomName
+            : !string.IsNullOrWhiteSpace(sessionClass?.Room?.RoomName)
+            ? sessionClass.Room.RoomName
+            : "Chưa cập nhật";
+
+                                <article class="student-schedule-item">
+
+                                    <div class="student-schedule-date">
+                                        <strong>
+                                            @session.SessionDate.ToString("dd")
+                                        </strong>
+
+                                        <span>
+                                            Tháng @session.SessionDate.ToString("MM")
+                                        </span>
+                                    </div>
+
+                                    <div class="student-schedule-info">
+
+                                        <strong>@sessionTitle</strong>
+
+                                        <span>
+                                            @session.StartTime.ToString(@"hh\:mm")
+                                            –
+                                            @session.EndTime.ToString(@"hh\:mm")
+                                        </span>
+
+                                        <small>
+                                            Lớp:
+                                            @(sessionClass != null
+                                                ? sessionClass.ClassName
+                                                : "Chưa cập nhật")
+                                            · Phòng: @roomName
+                                        </small>
+
+                                    </div>
+
+                                    <span class="student-schedule-arrow">›</span>
+
+                                </article>
+                            }
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="student-empty-state student-empty-state-compact">
+                            <div class="student-empty-icon">◷</div>
+
+                            <p>
+                                Chưa có buổi học sắp tới trong hệ thống.
+                            </p>
+                        </div>
+                    }
+
+                </section>
+
+                @* KẾT QUẢ HỌC TẬP *@
+                <section class="student-panel" id="student-results">
+
+                    <div class="student-panel-heading">
+
+                        <div>
+                            <span class="student-panel-eyebrow">
+                                ACADEMIC RESULTS
+                            </span>
+
+                            <

@@ -1,0 +1,610 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Courses.CourseCatalogViewModel
+
+@{
+    ViewBag.Title = "Danh mục khóa học";
+
+    var levels = new[]
+    {
+        "Beginner",
+        "Elementary",
+        "Intermediate",
+        "Upper Intermediate",
+        "Advanced",
+        "IELTS/TOEIC preparation"
+    };
+}
+
+<style>
+    .catalog-page {
+        padding-bottom: 44px;
+    }
+
+        .catalog-page .catalog-hero {
+            position: relative;
+            overflow: hidden;
+            margin: 24px 0 30px;
+            padding: 42px 36px;
+            border: 1px solid #e5e9f0;
+            border-radius: 20px;
+            background: linear-gradient(120deg, #ffffff 0%, #f3f5fa 75%, #fff0f0 100%);
+        }
+
+            .catalog-page .catalog-hero h1 {
+                position: relative;
+                z-index: 1;
+                margin: 0 0 14px;
+                color: #202938;
+                font-size: clamp(28px, 4vw, 43px);
+                line-height: 1.2;
+                font-weight: 850;
+            }
+
+            .catalog-page .catalog-hero > p {
+                position: relative;
+                z-index: 1;
+                max-width: 680px;
+                margin-bottom: 22px;
+                color: #6b7280;
+                font-size: 15px;
+                line-height: 1.8;
+            }
+
+        .catalog-page .catalog-highlights {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+            .catalog-page .catalog-highlights span {
+                padding: 8px 12px;
+                border-radius: 20px;
+                background: #fff0f0;
+                color: #a61f24;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+        .catalog-page .catalog-toolbar {
+            margin-bottom: 36px;
+            padding: 25px;
+            border: 1px solid #e5e9f0;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 4px 18px rgba(20, 30, 50, .035);
+        }
+
+        .catalog-page .catalog-toolbar-heading,
+        .catalog-page .catalog-results-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+            .catalog-page .catalog-toolbar-heading h2,
+            .catalog-page .catalog-results-heading h2 {
+                margin: 0 0 6px;
+                color: #202938;
+                font-size: 21px;
+                font-weight: 800;
+            }
+
+            .catalog-page .catalog-toolbar-heading p,
+            .catalog-page .catalog-results-heading p {
+                margin: 0;
+                color: #7b8496;
+                font-size: 13px;
+                line-height: 1.7;
+            }
+
+        .catalog-page .catalog-search-form {
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) minmax(180px, 1fr) auto;
+            align-items: end;
+            gap: 16px;
+        }
+
+        .catalog-page .catalog-filter-field {
+            min-width: 0;
+        }
+
+            .catalog-page .catalog-filter-field label {
+                display: block;
+                margin-bottom: 8px;
+                color: #475267;
+                font-size: 12px;
+                font-weight: 750;
+            }
+
+            .catalog-page .catalog-filter-field .form-control,
+            .catalog-page .catalog-filter-field .form-select {
+                min-height: 44px;
+                border-color: #dfe4ed;
+                border-radius: 9px;
+                font-size: 13px;
+            }
+
+                .catalog-page .catalog-filter-field .form-control:focus,
+                .catalog-page .catalog-filter-field .form-select:focus {
+                    border-color: #d96e6e;
+                    box-shadow: 0 0 0 3px rgba(198, 40, 40, .07);
+                }
+
+        .catalog-page .catalog-filter-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+            .catalog-page .catalog-filter-actions .btn {
+                min-height: 44px;
+                margin: 0;
+                border-radius: 9px;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+        .catalog-page .catalog-count {
+            flex-shrink: 0;
+            padding: 8px 13px;
+            border-radius: 20px;
+            background: #fff0f0;
+            color: #a61f24;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        /* ẢNH BÌA KHÓA HỌC */
+        .catalog-page .catalog-course-cover {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 230px;
+            min-height: 230px;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e9edf5, #f8fafc);
+        }
+
+        .catalog-page .catalog-course-image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transition: transform .35s ease;
+        }
+
+        .catalog-page .course-card:hover .catalog-course-image {
+            transform: scale(1.035);
+        }
+
+        .catalog-page .catalog-course-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 13px;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            background: radial-gradient(circle at 85% 15%, rgba(198, 40, 40, .10), transparent 35%), linear-gradient(135deg, #eef2f8, #fafbfe);
+            text-align: center;
+        }
+
+            .catalog-page .catalog-course-placeholder i {
+                color: #c62828;
+                font-size: 36px;
+            }
+
+            .catalog-page .catalog-course-placeholder span {
+                max-width: 90%;
+                padding: 7px 13px;
+                border: 1px solid #d8dde7;
+                border-radius: 20px;
+                background: rgba(255, 255, 255, .92);
+                color: #374151;
+                font-size: 11px;
+                font-weight: 800;
+            }
+
+        .catalog-page .catalog-results .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            align-items: stretch;
+            gap: 24px;
+        }
+
+        .catalog-page .catalog-results .course-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid #e5e9f0;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 4px 16px rgba(20, 30, 50, .035);
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+            .catalog-page .catalog-results .course-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 12px 28px rgba(20, 30, 50, .09);
+            }
+
+        .catalog-page .catalog-results .course-card-body {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            padding: 22px;
+        }
+
+        .catalog-page .catalog-results .course-level {
+            margin-bottom: 8px;
+            color: #c62828;
+            font-size: 11px;
+            font-weight: 850;
+            text-transform: uppercase;
+        }
+
+        .catalog-page .catalog-results .course-card-body h3 {
+            margin: 4px 0 10px;
+            color: #202938;
+            font-size: 18px;
+            font-weight: 800;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .catalog-page .catalog-results .course-description {
+            display: -webkit-box;
+            min-height: 66px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            color: #778195;
+            font-size: 13px;
+            line-height: 1.75;
+            overflow-wrap: anywhere;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+        }
+
+        .catalog-page .catalog-results .course-meta {
+            margin: auto 0 16px;
+            padding-top: 15px;
+            border-top: 1px solid #edf0f5;
+            color: #7b8496;
+            font-size: 12px;
+        }
+
+        .catalog-page .catalog-results .course-price {
+            color: #c62828;
+            font-size: 20px;
+            font-weight: 850;
+            overflow-wrap: anywhere;
+        }
+
+        .catalog-page .catalog-results .course-card-action {
+            padding-top: 18px;
+        }
+
+            .catalog-page .catalog-results .course-card-action .btn {
+                min-height: 43px;
+                border-radius: 9px;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+        .catalog-page .catalog-empty {
+            padding: 50px 20px;
+            border: 1px dashed #d1d5db;
+            border-radius: 16px;
+            background: #ffffff;
+            text-align: center;
+        }
+
+        .catalog-page .catalog-empty-icon {
+            margin-bottom: 12px;
+            color: #c62828;
+            font-size: 38px;
+        }
+
+        .catalog-page .catalog-empty h3 {
+            color: #202938;
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        .catalog-page .catalog-empty p {
+            color: #7b8496;
+            font-size: 13px;
+        }
+
+    @@media (max-width: 991px) {
+        .catalog-page .catalog-results .courses-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .catalog-page .catalog-search-form {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        }
+
+        .catalog-page .catalog-filter-actions {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .catalog-page .catalog-hero {
+            padding: 28px 19px;
+        }
+
+        .catalog-page .catalog-toolbar {
+            padding: 17px;
+        }
+
+        .catalog-page .catalog-search-form,
+        .catalog-page .catalog-results .courses-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .catalog-page .catalog-course-cover {
+            height: 220px;
+            min-height: 220px;
+        }
+
+        .catalog-page .catalog-filter-actions {
+            grid-column: auto;
+        }
+
+            .catalog-page .catalog-filter-actions .btn {
+                flex: 1;
+            }
+    }
+</style>
+
+<div class="catalog-page">
+
+    @* PHẦN GIỚI THIỆU *@
+    <section class="catalog-hero">
+
+        <span class="eyebrow">ENGLISH CENTER · OUR COURSES</span>
+
+        <h1>Khám phá khóa học tiếng Anh</h1>
+
+        <p>
+            Tìm chương trình học phù hợp với trình độ,
+            mục tiêu và ngân sách của bạn.
+        </p>
+
+        <div class="catalog-highlights">
+            <span>✓ Nhiều trình độ</span>
+            <span>✓ Thông tin học phí rõ ràng</span>
+            <span>✓ Lựa chọn lớp học phù hợp</span>
+        </div>
+
+    </section>
+
+    @* THÔNG BÁO *@
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @* TÌM KIẾM VÀ LỌC *@
+    <section class="catalog-toolbar">
+
+        <div class="catalog-toolbar-heading">
+            <div>
+                <h2>Tìm khóa học</h2>
+                <p>Lọc danh sách theo tên hoặc trình độ của bạn.</p>
+            </div>
+        </div>
+
+        @using (Html.BeginForm(
+            "Index",
+            "Courses",
+            FormMethod.Get,
+            new { @class = "catalog-search-form" }))
+        {
+            <div class="catalog-filter-field">
+
+                <label for="searchTerm">Tên khóa học</label>
+
+                <input type="text"
+                       id="searchTerm"
+                       name="searchTerm"
+                       value="@Model.SearchTerm"
+                       class="form-control"
+                       placeholder="Ví dụ: Tiếng Anh giao tiếp..." />
+
+            </div>
+
+            <div class="catalog-filter-field">
+
+                <label for="level">Trình độ</label>
+
+                <select id="level"
+                        name="level"
+                        class="form-select">
+
+                    <option value="">Tất cả trình độ</option>
+
+                    @foreach (var item in levels)
+                    {
+                        if (Model.SelectedLevel == item)
+                        {
+                            <option value="@item" selected="selected">
+                                @item
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="@item">@item</option>
+                        }
+                    }
+
+                </select>
+
+            </div>
+
+            <div class="catalog-filter-actions">
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i>
+                    Tìm khóa học
+                </button>
+
+                @Html.ActionLink(
+                    "Xóa bộ lọc",
+                    "Index",
+                    "Courses",
+                    null,
+                    new { @class = "btn btn-outline-secondary" }
+                )
+
+            </div>
+        }
+
+    </section>
+
+    @* DANH SÁCH KHÓA HỌC *@
+    <section class="catalog-results">
+
+        <div class="catalog-results-heading">
+
+            <div>
+                <h2>Danh sách khóa học</h2>
+
+                <p>
+                    Chọn khóa học để xem nội dung và các lớp đang mở.
+                </p>
+            </div>
+
+            @if (Model.Courses != null)
+            {
+                <span class="catalog-count">
+                    @Model.Courses.Count khóa học
+                </span>
+            }
+
+        </div>
+
+        @if (Model.Courses != null && Model.Courses.Any())
+        {
+            <div class="courses-grid">
+
+                @foreach (var course in Model.Courses)
+                {
+                    <article class="course-card">
+
+                        <div class="course-cover catalog-course-cover">
+
+                            @if (!string.IsNullOrWhiteSpace(course.ImageUrl))
+                            {
+                                <img class="catalog-course-image"
+                                     src="@Url.Content(course.ImageUrl)"
+                                     alt="Ảnh khóa học @course.CourseName"
+                                     loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="catalog-course-placeholder">
+
+                                    <i class="bi bi-mortarboard-fill"></i>
+
+                                    <span>@course.Level</span>
+
+                                </div>
+                            }
+
+                        </div>
+
+                        <div class="course-card-body">
+
+                            <span class="course-level">
+                                @course.Level
+                            </span>
+
+                            <h3>@course.CourseName</h3>
+
+                            <p class="course-description">
+                                @(
+                                    string.IsNullOrWhiteSpace(course.Description)
+                                    ? "Thông tin chi tiết về chương trình học sẽ được cập nhật."
+                                    : course.Description
+                                )
+                            </p>
+
+                            <div class="course-meta">
+                                <span>
+                                    <i class="bi bi-clock"></i>
+                                    @course.Duration giờ học
+                                </span>
+                            </div>
+
+                            <div class="course-price">
+                                @course.TuitionFee.ToString("N0") VNĐ
+                            </div>
+
+                            <div class="course-card-action">
+
+                                @Html.ActionLink(
+                                    "Xem chi tiết →",
+                                    "Details",
+                                    "Courses",
+                                    new { id = course.Id },
+                                    new { @class = "btn btn-outline-primary w-100" }
+                                )
+
+                            </div>
+
+                        </div>
+
+                    </article>
+                }
+
+            </div>
+        }
+        else
+        {
+            <div class="catalog-empty">
+
+                <div class="catalog-empty-icon">
+                    <i class="bi bi-search"></i>
+                </div>
+
+                <h3>Chưa tìm thấy khóa học phù hợp</h3>
+
+                <p>
+                    Hãy thử từ khóa khác hoặc chọn tất cả trình độ.
+                </p>
+
+                @Html.ActionLink(
+                    "Xem tất cả khóa học",
+                    "Index",
+                    "Courses",
+                    null,
+                    new { @class = "btn btn-outline-primary" }
+                )
+
+            </div>
+        }
+
+    </section>
+
+</div>

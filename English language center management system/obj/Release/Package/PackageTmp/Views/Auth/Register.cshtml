@@ -1,0 +1,188 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Authentication.RegisterViewModel
+
+@{
+    ViewBag.Title = "Đăng ký tài khoản";
+}
+
+<div class="auth-overlay auth-overlay--register">
+
+    <section class="auth-modal auth-modal--register"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="registerTitle">
+
+        <a class="auth-close"
+           href="@Url.Action("Index", "Home")"
+           aria-label="Đóng"
+           title="Quay về trang chủ">×</a>
+
+        <div class="auth-brand-mark">EC</div>
+
+        <p class="auth-kicker">ENGLISH CENTER</p>
+
+        <h1 id="registerTitle" class="auth-title">
+            Tạo tài khoản học viên
+        </h1>
+
+        <p class="auth-subtitle">
+            Đăng ký để bắt đầu hành trình học tiếng Anh của bạn.
+        </p>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="auth-alert auth-alert-error" role="alert">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        @using (Html.BeginForm(
+            "Register",
+            "Auth",
+            FormMethod.Post,
+            new { id = "registerForm", @class = "auth-form" }))
+        {
+            @Html.AntiForgeryToken()
+
+            @Html.ValidationSummary(
+                true,
+                "",
+                new { @class = "auth-validation-summary" })
+
+            <div class="auth-field">
+
+                @Html.LabelFor(
+                    m => m.FullName,
+                    new { @class = "auth-label" })
+
+                @Html.TextBoxFor(
+                    m => m.FullName,
+                    new
+                    {
+                        @class = "form-control auth-input",
+                        placeholder = "Ví dụ: Nguyễn Văn An",
+                        autocomplete = "name"
+                    })
+
+                @Html.ValidationMessageFor(
+                    m => m.FullName,
+                    "",
+                    new { @class = "auth-validation" })
+
+            </div>
+
+            <div class="auth-field">
+
+                @Html.LabelFor(
+                    m => m.Username,
+                    new { @class = "auth-label" })
+
+                @Html.TextBoxFor(
+                    m => m.Username,
+                    new
+                    {
+                        @class = "form-control auth-input",
+                        placeholder = "Tạo tên đăng nhập",
+                        autocomplete = "username"
+                    })
+
+                @Html.ValidationMessageFor(
+                    m => m.Username,
+                    "",
+                    new { @class = "auth-validation" })
+
+            </div>
+
+            <div class="auth-field">
+
+                @Html.LabelFor(
+                    m => m.Email,
+                    new { @class = "auth-label" })
+
+                @Html.TextBoxFor(
+                    m => m.Email,
+                    new
+                    {
+                        @class = "form-control auth-input",
+                        placeholder = "ban@example.com",
+                        type = "email",
+                        autocomplete = "email"
+                    })
+
+                @Html.ValidationMessageFor(
+                    m => m.Email,
+                    "",
+                    new { @class = "auth-validation" })
+
+            </div>
+
+            <div class="auth-field">
+
+                @Html.LabelFor(
+                    m => m.Password,
+                    new { @class = "auth-label" })
+
+                @Html.PasswordFor(
+                    m => m.Password,
+                    new
+                    {
+                        @class = "form-control auth-input",
+                        placeholder = "Tối thiểu 6 ký tự",
+                        autocomplete = "new-password"
+                    })
+
+                @Html.ValidationMessageFor(
+                    m => m.Password,
+                    "",
+                    new { @class = "auth-validation" })
+
+            </div>
+
+            <div class="auth-field">
+
+                @Html.LabelFor(
+                    m => m.ConfirmPassword,
+                    new { @class = "auth-label" })
+
+                @Html.PasswordFor(
+                    m => m.ConfirmPassword,
+                    new
+                    {
+                        @class = "form-control auth-input",
+                        placeholder = "Nhập lại mật khẩu",
+                        autocomplete = "new-password"
+                    })
+
+                @Html.ValidationMessageFor(
+                    m => m.ConfirmPassword,
+                    "",
+                    new { @class = "auth-validation" })
+
+            </div>
+
+            <button type="submit" class="btn btn-primary auth-submit">
+                TẠO TÀI KHOẢN
+            </button>
+        }
+
+        <div class="auth-divider">
+            <span>HOẶC</span>
+        </div>
+
+        <p class="auth-switch">
+            Đã có tài khoản?
+            @Html.ActionLink(
+                "Đăng nhập",
+                "Login",
+                "Auth",
+                null,
+                new { @class = "auth-link" })
+        </p>
+
+        <p class="auth-security-note">
+            Tài khoản đăng ký mới sẽ được hệ thống cấp vai trò học viên.
+        </p>
+
+    </section>
+
+</div>

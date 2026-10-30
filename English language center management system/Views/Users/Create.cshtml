@@ -1,0 +1,818 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Users.UserCreateViewModel
+
+@using System.Collections.Generic
+@using System.Web.Mvc
+
+@{
+    ViewBag.Title = "Thêm người dùng mới";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .uc-page {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 0 0 16px;
+        color: #25324a;
+    }
+
+        .uc-page * {
+            box-sizing: border-box;
+        }
+
+    .uc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .uc-eyebrow {
+        margin-bottom: 6px;
+        color: #929db0;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+    }
+
+    .uc-header h1 {
+        margin: 0 0 5px;
+        color: #25324a;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .uc-header p {
+        margin: 0;
+        color: #8793a8;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .uc-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 36px;
+        padding: 8px 13px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+
+    .uc-btn-back,
+    .uc-btn-cancel {
+        border-color: #dce3ed;
+        background: #fff;
+        color: #526078;
+    }
+
+        .uc-btn-back:hover,
+        .uc-btn-cancel:hover {
+            background: #f5f7fb;
+            color: #25324a;
+        }
+
+    .uc-btn-save {
+        border-color: #c92828;
+        background: #c92828;
+        color: #fff;
+    }
+
+        .uc-btn-save:hover {
+            border-color: #a91f1f;
+            background: #a91f1f;
+            color: #fff;
+        }
+
+    .uc-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 225px;
+        align-items: start;
+        gap: 16px;
+    }
+
+    .uc-card,
+    .uc-side-card {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(26, 42, 69, .035);
+    }
+
+    .uc-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 15px 19px;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+    .uc-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 22px;
+        font-weight: 800;
+    }
+
+    .uc-card-header h2 {
+        margin: 0 0 4px;
+        color: #25324a;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .uc-card-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 11px;
+    }
+
+    .uc-card-body {
+        padding: 18px 20px;
+    }
+
+    .uc-section {
+        margin-bottom: 20px;
+    }
+
+        .uc-section:last-child {
+            margin-bottom: 0;
+        }
+
+    .uc-section-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0 0 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #edf0f5;
+        color: #29364d;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .uc-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 25px;
+        height: 25px;
+        flex-shrink: 0;
+        border-radius: 7px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 11px;
+    }
+
+    .uc-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px 16px;
+    }
+
+    .uc-field {
+        min-width: 0;
+    }
+
+    .uc-full {
+        grid-column: 1 / -1;
+    }
+
+    .uc-label {
+        display: block;
+        margin-bottom: 6px;
+        color: #435169;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .uc-required {
+        margin-left: 3px;
+        color: #c92828;
+    }
+
+    .uc-control {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        min-height: 39px;
+        padding: 8px 11px;
+        border: 1px solid #d9e1ec;
+        border-radius: 8px;
+        background: #fff;
+        color: #25324a;
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .uc-control:focus {
+            border-color: #c92828;
+            box-shadow: 0 0 0 3px rgba(201, 40, 40, .08);
+        }
+
+        .uc-control::placeholder {
+            color: #9ba6b8;
+        }
+
+    .uc-help {
+        display: block;
+        margin-top: 5px;
+        color: #8995aa;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    .uc-validation {
+        display: block;
+        margin-top: 5px;
+        color: #bd2626;
+        font-size: 11px;
+    }
+
+    .uc-validation-summary {
+        margin-bottom: 18px;
+        padding: 11px 13px;
+        border: 1px solid #ffdada;
+        border-radius: 8px;
+        background: #fff4f4;
+        color: #b42323;
+        font-size: 12px;
+    }
+
+        .uc-validation-summary:empty {
+            display: none;
+        }
+
+    .uc-profile {
+        margin-top: 14px;
+        padding: 14px;
+        border: 1px solid #e5eaf2;
+        border-radius: 9px;
+        background: #fafbfd;
+    }
+
+    .uc-profile-heading {
+        margin-bottom: 12px;
+        color: #29364d;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .uc-avatar-preview {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px dashed #dce3ed;
+        border-radius: 8px;
+        background: #fafbfd;
+    }
+
+    .uc-avatar-box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+        overflow: hidden;
+        border-radius: 10px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+        .uc-avatar-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .uc-avatar-info {
+        min-width: 0;
+    }
+
+        .uc-avatar-info strong {
+            display: block;
+            color: #435169;
+            font-size: 11px;
+            overflow-wrap: anywhere;
+        }
+
+        .uc-avatar-info span {
+            display: block;
+            margin-top: 4px;
+            color: #8995aa;
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+    .uc-footer {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 14px 20px;
+        border-top: 1px solid #edf0f5;
+        background: #fbfcfe;
+    }
+
+    .uc-side-card {
+        margin-bottom: 12px;
+    }
+
+    .uc-side-header {
+        padding: 13px 15px;
+        border-bottom: 1px solid #edf0f5;
+        color: #29364d;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .uc-side-body {
+        padding: 14px;
+    }
+
+    .uc-tip {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin-bottom: 13px;
+    }
+
+        .uc-tip:last-child {
+            margin-bottom: 0;
+        }
+
+    .uc-tip-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        flex-shrink: 0;
+        border-radius: 7px;
+        background: #f1f4f9;
+        color: #63718a;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .uc-tip strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #344159;
+        font-size: 11px;
+    }
+
+    .uc-tip p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 10px;
+        line-height: 1.7;
+    }
+
+    .uc-note {
+        padding: 12px;
+        border: 1px solid #f1dfb5;
+        border-radius: 8px;
+        background: #fff9ed;
+        color: #8a6418;
+        font-size: 10px;
+        line-height: 1.7;
+    }
+
+        .uc-note strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+    @@media (max-width: 1000px) {
+        .uc-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .uc-sidebar {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .uc-side-card {
+            margin-bottom: 0;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .uc-header h1 {
+            font-size: 21px;
+        }
+
+        .uc-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .uc-full {
+            grid-column: auto;
+        }
+
+        .uc-card-body,
+        .uc-card-header {
+            padding: 14px;
+        }
+
+        .uc-footer {
+            padding: 12px 14px;
+        }
+
+        .uc-sidebar {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+</style>
+
+<div class="uc-page">
+
+    <div class="uc-header">
+        <div>
+            <div class="uc-eyebrow">ENGLISH LANGUAGE CENTER / QUẢN LÝ NGƯỜI DÙNG</div>
+            <h1>Thêm người dùng mới</h1>
+            <p>Tạo tài khoản và thiết lập thông tin cho người dùng trong hệ thống.</p>
+        </div>
+
+        <a href="@Url.Action("Index", "Users")" class="uc-btn uc-btn-back">
+            ← Quay lại danh sách
+        </a>
+    </div>
+
+    <div class="uc-layout">
+
+        <section class="uc-card">
+
+            <div class="uc-card-header">
+                <div class="uc-icon">+</div>
+                <div>
+                    <h2>Thông tin tài khoản</h2>
+                    <p>Điền thông tin để tạo tài khoản mới.</p>
+                </div>
+            </div>
+
+            @using (Html.BeginForm("Create", "Users", FormMethod.Post,
+                new { enctype = "multipart/form-data", @class = "uc-form" }))
+            {
+                @Html.AntiForgeryToken()
+
+                <div class="uc-card-body">
+
+                    @Html.ValidationSummary(true,
+                        "Vui lòng kiểm tra lại thông tin:",
+                        new { @class = "uc-validation-summary" })
+
+                    <div class="uc-section">
+                        <h3 class="uc-section-title">
+                            <span class="uc-number">01</span>
+                            Thông tin đăng nhập
+                        </h3>
+
+                        <div class="uc-grid">
+
+                            <div class="uc-field">
+                                @Html.LabelFor(m => m.Username, new { @class = "uc-label" })
+                                <span class="uc-required">*</span>
+
+                                @Html.TextBoxFor(m => m.Username, new
+                                {
+                                    @class = "uc-control",
+                                    placeholder = "Ví dụ: nguyenvana",
+                                    autocomplete = "username"
+                                })
+
+                                @Html.ValidationMessageFor(m => m.Username, "",
+                                    new { @class = "uc-validation" })
+                            </div>
+
+                            <div class="uc-field">
+                                @Html.LabelFor(m => m.Password, new { @class = "uc-label" })
+                                <span class="uc-required">*</span>
+
+                                @Html.PasswordFor(m => m.Password, new
+                                {
+                                    @class = "uc-control",
+                                    placeholder = "Nhập mật khẩu",
+                                    autocomplete = "new-password"
+                                })
+
+                                <small class="uc-help">Mật khẩu tối thiểu 6 ký tự.</small>
+
+                                @Html.ValidationMessageFor(m => m.Password, "",
+                                    new { @class = "uc-validation" })
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="uc-section">
+                        <h3 class="uc-section-title">
+                            <span class="uc-number">02</span>
+                            Thông tin cá nhân
+                        </h3>
+
+                        <div class="uc-grid">
+
+                            <div class="uc-field uc-full">
+                                @Html.LabelFor(m => m.FullName, new { @class = "uc-label" })
+                                <span class="uc-required">*</span>
+
+                                @Html.TextBoxFor(m => m.FullName, new
+                                {
+                                    @class = "uc-control",
+                                    placeholder = "Nhập họ và tên",
+                                    autocomplete = "name"
+                                })
+
+                                @Html.ValidationMessageFor(m => m.FullName, "",
+                                    new { @class = "uc-validation" })
+                            </div>
+
+                            <div class="uc-field">
+                                @Html.LabelFor(m => m.Email, new { @class = "uc-label" })
+                                <span class="uc-required">*</span>
+
+                                @Html.TextBoxFor(m => m.Email, new
+                                {
+                                    @class = "uc-control",
+                                    type = "email",
+                                    placeholder = "example@email.com",
+                                    autocomplete = "email"
+                                })
+
+                                @Html.ValidationMessageFor(m => m.Email, "",
+                                    new { @class = "uc-validation" })
+                            </div>
+
+                            <div class="uc-field">
+                                @Html.LabelFor(m => m.Phone, new { @class = "uc-label" })
+
+                                @Html.TextBoxFor(m => m.Phone, new
+                                {
+                                    @class = "uc-control",
+                                    type = "tel",
+                                    placeholder = "Nhập số điện thoại",
+                                    autocomplete = "tel"
+                                })
+
+                                @Html.ValidationMessageFor(m => m.Phone, "",
+                                    new { @class = "uc-validation" })
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="uc-section">
+                        <h3 class="uc-section-title">
+                            <span class="uc-number">03</span>
+                            Vai trò và hồ sơ
+                        </h3>
+
+                        <div class="uc-field">
+                            @Html.LabelFor(m => m.RoleId, new { @class = "uc-label" })
+                            <span class="uc-required">*</span>
+
+                            @Html.DropDownListFor(
+                                m => m.RoleId,
+                                (IEnumerable<SelectListItem>)ViewBag.RoleId,
+                                "-- Chọn vai trò --",
+                                new { @class = "uc-control", id = "ucRoleSelect" })
+
+                            @Html.ValidationMessageFor(m => m.RoleId, "",
+                                new { @class = "uc-validation" })
+                        </div>
+
+                        <div id="ucTeacherFields" class="uc-profile" style="display:none;">
+                            <div class="uc-profile-heading">Hồ sơ giáo viên</div>
+
+                            <div class="uc-field">
+                                @Html.LabelFor(m => m.Specialization, new { @class = "uc-label" })
+
+                                @Html.TextBoxFor(m => m.Specialization, new
+                                {
+                                    @class = "uc-control",
+                                    placeholder = "Ví dụ: IELTS, TESOL, Tiếng Anh giao tiếp"
+                                })
+
+                                @Html.ValidationMessageFor(m => m.Specialization, "",
+                                    new { @class = "uc-validation" })
+                            </div>
+                        </div>
+
+                        <div id="ucStudentFields" class="uc-profile" style="display:none;">
+                            <div class="uc-profile-heading">Hồ sơ học viên</div>
+
+                            <div class="uc-grid">
+                                <div class="uc-field">
+                                    @Html.LabelFor(m => m.DateOfBirth, new { @class = "uc-label" })
+
+                                    @Html.TextBoxFor(m => m.DateOfBirth, "{0:yyyy-MM-dd}", new
+                                    {
+                                        @class = "uc-control",
+                                        type = "date"
+                                    })
+
+                                    @Html.ValidationMessageFor(m => m.DateOfBirth, "",
+                                        new { @class = "uc-validation" })
+                                </div>
+
+                                <div class="uc-field">
+                                    @Html.LabelFor(m => m.Address, new { @class = "uc-label" })
+
+                                    @Html.TextBoxFor(m => m.Address, new
+                                    {
+                                        @class = "uc-control",
+                                        placeholder = "Nhập địa chỉ thường trú",
+                                        autocomplete = "street-address"
+                                    })
+
+                                    @Html.ValidationMessageFor(m => m.Address, "",
+                                        new { @class = "uc-validation" })
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="uc-section">
+                        <h3 class="uc-section-title">
+                            <span class="uc-number">04</span>
+                            Ảnh đại diện
+                        </h3>
+
+                        <div class="uc-field">
+                            @Html.LabelFor(m => m.AvatarFile, new { @class = "uc-label" })
+
+                            <input type="file"
+                                   id="ucAvatarFile"
+                                   name="AvatarFile"
+                                   class="uc-control"
+                                   accept="image/*" />
+
+                            @Html.ValidationMessageFor(m => m.AvatarFile, "",
+                                new { @class = "uc-validation" })
+
+                            <small class="uc-help">
+                                Có thể bỏ qua nếu chưa có ảnh đại diện.
+                            </small>
+
+                            <div class="uc-avatar-preview">
+                                <div id="ucAvatarPreview" class="uc-avatar-box">EC</div>
+                                <div class="uc-avatar-info">
+                                    <strong id="ucAvatarName">Chưa chọn ảnh</strong>
+                                    <span id="ucAvatarHelp">Ảnh xem trước sẽ hiển thị tại đây.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="uc-footer">
+                    <a href="@Url.Action("Index", "Users")"
+                       class="uc-btn uc-btn-cancel">Hủy bỏ</a>
+
+                    <button type="submit" class="uc-btn uc-btn-save">
+                        ✓ Tạo người dùng
+                    </button>
+                </div>
+            }
+
+        </section>
+
+        <aside class="uc-sidebar">
+
+            <section class="uc-side-card">
+                <div class="uc-side-header">Hướng dẫn tạo tài khoản</div>
+                <div class="uc-side-body">
+
+                    <div class="uc-tip">
+                        <div class="uc-tip-number">1</div>
+                        <div>
+                            <strong>Thông tin tài khoản</strong>
+                            <p>Nhập tên đăng nhập và mật khẩu.</p>
+                        </div>
+                    </div>
+
+                    <div class="uc-tip">
+                        <div class="uc-tip-number">2</div>
+                        <div>
+                            <strong>Chọn vai trò</strong>
+                            <p>Chọn đúng vai trò để hiển thị trường hồ sơ tương ứng.</p>
+                        </div>
+                    </div>
+
+                    <div class="uc-tip">
+                        <div class="uc-tip-number">3</div>
+                        <div>
+                            <strong>Kiểm tra thông tin</strong>
+                            <p>Xác nhận thông tin trước khi tạo tài khoản.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <section class="uc-side-card">
+                <div class="uc-side-header">Lưu ý</div>
+                <div class="uc-side-body">
+                    <div class="uc-note">
+                        <strong>Thông tin cần chính xác</strong>
+                        Tên đăng nhập và email không được trùng với tài khoản hiện có.
+                    </div>
+                </div>
+            </section>
+
+        </aside>
+
+    </div>
+</div>
+
+@section scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+
+    <script>
+                $(function () {
+                    function toggleProfileFields() {
+                        var text = $("#ucRoleSelect option:selected")
+                            .text().toLowerCase();
+
+                        var isTeacher =
+                            text.indexOf("teacher") >= 0 ||
+                            text.indexOf("giáo viên") >= 0;
+
+                        var isStudent =
+                            text.indexOf("student") >= 0 ||
+                            text.indexOf("học viên") >= 0 ||
+                            text.indexOf("học sinh") >= 0;
+
+                        $("#ucTeacherFields").toggle(isTeacher);
+                        $("#ucStudentFields").toggle(isStudent);
+                    }
+
+                    toggleProfileFields();
+                    $("#ucRoleSelect").on("change", toggleProfileFields);
+
+                    $("#ucAvatarFile").on("change", function () {
+                        var file = this.files && this.files.length
+                            ? this.files[0] : null;
+
+                        var preview = $("#ucAvatarPreview");
+
+                        if (!file) {
+                            preview.text("EC");
+                            $("#ucAvatarName").text("Chưa chọn ảnh");
+                            $("#ucAvatarHelp").text("Ảnh xem trước sẽ hiển thị tại đây.");
+                            return;
+                        }
+
+                        $("#ucAvatarName").text(file.name);
+
+                        if (file.type && file.type.indexOf("image/") === 0) {
+                            var reader = new FileReader();
+
+                            reader.onload = function (event) {
+                                preview.empty();
+                                $("<img>", {
+                                    src: event.target.result,
+                                    alt: "Ảnh xem trước"
+                                }).appendTo(preview);
+                            };
+
+                            reader.readAsDataURL(file);
+                            $("#ucAvatarHelp").text("Ảnh được chọn để tải lên.");
+                        } else {
+                            preview.text("!");
+                            $("#ucAvatarHelp").text("Tệp được chọn không phải định dạng ảnh được nhận diện.");
+                        }
+                    });
+                });
+    </script>
+}

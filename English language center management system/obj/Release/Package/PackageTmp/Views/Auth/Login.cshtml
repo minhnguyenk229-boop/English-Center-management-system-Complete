@@ -1,0 +1,148 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Authentication.LoginViewModel
+
+@{
+    ViewBag.Title = "Đăng nhập";
+}
+
+<div class="auth-overlay auth-overlay--login">
+
+    <section class="auth-modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="authTitle">
+
+        <a class="auth-close"
+           href="@Url.Action("Index", "Home")"
+           aria-label="Đóng"
+           title="Quay về trang chủ">×</a>
+
+        <div class="auth-brand-mark">EC</div>
+
+        <p class="auth-kicker">ENGLISH CENTER</p>
+
+        <h1 id="authTitle" class="auth-title">
+            Đăng nhập hệ thống
+        </h1>
+
+        <p class="auth-subtitle">
+            Chào mừng bạn trở lại! Hãy đăng nhập để tiếp tục học tập.
+        </p>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="auth-alert auth-alert-success" role="status">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="auth-alert auth-alert-error" role="alert">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        @using (Html.BeginForm(
+            "Login",
+            "Auth",
+            FormMethod.Post,
+            new { id = "loginForm", @class = "auth-form" }))
+        {
+            @Html.AntiForgeryToken()
+
+            @Html.ValidationSummary(
+                true,
+                "",
+                new { @class = "auth-validation-summary" })
+
+            <div class="auth-field">
+
+                @Html.LabelFor(
+                    m => m.Username,
+                    new { @class = "auth-label" })
+
+                <div class="auth-input-wrap">
+                    <span class="auth-input-icon" aria-hidden="true">&#64;</span>
+
+                    @Html.TextBoxFor(
+                        m => m.Username,
+                        new
+                        {
+                            @class = "form-control auth-input",
+                            placeholder = "Tên đăng nhập hoặc email",
+                            autocomplete = "username",
+                            autofocus = "autofocus"
+                        })
+                </div>
+
+                @Html.ValidationMessageFor(
+                    m => m.Username,
+                    "",
+                    new { @class = "auth-validation" })
+
+            </div>
+
+            <div class="auth-field">
+
+                @Html.LabelFor(
+                    m => m.Password,
+                    new { @class = "auth-label" })
+
+                <div class="auth-input-wrap">
+                    <span class="auth-input-icon" aria-hidden="true">&#9670;</span>
+
+                    @Html.PasswordFor(
+                        m => m.Password,
+                        new
+                        {
+                            @class = "form-control auth-input",
+                            placeholder = "Nhập mật khẩu",
+                            autocomplete = "current-password"
+                        })
+                </div>
+
+                @Html.ValidationMessageFor(
+                    m => m.Password,
+                    "",
+                    new { @class = "auth-validation" })
+
+            </div>
+
+            <div class="auth-options">
+                <label class="auth-checkbox-label">
+                    @Html.CheckBoxFor(
+                        m => m.RememberMe,
+                        new { @class = "auth-checkbox" })
+
+                    <span>Ghi nhớ đăng nhập</span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary auth-submit">
+                ĐĂNG NHẬP
+            </button>
+        }
+
+        <div class="auth-divider">
+            <span>HOẶC</span>
+        </div>
+
+        <p class="auth-switch">
+            Chưa có tài khoản?
+            @Html.ActionLink(
+                "Đăng ký ngay",
+                "Register",
+                "Auth",
+                null,
+                new { @class = "auth-link" })
+        </p>
+
+        <p class="auth-security-note">
+            Tài khoản của bạn được sử dụng để truy cập các chức năng
+            phù hợp với vai trò trong hệ thống.
+        </p>
+
+    </section>
+
+</div>

@@ -1,0 +1,186 @@
+D:\English language center management system\English language center management system\bin\English language center management system.dll.config
+D:\English language center management system\English language center management system\bin\English language center management system.dll
+D:\English language center management system\English language center management system\bin\English language center management system.pdb
+D:\English language center management system\English language center management system\bin\roslyn\csc.exe
+D:\English language center management system\English language center management system\bin\roslyn\csc.exe.config
+D:\English language center management system\English language center management system\bin\roslyn\csc.rsp
+D:\English language center management system\English language center management system\bin\roslyn\csi.exe
+D:\English language center management system\English language center management system\bin\roslyn\csi.exe.config
+D:\English language center management system\English language center management system\bin\roslyn\csi.rsp
+D:\English language center management system\English language center management system\bin\roslyn\Microsoft.Build.Tasks.CodeAnalysis.dll
+D:\English language center management system\English language center management system\bin\roslyn\Microsoft.CodeAnalysis.CSharp.dll
+D:\English language center management system\English language center management system\bin\roslyn\Microsoft.CodeAnalysis.CSharp.Scripting.dll
+D:\English language center management system\English language center management system\bin\roslyn\Microsoft.CodeAnalysis.dll
+D:\English language center management system\English language center management system\bin\roslyn\Microsoft.CodeAnalysis.Scripting.dll
+D:\English language center management system\English language center management system\bin\roslyn\Microsoft.CodeAnalysis.VisualBasic.dll
+D:\English language center management system\English language center management system\bin\roslyn\Microsoft.CSharp.Core.targets
+D:\English language center management system\English language center management system\bin\roslyn\Microsoft.DiaSymReader.Native.amd64.dll
+D:\English language center management system\English language center management system\bin\roslyn\Microsoft.DiaSymReader.Native.x86.dll
+D:\English language center management system\English language center management system\bin\roslyn\Microsoft.Managed.Core.targets
+D:\English language center management system\English language center management system\bin\roslyn\Microsoft.VisualBasic.Core.targets
+D:\English language center management system\English language center management system\bin\roslyn\Microsoft.Win32.Primitives.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.AppContext.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Collections.Immutable.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Console.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Diagnostics.DiagnosticSource.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Diagnostics.FileVersionInfo.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Diagnostics.StackTrace.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Globalization.Calendars.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.IO.Compression.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.IO.Compression.ZipFile.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.IO.FileSystem.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.IO.FileSystem.Primitives.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Net.Http.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Net.Sockets.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Reflection.Metadata.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Runtime.InteropServices.RuntimeInformation.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Security.Cryptography.Algorithms.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Security.Cryptography.Encoding.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Security.Cryptography.Primitives.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Security.Cryptography.X509Certificates.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Text.Encoding.CodePages.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Threading.Tasks.Extensions.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.ValueTuple.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Xml.ReaderWriter.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Xml.XmlDocument.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Xml.XPath.dll
+D:\English language center management system\English language center management system\bin\roslyn\System.Xml.XPath.XDocument.dll
+D:\English language center management system\English language center management system\bin\roslyn\vbc.exe
+D:\English language center management system\English language center management system\bin\roslyn\vbc.exe.config
+D:\English language center management system\English language center management system\bin\roslyn\vbc.rsp
+D:\English language center management system\English language center management system\bin\roslyn\VBCSCompiler.exe
+D:\English language center management system\English language center management system\bin\roslyn\VBCSCompiler.exe.config
+D:\English language center management system\English language center management system\bin\Antlr3.Runtime.dll
+D:\English language center management system\English language center management system\bin\EntityFramework.dll
+D:\English language center management system\English language center management system\bin\EntityFramework.SqlServer.dll
+D:\English language center management system\English language center management system\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll
+D:\English language center management system\English language center management system\bin\Microsoft.Web.Infrastructure.dll
+D:\English language center management system\English language center management system\bin\Newtonsoft.Json.dll
+D:\English language center management system\English language center management system\bin\System.Web.Helpers.dll
+D:\English language center management system\English language center management system\bin\System.Web.Mvc.dll
+D:\English language center management system\English language center management system\bin\System.Web.Optimization.dll
+D:\English language center management system\English language center management system\bin\System.Web.Razor.dll
+D:\English language center management system\English language center management system\bin\System.Web.WebPages.Deployment.dll
+D:\English language center management system\English language center management system\bin\System.Web.WebPages.dll
+D:\English language center management system\English language center management system\bin\System.Web.WebPages.Razor.dll
+D:\English language center management system\English language center management system\bin\WebGrease.dll
+D:\English language center management system\English language center management system\bin\EntityFramework.xml
+D:\English language center management system\English language center management system\bin\EntityFramework.SqlServer.xml
+D:\English language center management system\English language center management system\bin\System.Web.Helpers.xml
+D:\English language center management system\English language center management system\bin\System.Web.Mvc.xml
+D:\English language center management system\English language center management system\bin\System.Web.Optimization.xml
+D:\English language center management system\English language center management system\bin\System.Web.Razor.xml
+D:\English language center management system\English language center management system\bin\System.Web.WebPages.xml
+D:\English language center management system\English language center management system\bin\System.Web.WebPages.Deployment.xml
+D:\English language center management system\English language center management system\bin\System.Web.WebPages.Razor.xml
+D:\English language center management system\English language center management system\bin\Newtonsoft.Json.xml
+D:\English language center management system\English language center management system\bin\Antlr3.Runtime.pdb
+D:\English language center management system\English language center management system\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.xml
+D:\English language center management system\English language center management system\obj\Debug\English language center management system.csproj.AssemblyReference.cache
+D:\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.InitialCreate.resources
+D:\English language center management system\English language center management system\obj\Debug\English language center management system.csproj.GenerateResource.cache
+D:\English language center management system\English language center management system\obj\Debug\English language center management system.csproj.CoreCompileInputs.cache
+D:\English language center management system\English language center management system\obj\Debug\English .75452363.Up2Date
+D:\English language center management system\English language center management system\obj\Debug\English language center management system.dll
+D:\English language center management system\English language center management system\obj\Debug\English language center management system.pdb
+D:\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.AddRoomTableAndCourseImageUrl.resources
+D:\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.AddAvatarAndProfileFields.resources
+D:\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.UpdateCourseModel.resources
+D:\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.UpdateClassScheduleAndStatus.resources
+D:\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.Notnull.resources
+D:\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.TeachersCertificate.resources
+D:\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.updatecomments.resources
+D:\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.fixcode.resources
+D:\English language center management system\English language center management system\English language center management system\bin\English language center management system.dll.config
+D:\English language center management system\English language center management system\English language center management system\bin\English language center management system.dll
+D:\English language center management system\English language center management system\English language center management system\bin\English language center management system.pdb
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\csc.exe
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\csc.exe.config
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\csc.rsp
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\csi.exe
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\csi.exe.config
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\csi.rsp
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\Microsoft.Build.Tasks.CodeAnalysis.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\Microsoft.CodeAnalysis.CSharp.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\Microsoft.CodeAnalysis.CSharp.Scripting.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\Microsoft.CodeAnalysis.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\Microsoft.CodeAnalysis.Scripting.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\Microsoft.CodeAnalysis.VisualBasic.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\Microsoft.CSharp.Core.targets
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\Microsoft.DiaSymReader.Native.amd64.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\Microsoft.DiaSymReader.Native.x86.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\Microsoft.Managed.Core.targets
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\Microsoft.VisualBasic.Core.targets
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\Microsoft.Win32.Primitives.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.AppContext.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Collections.Immutable.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Console.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Diagnostics.DiagnosticSource.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Diagnostics.FileVersionInfo.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Diagnostics.StackTrace.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Globalization.Calendars.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.IO.Compression.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.IO.Compression.ZipFile.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.IO.FileSystem.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.IO.FileSystem.Primitives.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Net.Http.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Net.Sockets.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Reflection.Metadata.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Runtime.InteropServices.RuntimeInformation.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Security.Cryptography.Algorithms.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Security.Cryptography.Encoding.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Security.Cryptography.Primitives.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Security.Cryptography.X509Certificates.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Text.Encoding.CodePages.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Threading.Tasks.Extensions.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.ValueTuple.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Xml.ReaderWriter.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Xml.XmlDocument.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Xml.XPath.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\System.Xml.XPath.XDocument.dll
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\vbc.exe
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\vbc.exe.config
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\vbc.rsp
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\VBCSCompiler.exe
+D:\English language center management system\English language center management system\English language center management system\bin\roslyn\VBCSCompiler.exe.config
+D:\English language center management system\English language center management system\English language center management system\bin\Antlr3.Runtime.dll
+D:\English language center management system\English language center management system\English language center management system\bin\EntityFramework.dll
+D:\English language center management system\English language center management system\English language center management system\bin\EntityFramework.SqlServer.dll
+D:\English language center management system\English language center management system\English language center management system\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll
+D:\English language center management system\English language center management system\English language center management system\bin\Microsoft.Web.Infrastructure.dll
+D:\English language center management system\English language center management system\English language center management system\bin\Newtonsoft.Json.dll
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.Helpers.dll
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.Mvc.dll
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.Optimization.dll
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.Razor.dll
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.WebPages.Deployment.dll
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.WebPages.dll
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.WebPages.Razor.dll
+D:\English language center management system\English language center management system\English language center management system\bin\WebGrease.dll
+D:\English language center management system\English language center management system\English language center management system\bin\EntityFramework.xml
+D:\English language center management system\English language center management system\English language center management system\bin\EntityFramework.SqlServer.xml
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.Helpers.xml
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.Mvc.xml
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.Optimization.xml
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.Razor.xml
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.WebPages.xml
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.WebPages.Deployment.xml
+D:\English language center management system\English language center management system\English language center management system\bin\System.Web.WebPages.Razor.xml
+D:\English language center management system\English language center management system\English language center management system\bin\Newtonsoft.Json.xml
+D:\English language center management system\English language center management system\English language center management system\bin\Antlr3.Runtime.pdb
+D:\English language center management system\English language center management system\English language center management system\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.xml
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English language center management system.csproj.AssemblyReference.cache
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.InitialCreate.resources
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.AddRoomTableAndCourseImageUrl.resources
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.AddAvatarAndProfileFields.resources
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.UpdateCourseModel.resources
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.UpdateClassScheduleAndStatus.resources
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.Notnull.resources
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.TeachersCertificate.resources
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.updatecomments.resources
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English_language_center_management_system.Migrations.fixcode.resources
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English language center management system.csproj.GenerateResource.cache
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English language center management system.csproj.CoreCompileInputs.cache
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English .75452363.Up2Date
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English language center management system.dll
+D:\English language center management system\English language center management system\English language center management system\obj\Debug\English language center management system.pdb

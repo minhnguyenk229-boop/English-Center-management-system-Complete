@@ -1,0 +1,814 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Home.TeacherDashboardViewModel
+
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using English_language_center_management_system.Models
+
+@{
+    //Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+    ViewBag.Title = "Dashboard Giáo viên";
+
+    var teacherName =
+        Model.TeacherInfo != null &&
+        !string.IsNullOrWhiteSpace(Model.TeacherInfo.FullName)
+        ? Model.TeacherInfo.FullName
+        : "Giáo viên";
+
+    var teacherInitial = teacherName.Substring(0, 1).ToUpper();
+    string dashboardTeacherAvatar = null;
+
+    int dashboardTeacherId;
+    if (int.TryParse(Convert.ToString(Session["UserId"]), out dashboardTeacherId))
+    {
+        using (var db = new EnglishCenterDbContext())
+        {
+            dashboardTeacherAvatar = db.TeacherProfiles
+                .Where(p => p.UserId == dashboardTeacherId)
+                .Select(p => p.AvatarUrl)
+                .FirstOrDefault();
+        }
+    }
+
+    string dashboardTeacherAvatarSrc =
+        string.IsNullOrWhiteSpace(dashboardTeacherAvatar)
+            ? null
+            : Url.Content(
+                dashboardTeacherAvatar.StartsWith("~/")
+                    ? dashboardTeacherAvatar
+                    : "~/" + dashboardTeacherAvatar.TrimStart('/')
+              );
+
+    var classes = Model.AssignedClasses ?? new List<Class>();
+
+    var sessions = Model.UpcomingTeachingSessions
+        ?? new List<ClassSession>();
+
+    var pendingSubmissions = Model.PendingSubmissions
+        ?? new List<Submission>();
+
+    var assignments = Model.UpcomingAssignments
+        ?? new List<Assignment>();
+
+    var specialization =
+        Model.Profile != null &&
+        !string.IsNullOrWhiteSpace(Model.Profile.Specialization)
+        ? Model.Profile.Specialization
+        : "Giáo viên English Center";
+}
+
+<div class="teacher-portal" id="teacher-dashboard">
+
+    @* SIDEBAR *@
+    <aside class="teacher-sidebar">
+
+        <a class="teacher-brand"
+           href="@Url.Action("TeacherDashboard", "Home")">
+
+            <span class="teacher-brand-mark">
+                <img src="@Url.Content("~/Uploads/Images/logo.png")"
+                     alt="Logo Trung tâm Anh ngữ"
+                     class="dashboard-brand-image" />
+            </span>
+
+            <span class="teacher-brand-text">
+                TRUNG TÂM ANH NGỮ
+                <small>CỔNG GIÁO VIÊN</small>
+            </span>
+
+        </a>
+
+        <div class="teacher-sidebar-caption">
+            KHÔNG GIAN GIẢNG DẠY
+        </div>
+
+        <nav class="teacher-side-nav">
+
+            <a href="#teacher-dashboard"
+               class="teacher-nav-link is-active">
+                <span class="teacher-nav-icon">⌂</span>
+                Dashboard
+            </a>
+
+            <a href="@Url.Action("TeacherTeachingSchedule", "ClassSessions")#teacher-weekly-schedule"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">▦</span>
+                Lịch dạy + Lớp phụ trách
+            </a>
+
+            <a href="@Url.Action("TeacherAttendance", "Attendances")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">✓</span>
+                Điểm danh
+            </a>
+
+            <a href="@Url.Action("TeacherGrades", "AssessmentScores")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">A+</span>
+                Nhập điểm & đánh giá
+            </a>
+
+            <a href="@Url.Action("TeacherSubmissions", "Assignments")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">📄</span>
+                Bài nộp học viên
+            </a>
+
+            <a href="@Url.Action("TeacherClassResources", "CourseMaterials")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">📚</span>
+                Bài tập & tài liệu
+            </a>
+
+            <a href="@Url.Action("TeacherProfile", "Profiles")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">◎</span>
+                Hồ sơ cá nhân
+            </a>
+
+        </nav>
+
+        <div class="teacher-sidebar-bottom">
+
+            <div class="teacher-support-card">
+
+                <span class="teacher-support-icon">?</span>
+
+                <strong>Cần hỗ trợ?</strong>
+
+                <p>
+                    Liên hệ trung tâm để được hỗ trợ
+                    về lịch dạy hoặc lớp học.
+                </p>
+
+                @Html.ActionLink(
+                    "Liên hệ trung tâm →",
+                    "Contact",
+                    "Home",
+                    null,
+                    new { @class = "teacher-support-link" }
+                )
+
+            </div>
+
+            @Html.ActionLink(
+                "↪ Đăng xuất",
+                "Logout",
+                "Auth",
+                null,
+                new { @class = "teacher-logout-link" }
+            )
+
+        </div>
+
+    </aside>
+
+    @* NỘI DUNG CHÍNH *@
+<div class="teacher-main">
+
+    @* TOP BAR *@
+    <header class="teacher-topbar">
+
+        <div class="teacher-topbar-title">
+            <span>CỔNG GIÁO VIÊN</span>
+            <strong>Dashboard</strong>
+        </div>
+
+        <div class="teacher-topbar-user">
+
+            <span class="teacher-avatar-small">
+                @if (!string.IsNullOrWhiteSpace(dashboardTeacherAvatarSrc))
+                {
+                    <img src="@dashboardTeacherAvatarSrc"
+                         alt="Ảnh đại diện giáo viên"
+                         class="dashboard-avatar-image" />
+                }
+                else
+                {
+                    @teacherInitial
+                }
+            </span>
+
+            <span class="teacher-topbar-user-info">
+                <strong>@teacherName</strong>
+                <small>Giáo viên</small>
+            </span>
+
+        </div>
+
+    </header>
+
+    <main class="teacher-content">
+
+        <div class="teacher-breadcrumb">
+            Trang chủ <span>/</span> Cổng giáo viên
+        </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @* LỜI CHÀO *@
+        <section class="teacher-welcome">
+
+            <div class="teacher-avatar-large">
+                @if (!string.IsNullOrWhiteSpace(dashboardTeacherAvatarSrc))
+                {
+                    <img src="@dashboardTeacherAvatarSrc"
+                         alt="Ảnh đại diện giáo viên"
+                         class="dashboard-avatar-image" />
+                }
+                else
+                {
+                    @teacherInitial
+                }
+            </div>
+
+            <div class="teacher-welcome-content">
+
+                <span class="teacher-welcome-kicker">
+                    TEACHING WORKSPACE
+                </span>
+
+                <h1>Xin chào, @teacherName!</h1>
+
+                <p>
+                    Chào mừng bạn quay lại. Hãy theo dõi lớp phụ trách,
+                    lịch giảng dạy và những bài nộp cần đánh giá.
+                </p>
+
+                <div class="teacher-welcome-tags">
+
+                    <span>@specialization</span>
+
+                    <span>
+                        @Model.TotalAssignedClasses lớp phụ trách
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        @* THỐNG KÊ NHANH *@
+        <section class="teacher-stat-grid">
+
+            <article class="teacher-stat-card">
+
+                <div class="teacher-stat-top">
+                    <span class="teacher-stat-icon teacher-icon-red">
+                        ▣
+                    </span>
+
+                    <span class="teacher-stat-label">
+                        LỚP PHỤ TRÁCH
+                    </span>
+                </div>
+
+                <strong class="teacher-stat-number">
+                    @Model.TotalAssignedClasses
+                </strong>
+
+                <span class="teacher-stat-description">
+                    Tổng số lớp được phân công
+                </span>
+
+            </article>
+
+            <article class="teacher-stat-card">
+
+                <div class="teacher-stat-top">
+                    <span class="teacher-stat-icon teacher-icon-blue">
+                        ◎
+                    </span>
+
+                    <span class="teacher-stat-label">
+                        HỌC VIÊN
+                    </span>
+                </div>
+
+                <strong class="teacher-stat-number">
+                    @Model.TotalStudentsTaught
+                </strong>
+
+                <span class="teacher-stat-description">
+                    Học viên thuộc các lớp phụ trách
+                </span>
+
+            </article>
+
+            <article class="teacher-stat-card">
+
+                <div class="teacher-stat-top">
+                    <span class="teacher-stat-icon teacher-icon-purple">
+                        ▦
+                    </span>
+
+                    <span class="teacher-stat-label">
+                        BUỔI DẠY SẮP TỚI
+                    </span>
+                </div>
+
+                <strong class="teacher-stat-number">
+                    @sessions.Count
+                </strong>
+
+                <span class="teacher-stat-description">
+                    Các buổi sắp tới trong danh sách hiển thị
+                </span>
+
+            </article>
+
+            <article class="teacher-stat-card">
+
+                <div class="teacher-stat-top">
+                    <span class="teacher-stat-icon teacher-icon-orange">
+                        ✓
+                    </span>
+
+                    <span class="teacher-stat-label">
+                        BÀI NỘP CHỜ CHẤM
+                    </span>
+                </div>
+
+                <strong class="teacher-stat-number">
+                    @Model.PendingSubmissionsCount
+                </strong>
+
+                <span class="teacher-stat-description">
+                    Bài nộp chưa có điểm
+                </span>
+
+            </article>
+
+        </section>
+
+        @* CÁC KHUNG NỘI DUNG *@
+        <div class="teacher-dashboard-grid">
+
+            @* LỚP PHỤ TRÁCH *@
+            <section class="teacher-panel"
+                     id="teacher-classes">
+
+                <div class="teacher-panel-heading">
+
+                    <div>
+                        <span class="teacher-panel-eyebrow">
+                            MY CLASSES
+                        </span>
+
+                        <h2>Lớp học phụ trách</h2>
+
+                        <p>
+                            Danh sách lớp được phân công cho bạn.
+                        </p>
+                    </div>
+
+                    <span class="teacher-panel-heading-icon">▣</span>
+
+                </div>
+
+                @if (classes.Any())
+                {
+                    <div class="teacher-class-grid">
+
+                        @foreach (var classroom in classes)
+                        {
+                            var courseName =
+                                classroom.Course != null
+                                ? classroom.Course.CourseName
+                                : "Khóa học";
+
+                            <article class="teacher-class-card">
+
+                                <div class="teacher-class-top">
+
+                                    <span class="teacher-class-icon">
+                                        EC
+                                    </span>
+
+                                    <span class="teacher-class-status">
+                                        @classroom.Status
+                                    </span>
+
+                                </div>
+
+                                <h3>@classroom.ClassName</h3>
+
+                                <p class="teacher-class-course">
+                                    @courseName
+                                </p>
+
+                                <div class="teacher-class-detail">
+
+                                    <span>Phòng học</span>
+
+                                    <strong>
+                                        @(classroom.Room != null
+                                          && !string.IsNullOrWhiteSpace(classroom.Room.RoomName)
+                                          ? classroom.Room.RoomName
+                                             : "Chưa xếp phòng")
+                                    </strong>
+
+                                </div>
+
+                                <div class="teacher-class-detail">
+
+                                    <span>Sĩ số tối đa</span>
+
+                                    <strong>
+                                        @classroom.MaxCapacity học viên
+                                    </strong>
+
+                                </div>
+
+                                <div class="teacher-class-schedule">
+
+                                    <span>▦</span>
+
+                                    <p>
+                                        @(string.IsNullOrWhiteSpace(
+                                                classroom.ScheduleDescription)
+                                                ? "Lịch học chưa cập nhật"
+                                                : classroom.ScheduleDescription)
+                                    </p>
+
+                                </div>
+
+                            </article>
+                        }
+
+                    </div>
+                }
+                else
+                {
+                    <div class="teacher-empty-state">
+
+                        <div class="teacher-empty-icon">▣</div>
+
+                        <h3>Bạn chưa được phân công lớp học</h3>
+
+                        <p>
+                            Khi quản trị viên phân công lớp,
+                            thông tin sẽ xuất hiện tại đây.
+                        </p>
+
+                    </div>
+                }
+
+            </section>
+
+            @* LỊCH DẠY SẮP TỚI *@
+            <section class="teacher-panel"
+                     id="teacher-schedule">
+
+                <div class="teacher-panel-heading">
+
+                    <div>
+                        <span class="teacher-panel-eyebrow">
+                            UPCOMING CLASSES
+                        </span>
+
+                        <h2>Lịch dạy sắp tới</h2>
+
+                        <p>
+                            Tối đa 5 buổi gần nhất trong hệ thống.
+                        </p>
+                    </div>
+
+                    <span class="teacher-panel-heading-icon">◷</span>
+
+                </div>
+
+                @if (sessions.Any())
+                {
+                    <div class="teacher-session-list">
+
+                        @foreach (var session in sessions)
+                        {
+                            var sessionClass = session.Class;
+
+                            var sessionCourse =
+                                sessionClass != null
+                                ? sessionClass.Course
+                                : null;
+
+                            var sessionTitle =
+                                sessionCourse != null
+                                ? sessionCourse.CourseName
+                                : sessionClass != null
+                                    ? sessionClass.ClassName
+                                    : "Buổi giảng dạy";
+
+                            var roomName = !string.IsNullOrWhiteSpace(session.Room?.RoomName) ? session.Room.RoomName : !string.IsNullOrWhiteSpace(sessionClass?.Room?.RoomName) ? sessionClass.Room.RoomName
+: "Chưa cập nhật";
+
+        <article class="teacher-session-item">
+
+            <div class="teacher-session-date">
+
+                <strong>
+                    @session.SessionDate.ToString("dd")
+                </strong>
+
+                <span>
+                    Tháng @session.SessionDate.ToString("MM")
+                </span>
+
+            </div>
+
+            <div class="teacher-session-info">
+
+                <strong>@sessionTitle</strong>
+
+                <span>
+                    @session.StartTime.ToString(@"hh\:mm")
+                    –
+                    @session.EndTime.ToString(@"hh\:mm")
+                </span>
+
+                <small>
+                    Lớp:
+                    @(sessionClass != null
+                                                ? sessionClass.ClassName
+                                                : "Chưa cập nhật")
+                    · Phòng: @roomName
+                </small>
+
+            </div>
+
+        </article>
+    }
+
+                    </div>
+                }
+                else
+                {
+                    <div class="teacher-empty-state teacher-empty-state-compact">
+
+                        <div class="teacher-empty-icon">◷</div>
+
+                        <p>
+                            Chưa có buổi dạy sắp tới
+                            trong các lớp được phân công.
+                        </p>
+
+                    </div>
+                }
+
+            </section>
+
+            @* BÀI TẬP SẮP ĐẾN HẠN *@
+            <section class="teacher-panel"
+                     id="teacher-assignments">
+
+                <div class="teacher-panel-heading">
+
+                    <div>
+                        <span class="teacher-panel-eyebrow">
+                            ASSIGNMENT DEADLINES
+                        </span>
+
+                        <h2>Bài tập sắp đến hạn</h2>
+
+                        <p>
+                            Các bài tập chưa đến hạn thuộc lớp của bạn.
+                        </p>
+                    </div>
+
+                    <span class="teacher-panel-heading-icon">▤</span>
+
+                </div>
+
+                @if (assignments.Any())
+                {
+                    <div class="teacher-assignment-list">
+
+                        @foreach (var assignment in assignments)
+                        {
+                            <article class="teacher-assignment-item">
+
+                                <span class="teacher-assignment-icon">
+                                    ▤
+                                </span>
+
+                                <div class="teacher-assignment-content">
+
+                                    <strong>@assignment.Title</strong>
+
+                                    <p>
+                                        Lớp:
+                                        @(assignment.Class != null
+                                                ? assignment.Class.ClassName
+                                                : "Chưa cập nhật")
+                                    </p>
+
+                                    <small>
+                                        Hạn nộp:
+                                        @assignment.DueDate.ToString("dd/MM/yyyy HH:mm")
+                                    </small>
+
+                                </div>
+
+                            </article>
+                        }
+
+                    </div>
+                }
+                else
+                {
+                    <div class="teacher-empty-state teacher-empty-state-compact">
+                        <div class="teacher-empty-icon">▤</div>
+
+                        <p>
+                            Không có bài tập nào sắp đến hạn
+                            trong các lớp của bạn.
+                        </p>
+                    </div>
+                }
+
+            </section>
+
+            @* BÀI NỘP CẦN CHẤM *@
+            <section class="teacher-panel"
+                     id="teacher-submissions">
+
+                <div class="teacher-panel-heading">
+
+                    <div>
+                        <span class="teacher-panel-eyebrow">
+                            SUBMISSIONS TO REVIEW
+                        </span>
+
+                        <h2>Bài nộp cần chấm</h2>
+
+                        <p>
+                            Tối đa 5 bài nộp chưa có điểm.
+                        </p>
+                    </div>
+
+                    <span class="teacher-pending-badge">
+                        @Model.PendingSubmissionsCount
+                    </span>
+
+                </div>
+
+                @if (pendingSubmissions.Any())
+                {
+                    <div class="teacher-submission-list">
+
+                        @foreach (var submission in pendingSubmissions)
+                        {
+                            <article class="teacher-submission-item">
+
+                                <div class="teacher-submission-avatar">
+                                    @(submission.Student != null &&
+                                          !string.IsNullOrWhiteSpace(
+                                              submission.Student.FullName)
+                                            ? submission.Student.FullName
+                                                .Substring(0, 1).ToUpper()
+                                            : "HV")
+                                </div>
+
+                                <div class="teacher-submission-content">
+
+                                    <strong>
+                                        @(submission.Student != null
+                                                ? submission.Student.FullName
+                                                : "Học viên")
+                                    </strong>
+
+                                    <p>
+                                        @(
+                                                submission.Assignment != null
+                                                    ? submission.Assignment.Title
+                                                    : "Bài tập"
+                                            )
+                                    </p>
+
+                                    <small>
+                                        Nộp lúc:
+                                        @submission.SubmittedAt.ToString(
+                                            "dd/MM/yyyy HH:mm")
+                                    </small>
+
+                                    @if (!string.IsNullOrWhiteSpace(
+                                        submission.FileUrl))
+                                    {
+                                        Uri submittedUri;
+
+                                        bool isHttpSubmission =
+                                            Uri.TryCreate(
+                                                submission.FileUrl,
+                                                UriKind.Absolute,
+                                                out submittedUri) &&
+                                            (
+                                                submittedUri.Scheme ==
+                                                    Uri.UriSchemeHttp ||
+                                                submittedUri.Scheme ==
+                                                    Uri.UriSchemeHttps
+                                            );
+
+                                        if (isHttpSubmission)
+                                        {
+                                            <a href="@submission.FileUrl"
+                                               target="_blank"
+                                               rel="noopener noreferrer"
+                                               class="teacher-submission-link">
+                                                Mở bài nộp ↗
+                                            </a>
+                                        }
+                                    }
+
+                                </div>
+
+                                <span class="teacher-review-status">
+                                    Chờ chấm
+                                </span>
+
+                            </article>
+                        }
+
+                    </div>
+                }
+                else
+                {
+                    <div class="teacher-empty-state teacher-empty-state-compact">
+
+                        <div class="teacher-empty-icon">✓</div>
+
+                        <p>
+                            Hiện không có bài nộp nào đang chờ chấm điểm.
+                        </p>
+
+                    </div>
+                }
+
+                @if (Model.PendingSubmissionsCount > pendingSubmissions.Count)
+                {
+                    <p class="teacher-more-note">
+                        Còn
+                        @(Model.PendingSubmissionsCount -
+                              pendingSubmissions.Count)
+                        bài nộp khác chưa được chấm.
+                    </p>
+                }
+
+            </section>
+
+        </div>
+
+    </main>
+
+    <footer class="teacher-footer">
+        <span>© @DateTime.Now.Year English Center</span>
+        <span>Teacher Information System</span>
+    </footer>
+    <style>
+        /* Logo hiệp sĩ trong trang Tổng quan */
+        .dashboard-brand-image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .student-brand-mark:has(.dashboard-brand-image),
+        .teacher-brand-mark:has(.dashboard-brand-image) {
+            background: transparent;
+            box-shadow: none;
+        }
+
+        /* Avatar đã cập nhật hoặc chữ cái mặc định */
+        .student-avatar-small,
+        .student-avatar-large,
+        .teacher-avatar-small,
+        .teacher-avatar-large {
+            overflow: hidden;
+            border-radius: 50%;
+        }
+
+        .dashboard-avatar-image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        </style>
+
+</div>
+
+</div>

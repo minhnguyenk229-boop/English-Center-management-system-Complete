@@ -1,0 +1,122 @@
+﻿@model English_language_center_management_system.Models.Class
+@{
+    ViewBag.Title = "Xác nhận xóa lớp học";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    string statusText = "Không xác định";
+    string statusClass = "status-default";
+    switch (Model.Status)
+    {
+        case "Mở đăng ký":
+        case "Open":
+            statusText = "Mở đăng ký";
+            statusClass = "status-open";
+            break;
+        case "Đã đủ sĩ số":
+        case "Full":
+            statusText = "Đã đủ sĩ số";
+            statusClass = "status-full";
+            break;
+        case "Đang học":
+        case "Studying":
+            statusText = "Đang học";
+            statusClass = "status-studying";
+            break;
+        case "Đã hoàn thành":
+        case "Completed":
+            statusText = "Đã hoàn thành";
+            statusClass = "status-completed";
+            break;
+        case "Đã đóng":
+        case "Closed":
+            statusText = "Đã đóng";
+            statusClass = "status-closed";
+            break;
+    }
+}
+
+<div class="admin-class-delete-page">
+    <div class="admin-class-delete-heading">
+        <div>
+            <div class="admin-class-delete-eyebrow">QUẢN LÝ ĐÀO TẠO</div>
+            <h2>Xác nhận xóa lớp học</h2>
+            <p>Kiểm tra thông tin lớp trước khi thực hiện thao tác.</p>
+        </div>
+        <div class="admin-class-delete-heading-icon">
+            <i class="glyphicon glyphicon-trash"></i>
+        </div>
+    </div>
+
+    <div class="admin-class-delete-card">
+        <div class="admin-class-delete-warning">
+            <div class="admin-class-delete-warning-icon">
+                <i class="glyphicon glyphicon-exclamation-sign"></i>
+            </div>
+            <div>
+                <h3>Bạn đang chuẩn bị xóa lớp học này</h3>
+                <p>Hãy kiểm tra thông tin bên dưới trước khi xác nhận. Thao tác xóa có thể ảnh hưởng đến dữ liệu lớp học.</p>
+            </div>
+        </div>
+
+        <div class="admin-class-delete-class-header">
+            <div class="admin-class-delete-class-icon">
+                <i class="glyphicon glyphicon-education"></i>
+            </div>
+            <div class="admin-class-delete-class-info">
+                <span class="admin-class-delete-code">MÃ LỚP #@Model.Id</span>
+                <h3>@Model.ClassName</h3>
+                <p>
+                    <i class="glyphicon glyphicon-book"></i>
+                    @(Model.Course != null ? Model.Course.CourseName : "Chưa có khóa học")
+                </p>
+            </div>
+            <span class="admin-class-delete-status @statusClass">@statusText</span>
+        </div>
+
+        <div class="admin-class-delete-details">
+            <div class="admin-class-delete-detail">
+                <span>Khóa học</span>
+                <strong>@(Model.Course != null ? Model.Course.CourseName : "Chưa có thông tin")</strong>
+            </div>
+            <div class="admin-class-delete-detail">
+                <span>Giáo viên phụ trách</span>
+                <strong>@(Model.Teacher != null ? (String.IsNullOrWhiteSpace(Model.Teacher.FullName) ? Model.Teacher.Username : Model.Teacher.FullName) : "Chưa phân công")</strong>
+            </div>
+            <div class="admin-class-delete-detail">
+                <span>Phòng học</span>
+                <strong>@(Model.Room != null && !String.IsNullOrWhiteSpace(Model.Room.RoomName) ? Model.Room.RoomName : "Chưa xếp phòng")</strong>
+            </div>
+            <div class="admin-class-delete-detail">
+                <span>Sĩ số tối đa</span>
+                <strong>@Model.MaxCapacity học viên</strong>
+            </div>
+            <div class="admin-class-delete-detail admin-class-delete-detail-full">
+                <span>Lịch học</span>
+                <strong>@(String.IsNullOrWhiteSpace(Model.ScheduleDescription) ? "Chưa cập nhật lịch học" : Model.ScheduleDescription)</strong>
+            </div>
+        </div>
+
+        <div class="admin-class-delete-important">
+            <i class="glyphicon glyphicon-info-sign"></i>
+            <div>
+                <strong>Lưu ý quan trọng</strong>
+                <p>
+                    Hệ thống không cho phép xóa lớp đã có học viên ghi danh.
+                    Nếu lớp đã có ghi danh, thao tác sẽ bị từ chối và bạn sẽ được chuyển về danh sách lớp học.
+                </p>
+            </div>
+        </div>
+
+        @using (Html.BeginForm("Delete", "Classes", new { id = Model.Id }, FormMethod.Post, new { @class = "admin-class-delete-form" }))
+        {
+            @Html.AntiForgeryToken()
+            <div class="admin-class-delete-actions">
+                <a href="@Url.Action("Index", "Classes")" class="admin-class-delete-btn admin-class-delete-cancel">
+                    <i class="glyphicon glyphicon-arrow-left"></i> Hủy và quay lại
+                </a>
+                <button type="submit" class="admin-class-delete-btn admin-class-delete-submit" onclick="return confirm('Bạn có chắc chắn muốn xóa lớp học này không?');">
+                    <i class="glyphicon glyphicon-trash"></i> Xác nhận xóa lớp
+                </button>
+            </div>
+        }
+    </div>
+</div>

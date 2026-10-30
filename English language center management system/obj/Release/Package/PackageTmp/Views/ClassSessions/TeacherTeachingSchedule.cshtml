@@ -1,0 +1,1586 @@
+﻿@model English_language_center_management_system.Models.ViewModels.ClassSessions.TeacherTeachingScheduleViewModel
+@using System
+@using System.Linq
+@using System.Collections.Generic
+@using English_language_center_management_system.Models
+
+@{
+    ViewBag.Title = "Lịch giảng dạy";
+
+    var sessions = Model != null && Model.Sessions != null
+        ? Model.Sessions
+        : new List<ClassSession>();
+
+    var assignedClasses = Model != null && Model.AssignedClasses != null
+        ? Model.AssignedClasses
+        : new List<English_language_center_management_system.Models.Class>();
+
+    var enrolledCounts = Model != null && Model.EnrolledCounts != null
+        ? Model.EnrolledCounts
+        : new Dictionary<int, int>();
+
+    DateTime weekStart = Model != null && Model.WeekStart != default(DateTime)
+        ? Model.WeekStart.Date
+        : DateTime.Today;
+
+    DateTime weekEnd = Model != null && Model.WeekEnd != default(DateTime)
+        ? Model.WeekEnd.Date
+        : weekStart.AddDays(6);
+
+    int weekOffset = Model != null ? Model.WeekOffset : 0;
+
+    string[] dayNames = {
+        "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5",
+        "Thứ 6", "Thứ 7", "Chủ Nhật"
+    };
+
+    string teacherName =
+        Session["FullName"] as string ??
+        Session["Username"] as string ??
+        "Giáo viên";
+
+    string teacherInitial = string.IsNullOrWhiteSpace(teacherName)
+        ? "G"
+        : teacherName.Substring(0, 1).ToUpper();
+
+    int totalSessions = sessions.Count;
+    int attendedSessions = sessions.Count(s => s.Attendances != null && s.Attendances.Any());
+    int pendingSessions = Math.Max(0, totalSessions - attendedSessions);
+
+    // Chỉ hiển thị các khung giờ liên quan đến lịch học thực tế để giảm chiều cao bảng.
+    // Nếu tuần chưa có lịch, vẫn hiện khung mặc định 07:00–22:00.
+    int calendarStartHour = 7;
+    int calendarEndHourExclusive = 22;
+
+    if (sessions.Any())
+    {
+        int earliestStartHour = (int)Math.Floor(
+            sessions.Min(s => s.StartTime.TotalMinutes) / 60.0
+        );
+
+        double latestEndMinutes = sessions.Max(s =>
+            Math.Max(
+                s.EndTime.TotalMinutes,
+                s.StartTime.TotalMinutes + 1
+            )
+        );
+
+        int latestEndHour = (int)Math.Ceiling(latestEndMinutes / 60.0);
+
+        calendarStartHour = Math.Max(0, Math.Min(23, earliestStartHour));
+        calendarEndHourExclusive = Math.Min(
+            24,
+            Math.Max(calendarStartHour + 1, latestEndHour)
+        );
+    }
+
+    string selectedClassIdQuery = Request.QueryString["classId"] ?? "";
+}
+
+<style>
+    /* ==========================================
+       TEACHER TIMETABLE - BẢN GỌN
+       Giữ đủ thông tin, giảm chiều rộng và chiều cao ma trận
+       ========================================== */
+
+    .teacher-portal .tw-schedule-page {
+        min-width: 0;
+        color: #202938;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .tw-schedule-page *,
+    .tw-schedule-page *::before,
+    .tw-schedule-page *::after {
+        box-sizing: border-box;
+    }
+
+    .tw-schedule-page a {
+        transition: background .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    /* Tiêu đề trang */
+    .tw-page-heading {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 16px;
+        padding: 17px 20px;
+        border: 1px solid #e8ebf1;
+        border-radius: 13px;
+        background: radial-gradient(circle at 100% 0, rgba(198,40,40,.055), transparent 34%), #fff;
+        box-shadow: 0 4px 14px rgba(28,39,60,.03);
+    }
+
+    .tw-page-heading-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        flex: 0 0 48px;
+        border: 4px solid #fff2f2;
+        border-radius: 13px;
+        background: linear-gradient(135deg, #fbe3e3, #f4caca);
+        color: #aa252a;
+        font-size: 19px;
+    }
+
+    .tw-page-heading-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tw-page-eyebrow {
+        display: block;
+        margin-bottom: 4px;
+        color: #c62828;
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: 1.1px;
+    }
+
+    .tw-page-heading h1 {
+        margin: 0 0 4px;
+        color: #202938;
+        font-size: clamp(20px, 1.8vw, 25px);
+        font-weight: 850;
+        line-height: 1.35;
+    }
+
+    .tw-page-heading p {
+        margin: 0;
+        color: #737d8e;
+        font-size: 11.5px;
+        line-height: 1.65;
+    }
+
+    .tw-heading-actions {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .tw-heading-date {
+        display: block;
+        color: #8a93a3;
+        font-size: 10.5px;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    /* Thống kê */
+    .tw-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 11px;
+        margin-bottom: 16px;
+    }
+
+    .tw-stat-card {
+        min-width: 0;
+        padding: 14px 15px;
+        border: 1px solid #e7eaf0;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(28,39,60,.025);
+    }
+
+    .tw-stat-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .tw-stat-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        flex-shrink: 0;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .tw-icon-red {
+        background: #fff0f0;
+        color: #c62828;
+    }
+
+    .tw-icon-green {
+        background: #e9f8ef;
+        color: #198754;
+    }
+
+    .tw-icon-orange {
+        background: #fff5e8;
+        color: #bf7516;
+    }
+
+    .tw-stat-label {
+        color: #7b8495;
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: .25px;
+        line-height: 1.5;
+    }
+
+    .tw-stat-number {
+        display: block;
+        margin-bottom: 4px;
+        color: #202938;
+        font-size: 23px;
+        line-height: 1.2;
+        font-weight: 850;
+    }
+
+    .tw-stat-description {
+        display: block;
+        color: #8a93a3;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    /* Bộ lọc và điều hướng */
+    .tw-toolbar {
+        margin-bottom: 15px;
+        padding: 14px 16px;
+        border: 1px solid #e7eaf0;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(28,39,60,.025);
+    }
+
+    .tw-toolbar-top {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .tw-filter {
+        flex: 1 1 240px;
+        min-width: 0;
+    }
+
+        .tw-filter label {
+            display: block;
+            margin-bottom: 6px;
+            color: #344054;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+            .tw-filter label .glyphicon {
+                margin-right: 5px;
+                color: #c62828;
+            }
+
+        .tw-filter select {
+            display: block;
+            width: 100%;
+            max-width: 470px;
+            height: 37px;
+            padding: 7px 10px;
+            border: 1px solid #dfe3ea;
+            border-radius: 7px;
+            background: #fff;
+            color: #344054;
+            font-family: inherit;
+            font-size: 11px;
+            outline: none;
+        }
+
+            .tw-filter select:focus {
+                border-color: #c62828;
+                box-shadow: 0 0 0 3px rgba(198,40,40,.08);
+            }
+
+    .tw-filter-help {
+        margin: 5px 0 0;
+        color: #929aaa;
+        font-size: 10px;
+        line-height: 1.55;
+    }
+
+    .tw-navigation {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .tw-nav-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        min-height: 33px;
+        padding: 7px 9px;
+        border: 1px solid #e3e7ee;
+        border-radius: 7px;
+        background: #fff;
+        color: #596273;
+        font-size: 10px;
+        font-weight: 800;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+        .tw-nav-button:hover, .tw-nav-button:focus {
+            border-color: #efc5c5;
+            background: #fff4f4;
+            color: #b42329;
+            text-decoration: none;
+        }
+
+    .tw-nav-button-current {
+        border-color: #f0d0d0;
+        background: #fff0f0;
+        color: #b42329;
+    }
+
+    .tw-toolbar-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-top: 11px;
+        padding-top: 10px;
+        border-top: 1px solid #eff1f5;
+    }
+
+    .tw-week-range {
+        color: #596273;
+        font-size: 10.5px;
+        font-weight: 750;
+        line-height: 1.7;
+    }
+
+        .tw-week-range .glyphicon {
+            margin-right: 5px;
+            color: #c62828;
+        }
+
+    .tw-time-jumps {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .tw-jump-label {
+        color: #929aaa;
+        font-size: 10px;
+        font-weight: 750;
+    }
+
+    .tw-jump-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        min-height: 28px;
+        padding: 5px 7px;
+        border: 1px solid #e3e7ee;
+        border-radius: 6px;
+        background: #f9fafc;
+        color: #596273;
+        font-size: 9.5px;
+        font-weight: 750;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+        .tw-jump-button:hover, .tw-jump-button:focus {
+            border-color: #efc5c5;
+            background: #fff4f4;
+            color: #b42329;
+            text-decoration: none;
+        }
+
+    /* Khung thời khóa biểu */
+    .tw-calendar-panel {
+        min-width: 0;
+        padding: 15px;
+        border: 1px solid #e7eaf0;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(28,39,60,.025);
+        scroll-margin-top: 90px;
+    }
+
+    .tw-calendar-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 11px;
+    }
+
+        .tw-calendar-heading h2 {
+            margin: 0 0 4px;
+            color: #202938;
+            font-size: 15px;
+            font-weight: 850;
+            line-height: 1.45;
+        }
+
+            .tw-calendar-heading h2 .glyphicon {
+                margin-right: 5px;
+                color: #c62828;
+            }
+
+        .tw-calendar-heading p {
+            margin: 0;
+            color: #929aaa;
+            font-size: 10.5px;
+            line-height: 1.65;
+        }
+
+    .tw-record-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 9px;
+        border: 1px solid #f0d0d0;
+        border-radius: 18px;
+        background: #fff5f5;
+        color: #b42329;
+        font-size: 10px;
+        font-weight: 850;
+        white-space: nowrap;
+    }
+
+    .tw-table-scroll {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        border-radius: 8px;
+        scrollbar-width: thin;
+        scrollbar-color: #c4cbd6 #edf0f4;
+    }
+
+    /* 110px cột tiết + 7 cột ngày khoảng 155px = xấp xỉ 1.200px */
+    .tw-matrix {
+        width: 100%;
+        min-width: 1200px;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+        color: #202938;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+        .tw-matrix th, .tw-matrix td {
+            border-right: 1px solid #e7eaf0;
+            border-bottom: 1px solid #e7eaf0;
+        }
+
+        .tw-matrix thead th {
+            min-width: 155px;
+            padding: 8px 5px;
+            background: #f8fafc;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+            .tw-matrix thead th:first-child {
+                width: 110px;
+                min-width: 110px;
+                border-top-left-radius: 8px;
+                border-left: 1px solid #e7eaf0;
+                background: #f2f4f8;
+            }
+
+            .tw-matrix thead th:last-child {
+                border-top-right-radius: 8px;
+            }
+
+        .tw-matrix th:first-child, .tw-matrix td:first-child {
+            border-left: 1px solid #e7eaf0;
+        }
+
+    .tw-day-heading {
+        display: block;
+        margin-bottom: 3px;
+        color: #344054;
+        font-size: 10.5px;
+        font-weight: 850;
+    }
+
+    .tw-day-date {
+        display: block;
+        color: #8a93a3;
+        font-size: 9px;
+        line-height: 1.5;
+    }
+
+    .tw-day-today {
+        background: #fff2f2 !important;
+    }
+
+        .tw-day-today .tw-day-heading, .tw-day-today .tw-day-date {
+            color: #b42329;
+        }
+
+    .tw-today-pill {
+        display: inline-block;
+        margin-top: 4px;
+        padding: 2px 5px;
+        border-radius: 4px;
+        background: #c62828;
+        color: #fff;
+        font-size: 8px;
+        font-weight: 850;
+    }
+
+    .tw-time-heading {
+        display: block;
+        margin-bottom: 4px;
+        color: #344054;
+        font-size: 9px;
+        font-weight: 850;
+    }
+
+    .tw-time-subheading {
+        display: block;
+        color: #929aaa;
+        font-size: 8px;
+        font-weight: 600;
+        line-height: 1.5;
+    }
+
+    /* Cột tiết / thời gian */
+    .tw-period-cell {
+        width: 110px;
+        min-width: 110px;
+        padding: 7px 4px;
+        background: #fafbfc;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .tw-period-number {
+        display: inline-block;
+        margin-bottom: 4px;
+        padding: 4px 6px;
+        border-radius: 5px;
+        background: #fbe5e5;
+        color: #b42329;
+        font-size: 8.5px;
+        font-weight: 850;
+        line-height: 1.35;
+    }
+
+    .tw-period-outside {
+        background: #f1f3f6;
+        color: #7b8495;
+    }
+
+    .tw-period-time {
+        display: block;
+        color: #344054;
+        font-size: 10px;
+        font-weight: 850;
+        line-height: 1.45;
+    }
+
+    .tw-period-index {
+        display: block;
+        margin-top: 3px;
+        color: #929aaa;
+        font-size: 8.5px;
+        line-height: 1.4;
+    }
+
+    .tw-slot-cell {
+        min-width: 155px;
+        height: 1px;
+        padding: 4px;
+        background: #fff;
+        vertical-align: top;
+    }
+
+        .tw-slot-cell.tw-slot-today {
+            background: #fffdfd;
+        }
+
+    .tw-slot-content {
+        display: grid;
+        align-content: start;
+        gap: 5px;
+        min-height: 25px;
+    }
+
+    .tw-slot-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 17px;
+        color: #c0c6d0;
+        font-size: 8.5px;
+        line-height: 1.35;
+    }
+
+        .tw-slot-empty.tw-hidden {
+            display: none;
+        }
+
+    .tw-matrix tbody tr.tw-row-focus .tw-period-cell {
+        background: #fff0f0;
+    }
+
+    .tw-matrix tbody tr.tw-row-focus .tw-period-number {
+        background: #c62828;
+        color: #fff;
+    }
+
+    /* Thẻ buổi học gọn hơn, nhưng giữ đủ thông tin */
+    .tw-session-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+        padding: 7px;
+        border: 1px solid #efdddd;
+        border-left: 3px solid #c62828;
+        border-radius: 7px;
+        background: #fffafa;
+        color: #344054;
+        box-shadow: 0 1px 4px rgba(32,41,56,.025);
+        overflow-wrap: anywhere;
+        transition: border-color .18s ease, box-shadow .18s ease;
+    }
+
+        .tw-session-card:hover {
+            border-color: #e9bfc0;
+            box-shadow: 0 3px 8px rgba(32,41,56,.06);
+        }
+
+        .tw-session-card.tw-session-attended {
+            border-color: #d5e9dc;
+            border-left-color: #198754;
+            background: #fbfefc;
+        }
+
+    .tw-session-heading {
+        min-width: 0;
+    }
+
+    .tw-session-title-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 3px;
+    }
+
+    .tw-session-class {
+        display: block;
+        flex: 1 1 80px;
+        min-width: 0;
+        color: #273247;
+        font-size: 10px;
+        font-weight: 850;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .tw-session-course {
+        display: block;
+        color: #667085;
+        font-size: 9px;
+        font-weight: 650;
+        line-height: 1.45;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .tw-session-level {
+        display: inline-block;
+        max-width: 100%;
+        margin-top: 4px;
+        padding: 2px 5px;
+        border-radius: 4px;
+        background: #f2f4f8;
+        color: #596273;
+        font-size: 8px;
+        font-weight: 750;
+        line-height: 1.4;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .tw-period-badge {
+        display: inline-block;
+        flex: 0 0 auto;
+        padding: 3px 5px;
+        border-radius: 4px;
+        background: #fff0f0;
+        color: #b42329;
+        font-size: 8px;
+        font-weight: 850;
+        line-height: 1.35;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .tw-session-attended .tw-period-badge {
+        background: #e9f8ef;
+        color: #198754;
+    }
+
+    .tw-session-time-panel {
+        padding: 5px 6px;
+        border: 1px solid #eceff4;
+        border-radius: 5px;
+        background: #fff;
+    }
+
+    .tw-session-time-label {
+        display: block;
+        margin-bottom: 2px;
+        color: #8a93a3;
+        font-size: 7.5px;
+        font-weight: 800;
+        letter-spacing: .2px;
+        text-transform: uppercase;
+    }
+
+    .tw-session-time {
+        display: block;
+        color: #202938;
+        font-size: 11px;
+        font-weight: 900;
+        line-height: 1.4;
+        white-space: normal;
+    }
+
+    .tw-session-duration {
+        display: block;
+        margin-top: 2px;
+        color: #8a93a3;
+        font-size: 8.5px;
+        font-weight: 650;
+        line-height: 1.35;
+    }
+
+    .tw-session-details {
+        display: grid;
+        gap: 4px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .tw-detail-row {
+        display: grid;
+        grid-template-columns: 12px minmax(0,1fr);
+        align-items: start;
+        gap: 4px;
+        min-width: 0;
+        font-size: 8.5px;
+        line-height: 1.4;
+    }
+
+    .tw-detail-icon {
+        margin-top: 2px;
+        color: #9aa2af;
+        text-align: center;
+        font-size: 9px;
+    }
+
+    .tw-detail-label {
+        display: inline;
+        margin-right: 3px;
+        color: #929aaa;
+        font-size: 8px;
+        font-weight: 700;
+        letter-spacing: 0;
+    }
+
+    .tw-detail-value {
+        display: inline;
+        color: #475467;
+        font-size: 8.5px;
+        font-weight: 750;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+        white-space: normal;
+    }
+
+    .tw-session-status {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .tw-status-badge {
+        display: inline-block;
+        max-width: 100%;
+        padding: 3px 5px;
+        border-radius: 4px;
+        font-size: 7.8px;
+        font-weight: 850;
+        line-height: 1.35;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .tw-status-pending {
+        background: #f1f3f6;
+        color: #667085;
+    }
+
+    .tw-status-attended {
+        background: #198754;
+        color: #fff;
+    }
+
+    .tw-attendance-count {
+        background: #e9f8ef;
+        color: #198754;
+    }
+
+    .tw-session-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        width: 100%;
+        min-height: 27px;
+        padding: 5px 6px;
+        border: 1px solid #c62828;
+        border-radius: 5px;
+        background: #c62828;
+        color: #fff;
+        font-size: 8.5px;
+        font-weight: 850;
+        line-height: 1.35;
+        text-align: center;
+        text-decoration: none;
+        white-space: normal;
+    }
+
+        .tw-session-action:hover, .tw-session-action:focus {
+            border-color: #a61f24;
+            background: #a61f24;
+            color: #fff;
+            text-decoration: none;
+        }
+
+    .tw-session-attended .tw-session-action {
+        border-color: #198754;
+        background: #198754;
+    }
+
+        .tw-session-attended .tw-session-action:hover, .tw-session-attended .tw-session-action:focus {
+            border-color: #146c43;
+            background: #146c43;
+        }
+
+    .tw-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+        margin-top: 10px;
+        padding: 9px 11px;
+        border: 1px solid #e7eaf0;
+        border-radius: 8px;
+        background: #f9fafc;
+        color: #778194;
+        font-size: 9.5px;
+        line-height: 1.65;
+    }
+
+        .tw-note .glyphicon {
+            margin-top: 2px;
+            color: #c62828;
+        }
+
+    /* Responsive */
+    @@media (max-width: 1250px) {
+        .tw-page-heading {
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .tw-heading-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+        .tw-toolbar-top {
+            align-items: flex-start;
+        }
+
+        .tw-navigation {
+            width: 100%;
+        }
+    }
+
+    @@media (max-width: 767px) {
+        .tw-page-heading {
+            gap: 10px;
+            padding: 14px;
+            border-radius: 11px;
+        }
+
+        .tw-page-heading-icon {
+            width: 42px;
+            height: 42px;
+            flex-basis: 42px;
+            border-width: 3px;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .tw-heading-actions {
+            justify-content: space-between;
+        }
+
+        .tw-heading-date {
+            text-align: left;
+        }
+
+        .tw-stat-grid {
+            gap: 7px;
+        }
+
+        .tw-stat-card {
+            padding: 10px 8px;
+        }
+
+        .tw-stat-top {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 9px;
+        }
+
+        .tw-stat-label {
+            font-size: 8px;
+        }
+
+        .tw-stat-number {
+            font-size: 19px;
+        }
+
+        .tw-stat-description {
+            font-size: 9px;
+        }
+
+        .tw-toolbar {
+            padding: 12px 10px;
+        }
+
+        .tw-navigation {
+            gap: 5px;
+        }
+
+        .tw-nav-button {
+            padding: 7px;
+            font-size: 9px;
+        }
+
+        .tw-time-jumps {
+            width: 100%;
+        }
+
+        .tw-calendar-panel {
+            padding: 10px;
+        }
+
+        .tw-matrix {
+            min-width: 1200px;
+        }
+    }
+</style>
+
+<div class="teacher-portal" id="teacher-weekly-schedule">
+
+    @* SIDEBAR - DÙNG CÙNG GIAO DIỆN TEACHER DASHBOARD *@
+    <aside class="teacher-sidebar">
+        <a class="teacher-brand" href="@Url.Action("TeacherDashboard", "Home")">
+            <span class="teacher-brand-mark">EC</span>
+            <span class="teacher-brand-text">
+                ELC PORTAL
+                <small>TEACHER SPACE</small>
+            </span>
+        </a>
+
+        <div class="teacher-sidebar-caption">KHÔNG GIAN GIẢNG DẠY</div>
+
+        <nav class="teacher-side-nav">
+            <a href="@Url.Action("TeacherDashboard", "Home")#teacher-dashboard" class="teacher-nav-link">
+                <span class="teacher-nav-icon">⌂</span>
+                Dashboard
+            </a>
+
+            <a href="@Url.Action("TeacherTeachingSchedule", "ClassSessions")#teacher-weekly-schedule" class="teacher-nav-link is-active">
+                <span class="teacher-nav-icon">▦</span>
+                Lịch dạy + Lớp phụ trách
+            </a>
+
+            <a href="@Url.Action("TeacherAttendance", "Attendances")" class="teacher-nav-link">
+                <span class="teacher-nav-icon">✓</span>
+                Điểm danh
+            </a>
+
+            <a href="@Url.Action("TeacherGrades", "AssessmentScores")" class="teacher-nav-link">
+                <span class="teacher-nav-icon">A+</span>
+                Nhập điểm &amp; đánh giá
+            </a>
+
+            <a href="@Url.Action("TeacherSubmissions", "Assignments")" class="teacher-nav-link">
+                <span class="teacher-nav-icon">📄</span>
+                Bài nộp học viên
+            </a>
+
+            <a href="@Url.Action("TeacherClassResources", "CourseMaterials")" class="teacher-nav-link">
+                <span class="teacher-nav-icon">📚</span>
+                Bài tập &amp; tài liệu
+            </a>
+
+            <a href="@Url.Action("TeacherProfile", "Profiles")" class="teacher-nav-link">
+                <span class="teacher-nav-icon">◎</span>
+                Hồ sơ cá nhân
+            </a>
+        </nav>
+
+        <div class="teacher-sidebar-bottom">
+            <div class="teacher-support-card">
+                <span class="teacher-support-icon">?</span>
+                <strong>Cần hỗ trợ?</strong>
+                <p>Liên hệ trung tâm để được hỗ trợ về lịch dạy hoặc lớp học.</p>
+                @Html.ActionLink("Liên hệ trung tâm →", "Contact", "Home", null, new { @class = "teacher-support-link" })
+            </div>
+
+            @Html.ActionLink("↪ Đăng xuất", "Logout", "Auth", null, new { @class = "teacher-logout-link" })
+        </div>
+    </aside>
+
+    @* KHU VỰC CHÍNH *@
+    <div class="teacher-main">
+        <header class="teacher-topbar">
+            <div class="teacher-topbar-title">
+                <span>CỔNG GIÁO VIÊN</span>
+                <strong>Thời khóa biểu giảng dạy</strong>
+            </div>
+
+            <div class="teacher-topbar-user">
+                <span class="teacher-avatar-small">@teacherInitial</span>
+                <span class="teacher-topbar-user-info">
+                    <strong>@teacherName</strong>
+                    <small>Giáo viên</small>
+                </span>
+            </div>
+        </header>
+
+        <main class="teacher-content">
+            <div class="teacher-breadcrumb">
+                @Html.ActionLink("Trang chủ", "TeacherDashboard", "Home")
+                <span>/</span>
+                Cổng giáo viên
+                <span>/</span>
+                Thời khóa biểu
+            </div>
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+            }
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+            }
+
+            <div class="tw-schedule-page">
+                @* TIÊU ĐỀ TRANG *@
+                <section class="tw-page-heading">
+                    <div class="tw-page-heading-icon">
+                        <i class="glyphicon glyphicon-calendar"></i>
+                    </div>
+
+                    <div class="tw-page-heading-content">
+                        <span class="tw-page-eyebrow">TEACHING WORKSPACE</span>
+                        <h1>Thời khóa biểu giảng dạy</h1>
+                        <p>Theo dõi từng tiết học theo ngày, giờ bắt đầu, giờ kết thúc, phòng học và tình trạng điểm danh.</p>
+                    </div>
+
+                    <div class="tw-heading-actions">
+                        <span class="tw-heading-date">
+                            <i class="glyphicon glyphicon-calendar"></i>
+                            @DateTime.Today.ToString("dd/MM/yyyy")
+                        </span>
+                    </div>
+                </section>
+
+                @* THỐNG KÊ *@
+                <section class="tw-stat-grid">
+                    <article class="tw-stat-card">
+                        <div class="tw-stat-top">
+                            <span class="tw-stat-icon tw-icon-red"><i class="glyphicon glyphicon-calendar"></i></span>
+                            <span class="tw-stat-label">CA DẠY TRONG TUẦN</span>
+                        </div>
+                        <strong class="tw-stat-number" id="tw-stat-total">@totalSessions</strong>
+                        <span class="tw-stat-description">Tổng số buổi được xếp trong tuần đang xem</span>
+                    </article>
+
+                    <article class="tw-stat-card">
+                        <div class="tw-stat-top">
+                            <span class="tw-stat-icon tw-icon-green"><i class="glyphicon glyphicon-check"></i></span>
+                            <span class="tw-stat-label">ĐÃ CÓ DỮ LIỆU ĐIỂM DANH</span>
+                        </div>
+                        <strong class="tw-stat-number" id="tw-stat-attended">@attendedSessions</strong>
+                        <span class="tw-stat-description">Buổi học có ít nhất một bản ghi điểm danh</span>
+                    </article>
+
+                    <article class="tw-stat-card">
+                        <div class="tw-stat-top">
+                            <span class="tw-stat-icon tw-icon-orange"><i class="glyphicon glyphicon-time"></i></span>
+                            <span class="tw-stat-label">CHƯA CÓ DỮ LIỆU ĐIỂM DANH</span>
+                        </div>
+                        <strong class="tw-stat-number" id="tw-stat-pending">@pendingSessions</strong>
+                        <span class="tw-stat-description">Buổi học chưa có bản ghi điểm danh</span>
+                    </article>
+                </section>
+
+                @* BỘ LỌC VÀ ĐIỀU HƯỚNG *@
+                <section class="tw-toolbar">
+                    <div class="tw-toolbar-top">
+                        <div class="tw-filter">
+                            <label for="tw-class-filter">
+                                <i class="glyphicon glyphicon-filter"></i>
+                                Lọc thời khóa biểu theo lớp
+                            </label>
+
+                            <select id="tw-class-filter">
+                                <option value="">-- Tất cả lớp được phân công --</option>
+                                @foreach (var cls in assignedClasses)
+                                {
+                                    <option value="@cls.Id" @(selectedClassIdQuery == cls.Id.ToString() ? "selected=\"selected\"" : "")>
+                                        @cls.ClassName
+                                        @(cls.Course != null && !string.IsNullOrWhiteSpace(cls.Course.CourseName)
+                                            ? " · " + cls.Course.CourseName
+                                            : "")
+                                    </option>
+                                }
+                            </select>
+                            <p class="tw-filter-help">Lọc nhanh các buổi học thuộc một lớp cụ thể.</p>
+                        </div>
+
+                        <nav class="tw-navigation" aria-label="Điều hướng tuần">
+                            <a href="@Url.Action("TeacherTeachingSchedule", "ClassSessions", new { weekOffset = weekOffset - 1, classId = selectedClassIdQuery })#teacher-weekly-schedule" class="tw-nav-button tw-week-link">
+                                <i class="glyphicon glyphicon-chevron-left"></i> Tuần trước
+                            </a>
+                            <a href="@Url.Action("TeacherTeachingSchedule", "ClassSessions", new { weekOffset = 0, classId = selectedClassIdQuery })#teacher-weekly-schedule" class="tw-nav-button tw-nav-button-current tw-week-link">
+                                <i class="glyphicon glyphicon-calendar"></i> Tuần này
+                            </a>
+                            <a href="@Url.Action("TeacherTeachingSchedule", "ClassSessions", new { weekOffset = weekOffset + 1, classId = selectedClassIdQuery })#teacher-weekly-schedule" class="tw-nav-button tw-week-link">
+                                Tuần sau <i class="glyphicon glyphicon-chevron-right"></i>
+                            </a>
+                        </nav>
+                    </div>
+
+                    <div class="tw-toolbar-bottom">
+                        <div class="tw-week-range">
+                            <i class="glyphicon glyphicon-time"></i>
+                            Tuần từ @weekStart.ToString("dd/MM/yyyy") đến @weekEnd.ToString("dd/MM/yyyy")
+                        </div>
+
+                        <div class="tw-time-jumps">
+                            <span class="tw-jump-label">Đi đến:</span>
+                            <button type="button" class="tw-jump-button" data-jump-hour="7"><i class="glyphicon glyphicon-sun"></i> Buổi sáng</button>
+                            <button type="button" class="tw-jump-button" data-jump-hour="12"><i class="glyphicon glyphicon-time"></i> Buổi chiều</button>
+                            <button type="button" class="tw-jump-button" data-jump-hour="17"><i class="glyphicon glyphicon-moon"></i> Buổi tối</button>
+                            <a href="@Url.Action("TeacherTeachingSchedule", "ClassSessions", new { weekOffset = 0, classId = selectedClassIdQuery })#teacher-weekly-schedule" class="tw-jump-button tw-week-link">
+                                <i class="glyphicon glyphicon-home"></i> Về hôm nay
+                            </a>
+                        </div>
+                    </div>
+                </section>
+
+                @* BẢNG THỜI KHÓA BIỂU *@
+                <section class="tw-calendar-panel" id="tw-timetable">
+                    <div class="tw-calendar-heading">
+                        <div>
+                            <h2><i class="glyphicon glyphicon-th"></i> Lịch học theo tiết và khung giờ</h2>
+                            <p>Cột đầu tiên hiển thị tiết học và thời gian; các cột tiếp theo tương ứng 7 ngày trong tuần.</p>
+                        </div>
+                        <span class="tw-record-count">
+                            <i class="glyphicon glyphicon-list"></i>
+                            <span id="tw-visible-count">@totalSessions</span> ca dạy
+                        </span>
+                    </div>
+
+                    <div class="tw-table-scroll">
+                        <table class="tw-matrix">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <span class="tw-time-heading">TIẾT / KHUNG GIỜ</span>
+                                        <span class="tw-time-subheading">Mỗi khung 60 phút</span>
+                                    </th>
+
+                                    @for (int d = 0; d < 7; d++)
+                                    {
+                                        DateTime colDate = weekStart.AddDays(d).Date;
+                                        bool isToday = colDate == DateTime.Today;
+
+                                        <th class="@(isToday ? "tw-day-today" : "")" data-day-header data-day-date="@colDate.ToString("yyyy-MM-dd")">
+                                            <span class="tw-day-heading">@dayNames[d]</span>
+                                            <span class="tw-day-date">@colDate.ToString("dd/MM/yyyy")</span>
+
+                                            @if (isToday)
+                                            {
+                                                <span class="tw-today-pill">HÔM NAY</span>
+                                            }
+
+                                            <span class="tw-day-date" style="margin-top:4px;">
+                                                <span data-day-session-count>@sessions.Count(s => s.SessionDate.Date == colDate)</span> ca học
+                                            </span>
+                                        </th>
+                                    }
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @for (int hour = calendarStartHour; hour < calendarEndHourExclusive; hour++)
+                                {
+                                    int periodNumber = hour - 6;
+                                    string slotStart = hour.ToString("00") + ":00";
+                                    string slotEnd = hour == 23 ? "24:00" : (hour + 1).ToString("00") + ":00";
+
+                                    <tr data-hour-row="@hour">
+                                        <th scope="row" class="tw-period-cell">
+                                            @if (hour >= 7)
+                                            {
+                                                <span class="tw-period-number">TIẾT @periodNumber</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="tw-period-number tw-period-outside">NGOÀI KHUNG</span>
+                                            }
+                                            <span class="tw-period-time">@slotStart</span>
+                                            <span class="tw-period-index">đến @slotEnd</span>
+                                        </th>
+
+                                        @for (int d = 0; d < 7; d++)
+                                        {
+                                            DateTime cellDate = weekStart.AddDays(d).Date;
+                                            bool isTodayColumn = cellDate == DateTime.Today;
+
+                                            var slotSessions = sessions
+                                                .Where(s => s.SessionDate.Date == cellDate &&
+                                                    (int)Math.Floor(s.StartTime.TotalMinutes / 60.0) == hour)
+                                                .OrderBy(s => s.StartTime)
+                                                .ThenBy(s => s.EndTime)
+                                                .ThenBy(s => s.Id)
+                                                .ToList();
+
+                                            <td class="tw-slot-cell @(isTodayColumn ? "tw-slot-today" : "")"
+                                                data-time-slot
+                                                data-slot-date="@cellDate.ToString("yyyy-MM-dd")"
+                                                data-slot-hour="@hour">
+                                                <div class="tw-slot-content">
+                                                    @foreach (var s in slotSessions)
+                                                    {
+                                                        bool isAttended = s.Attendances != null && s.Attendances.Any();
+                                                        int attendanceCount = s.Attendances != null ? s.Attendances.Count : 0;
+                                                        int enrolledCount = 0;
+                                                        enrolledCounts.TryGetValue(s.ClassId, out enrolledCount);
+
+                                                        string className = s.Class != null && !string.IsNullOrWhiteSpace(s.Class.ClassName)
+                                                            ? s.Class.ClassName
+                                                            : "Lớp #" + s.ClassId;
+
+                                                        string courseName = s.Class != null && s.Class.Course != null && !string.IsNullOrWhiteSpace(s.Class.Course.CourseName)
+                                                            ? s.Class.Course.CourseName
+                                                            : "Chưa cập nhật khóa học";
+
+                                                        string courseLevel = s.Class != null && s.Class.Course != null && !string.IsNullOrWhiteSpace(s.Class.Course.Level)
+                                                            ? s.Class.Course.Level
+                                                            : "";
+
+                                                        string roomName = s.Room != null && !string.IsNullOrWhiteSpace(s.Room.RoomName)
+                                                            ? s.Room.RoomName
+                                                            : "Chưa xếp phòng";
+
+                                                        string timeText = s.StartTime.ToString(@"hh\:mm") + " – " + s.EndTime.ToString(@"hh\:mm");
+                                                        double durationMinutes = Math.Max(0, (s.EndTime - s.StartTime).TotalMinutes);
+                                                        int durationHours = (int)(durationMinutes / 60);
+                                                        int remainingMinutes = (int)(durationMinutes % 60);
+                                                        string durationText = "";
+
+                                                        if (durationHours > 0)
+                                                        {
+                                                            durationText = durationHours + " giờ";
+                                                        }
+
+                                                        if (remainingMinutes > 0)
+                                                        {
+                                                            durationText += (durationText.Length > 0 ? " " : "") + remainingMinutes + " phút";
+                                                        }
+
+                                                        if (string.IsNullOrWhiteSpace(durationText))
+                                                        {
+                                                            durationText = "Chưa xác định";
+                                                        }
+
+                                                        int firstPeriod = (int)Math.Floor(s.StartTime.TotalMinutes / 60.0) - 6;
+                                                        int lastPeriod = (int)Math.Ceiling(s.EndTime.TotalMinutes / 60.0) - 7;
+                                                        lastPeriod = Math.Max(firstPeriod, lastPeriod);
+
+                                                        string periodLabel;
+                                                        if (firstPeriod < 1)
+                                                        {
+                                                            periodLabel = "Ngoài khung chuẩn";
+                                                        }
+                                                        else if (lastPeriod > firstPeriod)
+                                                        {
+                                                            periodLabel = "TIẾT " + firstPeriod + "–" + lastPeriod;
+                                                        }
+                                                        else
+                                                        {
+                                                            periodLabel = "TIẾT " + firstPeriod;
+                                                        }
+
+                                                        <article class="tw-session-card @(isAttended ? "tw-session-attended" : "")"
+                                                                 data-session-card
+                                                                 data-session-id="@s.Id"
+                                                                 data-class-id="@s.ClassId"
+                                                                 data-session-date="@s.SessionDate.ToString("yyyy-MM-dd")"
+                                                                 data-attended="@(isAttended ? "true" : "false")">
+                                                            <div class="tw-session-heading">
+                                                                <div class="tw-session-title-row">
+                                                                    <strong class="tw-session-class">@className</strong>
+                                                                    <span class="tw-period-badge">@periodLabel</span>
+                                                                </div>
+
+                                                                <span class="tw-session-course">@courseName</span>
+
+                                                                @if (!string.IsNullOrWhiteSpace(courseLevel))
+                                                                {
+                                                                    <span class="tw-session-level">Trình độ: @courseLevel</span>
+                                                                }
+                                                            </div>
+
+                                                            <div class="tw-session-time-panel">
+                                                                <span class="tw-session-time-label"><i class="glyphicon glyphicon-time"></i> Thời gian học</span>
+                                                                <strong class="tw-session-time">@timeText</strong>
+                                                                <span class="tw-session-duration">Thời lượng: @durationText</span>
+                                                            </div>
+
+                                                            <ul class="tw-session-details">
+                                                                <li class="tw-detail-row">
+                                                                    <i class="glyphicon glyphicon-calendar tw-detail-icon"></i>
+                                                                    <span>
+                                                                        <span class="tw-detail-label">Ngày học:</span>
+                                                                        <strong class="tw-detail-value">@s.SessionDate.ToString("dd/MM/yyyy")</strong>
+                                                                    </span>
+                                                                </li>
+
+                                                                <li class="tw-detail-row">
+                                                                    <i class="glyphicon glyphicon-home tw-detail-icon"></i>
+                                                                    <span>
+                                                                        <span class="tw-detail-label">Phòng:</span>
+                                                                        <strong class="tw-detail-value">@roomName</strong>
+                                                                    </span>
+                                                                </li>
+
+                                                                <li class="tw-detail-row">
+                                                                    <i class="glyphicon glyphicon-user tw-detail-icon"></i>
+                                                                    <span>
+                                                                        <span class="tw-detail-label">Sĩ số:</span>
+                                                                        <strong class="tw-detail-value">@enrolledCount học viên</strong>
+                                                                    </span>
+                                                                </li>
+                                                            </ul>
+
+                                                            <div class="tw-session-status">
+                                                                @if (isAttended)
+                                                                {
+                                                                    <span class="tw-status-badge tw-status-attended">
+                                                                        <i class="glyphicon glyphicon-check"></i> Có dữ liệu điểm danh
+                                                                    </span>
+                                                                    <span class="tw-status-badge tw-attendance-count">@attendanceCount bản ghi</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="tw-status-badge tw-status-pending">
+                                                                        <i class="glyphicon glyphicon-time"></i> Chưa điểm danh
+                                                                    </span>
+                                                                }
+                                                            </div>
+
+                                                            <a href="@Url.Action("TeacherAttendance", "Attendances", new { sessionId = s.Id })" class="tw-session-action">
+                                                                @if (isAttended)
+                                                                {
+                                                                    <i class="glyphicon glyphicon-edit"></i><span>Xem / cập nhật điểm danh</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <i class="glyphicon glyphicon-check"></i><span>Điểm danh buổi học</span>
+                                                                }
+                                                            </a>
+                                                        </article>
+                                                    }
+
+                                                    <div class="tw-slot-empty @(slotSessions.Any() ? "tw-hidden" : "")" data-empty-slot>
+                                                        Không có ca học
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="tw-note">
+                        <i class="glyphicon glyphicon-info-sign"></i>
+                        <span>
+                            Bảng chỉ hiển thị các khung giờ từ buổi học sớm nhất đến buổi học kết thúc muộn nhất trong tuần để giảm các hàng trống. Nếu tuần chưa có lịch, bảng mặc định hiển thị từ 07:00 đến 22:00. Mỗi hàng là một khung 60 phút; nhãn tiết được suy ra từ giờ bắt đầu lúc 07:00 vì Model hiện tại chưa lưu số tiết chính thức. Các buổi cùng giờ bắt đầu được xếp nối tiếp nhau, không bị chồng lấp.
+                        </span>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+                (function () {
+                    "use strict";
+
+                    var schedule = document.getElementById("teacher-weekly-schedule");
+                    if (!schedule) return;
+
+                    var classFilter = schedule.querySelector("#tw-class-filter");
+                    var sessionCards = Array.prototype.slice.call(schedule.querySelectorAll("[data-session-card]"));
+                    var timeSlots = Array.prototype.slice.call(schedule.querySelectorAll("[data-time-slot]"));
+                    var dayHeaders = Array.prototype.slice.call(schedule.querySelectorAll("[data-day-header]"));
+                    var visibleCountElement = schedule.querySelector("#tw-visible-count");
+                    var totalStat = schedule.querySelector("#tw-stat-total");
+                    var attendedStat = schedule.querySelector("#tw-stat-attended");
+                    var pendingStat = schedule.querySelector("#tw-stat-pending");
+
+                    function applyClassFilter() {
+                        var selectedClassId = classFilter ? classFilter.value : "";
+                        var visibleCount = 0;
+                        var visibleAttended = 0;
+                        var visiblePending = 0;
+
+                        sessionCards.forEach(function (card) {
+                            var cardClassId = card.getAttribute("data-class-id");
+                            var isVisible = selectedClassId === "" || cardClassId === selectedClassId;
+                            card.style.display = isVisible ? "" : "none";
+
+                            if (isVisible) {
+                                visibleCount++;
+                                if (card.getAttribute("data-attended") === "true") {
+                                    visibleAttended++;
+                                } else {
+                                    visiblePending++;
+                                }
+                            }
+                        });
+
+                        timeSlots.forEach(function (slot) {
+                            var cards = slot.querySelectorAll("[data-session-card]");
+                            var visibleInSlot = 0;
+
+                            Array.prototype.forEach.call(cards, function (card) {
+                                if (card.style.display !== "none") visibleInSlot++;
+                            });
+
+                            var emptyLabel = slot.querySelector("[data-empty-slot]");
+                            if (emptyLabel) {
+                                emptyLabel.classList.toggle("tw-hidden", visibleInSlot > 0);
+                            }
+                        });
+
+                        dayHeaders.forEach(function (header) {
+                            var date = header.getAttribute("data-day-date");
+                            var count = 0;
+
+                            sessionCards.forEach(function (card) {
+                                if (card.getAttribute("data-session-date") === date && card.style.display !== "none") {
+                                    count++;
+                                }
+                            });
+
+                            var countElement = header.querySelector("[data-day-session-count]");
+                            if (countElement) countElement.textContent = count;
+                        });
+
+                        if (visibleCountElement) visibleCountElement.textContent = visibleCount;
+                        if (totalStat) totalStat.textContent = visibleCount;
+                        if (attendedStat) attendedStat.textContent = visibleAttended;
+                        if (pendingStat) pendingStat.textContent = visiblePending;
+
+                        schedule.querySelectorAll(".tw-week-link").forEach(function (link) {
+                            try {
+                                var url = new URL(link.href, window.location.href);
+                                if (selectedClassId !== "") {
+                                    url.searchParams.set("classId", selectedClassId);
+                                } else {
+                                    url.searchParams.delete("classId");
+                                }
+                                link.href = url.toString();
+                            } catch (error) {
+                                // Giữ nguyên liên kết nếu trình duyệt không hỗ trợ URL.
+                            }
+                        });
+                    }
+
+                    if (classFilter) {
+                        classFilter.addEventListener("change", applyClassFilter);
+                    }
+
+                    schedule.querySelectorAll("[data-jump-hour]").forEach(function (button) {
+                        button.addEventListener("click", function () {
+                            var hour = parseInt(button.getAttribute("data-jump-hour"), 10);
+                            if (isNaN(hour)) return;
+
+                            var row = schedule.querySelector('[data-hour-row="' + hour + '"]');
+                            if (!row) {
+                                var allRows = Array.prototype.slice.call(schedule.querySelectorAll("[data-hour-row]"));
+                                if (allRows.length) {
+                                    row = allRows.reduce(function (closest, candidate) {
+                                        var candidateHour = parseInt(candidate.getAttribute("data-hour-row"), 10);
+                                        var closestHour = parseInt(closest.getAttribute("data-hour-row"), 10);
+                                        return Math.abs(candidateHour - hour) < Math.abs(closestHour - hour) ? candidate : closest;
+                                    });
+                                }
+                            }
+
+                            if (row) {
+                                schedule.querySelectorAll(".tw-row-focus").forEach(function (oldRow) {
+                                    oldRow.classList.remove("tw-row-focus");
+                                });
+                                row.classList.add("tw-row-focus");
+                                row.scrollIntoView({ behavior: "smooth", block: "start" });
+                            }
+                        });
+                    });
+
+                    applyClassFilter();
+                })();
+    </script>
+}

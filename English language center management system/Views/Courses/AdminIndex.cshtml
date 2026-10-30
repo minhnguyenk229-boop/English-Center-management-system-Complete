@@ -1,0 +1,219 @@
+﻿@using System.Collections.Generic
+@using System.Linq
+@using English_language_center_management_system.Models.ViewModels.Courses
+@model CourseAdminIndexViewModel
+@{
+    ViewBag.Title = "Quản lý khóa học";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var courses = Model.Courses ?? new List<CourseAdminItemViewModel>();
+    int totalClasses = courses.Sum(c => c.TotalClassesCount);
+    int activeClasses = courses.Sum(c => c.ActiveClassesCount);
+    int enrollmentCount = courses.Sum(c => c.TotalStudentsCount);
+}
+
+<div class="admin-courses-page">
+    <!-- HEADER -->
+    <section class="admin-courses-header">
+        <div>
+            <span class="admin-courses-eyebrow">COURSE MANAGEMENT</span>
+            <h1>Quản lý khóa học</h1>
+            <p>
+                Quản lý danh mục chương trình, trình độ, học phí
+                và các lớp thuộc từng khóa học.
+            </p>
+        </div>
+        <a href="@Url.Action("Create", "Courses")" class="admin-courses-primary-btn">
+            + Thêm khóa học
+        </a>
+    </section>
+
+    <!-- THÔNG BÁO -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="admin-courses-alert success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="admin-courses-alert error">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- THẺ THỐNG KÊ -->
+    <section class="admin-courses-stats">
+        <article class="admin-courses-stat-card">
+            <span class="admin-courses-stat-icon red">▤</span>
+            <div>
+                <span>Tổng khóa học trong kết quả</span>
+                <strong>@courses.Count</strong>
+            </div>
+        </article>
+        <article class="admin-courses-stat-card">
+            <span class="admin-courses-stat-icon blue">▣</span>
+            <div>
+                <span>Tổng số lớp liên kết</span>
+                <strong>@totalClasses</strong>
+            </div>
+        </article>
+        <article class="admin-courses-stat-card">
+            <span class="admin-courses-stat-icon green">✓</span>
+            <div>
+                <span>Lớp đang mở / đang học</span>
+                <strong>@activeClasses</strong>
+            </div>
+        </article>
+        <article class="admin-courses-stat-card">
+            <span class="admin-courses-stat-icon orange">♙</span>
+            <div>
+                <span>Lượt ghi danh trong kết quả</span>
+                <strong>@enrollmentCount</strong>
+            </div>
+        </article>
+    </section>
+
+    <!-- BỘ LỌC VÀ SẮP XẾP -->
+    <section class="admin-courses-panel">
+        <div class="admin-courses-panel-heading">
+            <div>
+                <h2>Danh mục chương trình học</h2>
+                <p>Tìm kiếm khóa học, lọc theo trình độ hoặc sắp xếp dữ liệu.</p>
+            </div>
+        </div>
+
+        <form method="get" action="@Url.Action("AdminIndex", "Courses")" class="admin-courses-filter">
+            <div class="admin-courses-filter-field">
+                <label for="searchTerm">Tìm khóa học</label>
+                <input type="text" id="searchTerm" name="searchTerm" value="@Model.SearchTerm" class="admin-courses-input" placeholder="Nhập tên khóa học hoặc mô tả..." />
+            </div>
+
+            <div class="admin-courses-filter-field">
+                <label for="level">Trình độ</label>
+                <select id="level" name="level" class="admin-courses-input">
+                    <option value="">Tất cả trình độ</option>
+                    <option value="Beginner" @(Model.SelectedLevel == "Beginner" ? "selected" : "")>Cơ bản (Beginner)</option>
+                    <option value="Elementary" @(Model.SelectedLevel == "Elementary" ? "selected" : "")>Sơ cấp (Elementary)</option>
+                    <option value="Intermediate" @(Model.SelectedLevel == "Intermediate" ? "selected" : "")>Trung cấp (Intermediate)</option>
+                    <option value="Upper Intermediate" @(Model.SelectedLevel == "Upper Intermediate" ? "selected" : "")>Trên trung cấp</option>
+                    <option value="Advanced" @(Model.SelectedLevel == "Advanced" ? "selected" : "")>Nâng cao (Advanced)</option>
+                    <option value="IELTS" @(Model.SelectedLevel == "IELTS" ? "selected" : "")>Luyện thi IELTS</option>
+                    <option value="TOEIC" @(Model.SelectedLevel == "TOEIC" ? "selected" : "")>Luyện thi TOEIC</option>
+                    <option value="IELTS/TOEIC preparation" @(Model.SelectedLevel == "IELTS/TOEIC preparation" ? "selected" : "")>Luyện thi IELTS / TOEIC</option>
+                </select>
+            </div>
+
+            <!-- BỔ SUNG SẮP XẾP -->
+            <div class="admin-courses-filter-field">
+                <label for="sortBy">Sắp xếp theo</label>
+                <select id="sortBy" name="sortBy" class="admin-courses-input">
+                    <option value="name" @(Model.SortBy == "name" ? "selected" : "")>Tên khóa học</option>
+                    <option value="students" @(Model.SortBy == "students" ? "selected" : "")>Lượt học viên</option>
+                    <option value="classes" @(Model.SortBy == "classes" ? "selected" : "")>Tổng số lớp</option>
+                    <option value="tuition" @(Model.SortBy == "tuition" ? "selected" : "")>Học phí</option>
+                    <option value="duration" @(Model.SortBy == "duration" ? "selected" : "")>Thời lượng học</option>
+                </select>
+            </div>
+
+            <div class="admin-courses-filter-field">
+                <label for="sortOrder">Thứ tự</label>
+                <select id="sortOrder" name="sortOrder" class="admin-courses-input">
+                    <option value="asc" @(Model.SortOrder == "asc" ? "selected" : "")>Tăng dần (A-Z / Thấp-Cao)</option>
+                    <option value="desc" @(Model.SortOrder == "desc" ? "selected" : "")>Giảm dần (Z-A / Cao-Thấp)</option>
+                </select>
+            </div>
+
+            <div class="admin-courses-filter-actions">
+                <button type="submit" class="admin-courses-primary-btn">
+                    Tìm kiếm
+                </button>
+                <a href="@Url.Action("AdminIndex", "Courses")" class="admin-courses-reset-btn">
+                    Xóa bộ lọc
+                </a>
+            </div>
+        </form>
+
+        <!-- BẢNG KHÓA HỌC -->
+        <div class="admin-courses-table-toolbar">
+            <span>Tìm thấy <strong>@courses.Count</strong> khóa học</span>
+            <a href="@Url.Action("Index", "Classes")" class="admin-courses-text-link">
+                Quản lý lớp học →
+            </a>
+        </div>
+
+        <div class="admin-courses-table-wrap">
+            <table class="admin-courses-table">
+                <thead>
+                    <tr>
+                        <th>KHÓA HỌC</th>
+                        <th>TRÌNH ĐỘ</th>
+                        <th>THỜI LƯỢNG</th>
+                        <th>HỌC PHÍ</th>
+                        <th>TỔNG SỐ LỚP</th>
+                        <th>LƯỢT HỌC VIÊN</th>
+                        <th>THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (courses.Any())
+                    {
+                        foreach (var item in courses)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="admin-courses-name">
+                                        @if (!string.IsNullOrEmpty(item.Course.ImageUrl))
+                                        {
+                                            <img src="@Url.Content(item.Course.ImageUrl)" alt="Course Image" class="admin-courses-course-icon" style="object-fit: cover; width: 42px; height: 42px; border-radius: 6px;" />
+                                        }
+                                        else
+                                        {
+                                            <span class="admin-courses-course-icon">EN</span>
+                                        }
+                                        <div>
+                                            <strong>@item.Course.CourseName</strong>
+                                            <small>ID khóa học: #@item.Course.Id</small>
+                                            @if (!string.IsNullOrWhiteSpace(item.Course.Description))
+                                            {
+                                                <p class="admin-courses-description">@item.Course.Description</p>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="admin-courses-level">@item.Course.Level</span></td>
+                                <td>@item.Course.Duration giờ</td>
+                                <td><strong class="admin-courses-price">@item.Course.TuitionFee.ToString("N0") VNĐ</strong></td>
+                                <td>
+                                    <div class="admin-courses-count">
+                                        <strong>@item.TotalClassesCount</strong>
+                                        <small>lớp (@item.ActiveClassesCount mở)</small>
+                                    </div>
+                                </td>
+                                <td><span class="admin-courses-student-count">@item.TotalStudentsCount</span></td>
+                                <td>
+                                    <div class="admin-courses-actions">
+                                        <a href="@Url.Action("AdminDetails", "Courses", new { id = item.Course.Id })" class="admin-courses-action view">Chi tiết</a>
+                                        <a href="@Url.Action("Edit", "Courses", new { id = item.Course.Id })" class="admin-courses-action edit">Sửa</a>
+                                        <a href="@Url.Action("Delete", "Courses", new { id = item.Course.Id })" class="admin-courses-action delete">Xóa</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7">
+                                <div class="admin-courses-empty">
+                                    <span>▤</span>
+                                    <strong>Không tìm thấy khóa học</strong>
+                                    <p>Hãy đổi từ khóa tìm kiếm hoặc xóa bộ lọc.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>

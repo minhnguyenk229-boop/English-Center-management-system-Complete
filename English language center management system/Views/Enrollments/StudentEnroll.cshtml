@@ -1,0 +1,996 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Enrollments.StudentEnrollViewModel
+
+@using System
+
+@{
+    ViewBag.Title = "Xác nhận đăng ký lớp học";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+
+    string studentName = Session["FullName"] as string;
+
+    if (string.IsNullOrWhiteSpace(studentName))
+    {
+        studentName = Session["Username"] as string;
+    }
+
+    if (string.IsNullOrWhiteSpace(studentName))
+    {
+        studentName = "Học viên";
+    }
+
+    string studentInitial = studentName.Substring(0, 1).ToUpperInvariant();
+
+    string scheduleDays = string.IsNullOrWhiteSpace(Model.ScheduleDays)
+        ? "Chưa cập nhật"
+        : Model.ScheduleDays;
+
+    string startTime = Model.DailyStartTime.HasValue
+        ? Model.DailyStartTime.Value.ToString(@"hh\:mm")
+        : "--:--";
+
+    string endTime = Model.DailyEndTime.HasValue
+        ? Model.DailyEndTime.Value.ToString(@"hh\:mm")
+        : "--:--";
+}
+
+<style>
+    /* ========================================
+       STUDENT ENROLLMENT CONFIRMATION
+       ======================================== */
+
+    #student-enroll-confirm {
+        --sec-red: #c62828;
+        --sec-red-dark: #a61f24;
+        --sec-red-light: #fff0f0;
+        --sec-text: #202938;
+        --sec-muted: #7b8596;
+        --sec-border: #e6eaf0;
+        --sec-green: #16814e;
+        --sec-green-light: #eaf8f0;
+        color: var(--sec-text);
+        min-width: 0;
+    }
+
+        #student-enroll-confirm,
+        #student-enroll-confirm * {
+            box-sizing: border-box;
+        }
+
+            #student-enroll-confirm .sec-heading {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 14px;
+                margin-bottom: 23px;
+            }
+
+            #student-enroll-confirm .sec-eyebrow {
+                display: block;
+                margin-bottom: 8px;
+                color: var(--sec-red);
+                font-size: 10px;
+                font-weight: 850;
+                letter-spacing: 1.4px;
+            }
+
+            #student-enroll-confirm .sec-title {
+                margin: 0;
+                color: var(--sec-text);
+                font-size: 27px;
+                font-weight: 850;
+                line-height: 1.4;
+            }
+
+            #student-enroll-confirm .sec-description {
+                max-width: 700px;
+                margin: 8px 0 0;
+                color: var(--sec-muted);
+                font-size: 12px;
+                line-height: 1.8;
+            }
+
+            #student-enroll-confirm .sec-step-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                padding: 9px 12px;
+                border: 1px solid #f0d6d6;
+                border-radius: 8px;
+                background: #fff6f6;
+                color: #b42329;
+                font-size: 11px;
+                font-weight: 800;
+                white-space: nowrap;
+            }
+
+            #student-enroll-confirm .sec-alert {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                margin-bottom: 18px;
+                padding: 13px 15px;
+                border: 1px solid #f0cccc;
+                border-radius: 10px;
+                background: #fff2f2;
+                color: #a51f25;
+                font-size: 12px;
+                line-height: 1.7;
+            }
+
+                #student-enroll-confirm .sec-alert .bi {
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                    font-size: 16px;
+                }
+
+            #student-enroll-confirm .sec-layout {
+                display: grid;
+                grid-template-columns: minmax(0, 1.65fr) minmax(270px, 0.9fr);
+                align-items: start;
+                gap: 22px;
+            }
+
+            #student-enroll-confirm .sec-card {
+                min-width: 0;
+                overflow: hidden;
+                border: 1px solid var(--sec-border);
+                border-radius: 14px;
+                background: #ffffff;
+                box-shadow: 0 4px 16px rgba(28, 39, 60, 0.035);
+            }
+
+            #student-enroll-confirm .sec-card-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 19px 21px;
+                border-bottom: 1px solid #edf0f5;
+            }
+
+            #student-enroll-confirm .sec-header-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                flex-shrink: 0;
+                border-radius: 11px;
+                background: var(--sec-red-light);
+                color: var(--sec-red);
+                font-size: 18px;
+            }
+
+                #student-enroll-confirm .sec-header-icon.blue {
+                    background: #edf5ff;
+                    color: #2563a6;
+                }
+
+            #student-enroll-confirm .sec-card-title {
+                margin: 0;
+                color: var(--sec-text);
+                font-size: 15px;
+                font-weight: 850;
+                line-height: 1.5;
+            }
+
+            #student-enroll-confirm .sec-card-subtitle {
+                margin: 4px 0 0;
+                color: #8993a3;
+                font-size: 11px;
+                line-height: 1.65;
+            }
+
+            #student-enroll-confirm .sec-card-body {
+                padding: 22px;
+            }
+
+            #student-enroll-confirm .sec-course-banner {
+                display: flex;
+                align-items: flex-start;
+                gap: 15px;
+                margin-bottom: 22px;
+                padding: 18px;
+                border: 1px solid #f1dada;
+                border-radius: 11px;
+                background: linear-gradient(120deg, #fffafa, #ffffff);
+            }
+
+            #student-enroll-confirm .sec-course-art {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 56px;
+                height: 56px;
+                flex-shrink: 0;
+                border-radius: 14px;
+                background: linear-gradient(145deg, #e53935, #a61f24);
+                color: #ffffff;
+                font-size: 24px;
+                box-shadow: 0 4px 10px rgba(198, 40, 40, 0.13);
+            }
+
+            #student-enroll-confirm .sec-course-content {
+                min-width: 0;
+            }
+
+            #student-enroll-confirm .sec-course-label {
+                display: block;
+                margin-bottom: 5px;
+                color: var(--sec-red);
+                font-size: 9px;
+                font-weight: 850;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+            }
+
+            #student-enroll-confirm .sec-course-name {
+                margin: 0;
+                color: var(--sec-text);
+                font-size: 18px;
+                font-weight: 850;
+                line-height: 1.5;
+                overflow-wrap: anywhere;
+            }
+
+            #student-enroll-confirm .sec-class-name {
+                margin-top: 5px;
+                color: #677286;
+                font-size: 12px;
+                line-height: 1.7;
+                overflow-wrap: anywhere;
+            }
+
+                #student-enroll-confirm .sec-class-name strong {
+                    color: #b42329;
+                }
+
+            #student-enroll-confirm .sec-detail-list {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 13px;
+            }
+
+            #student-enroll-confirm .sec-detail-item {
+                display: flex;
+                align-items: flex-start;
+                gap: 11px;
+                min-width: 0;
+                padding: 14px;
+                border: 1px solid #e9edf3;
+                border-radius: 10px;
+                background: #ffffff;
+            }
+
+            #student-enroll-confirm .sec-detail-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 36px;
+                height: 36px;
+                flex-shrink: 0;
+                border-radius: 9px;
+                background: #f4f6fa;
+                color: #5e6a7e;
+                font-size: 15px;
+            }
+
+            #student-enroll-confirm .sec-detail-label {
+                display: block;
+                margin-bottom: 5px;
+                color: #8b94a3;
+                font-size: 9px;
+                font-weight: 800;
+                letter-spacing: 0.35px;
+                text-transform: uppercase;
+            }
+
+            #student-enroll-confirm .sec-detail-value {
+                display: block;
+                color: #344054;
+                font-size: 12px;
+                font-weight: 800;
+                line-height: 1.7;
+                overflow-wrap: anywhere;
+            }
+
+            #student-enroll-confirm .sec-fee-highlight {
+                margin-top: 20px;
+                padding: 17px;
+                border: 1px solid #f0dada;
+                border-radius: 11px;
+                background: #fffafa;
+            }
+
+            #student-enroll-confirm .sec-fee-label {
+                display: block;
+                color: #7b8596;
+                font-size: 10px;
+                font-weight: 800;
+            }
+
+            #student-enroll-confirm .sec-fee-amount {
+                display: block;
+                margin-top: 7px;
+                color: var(--sec-red);
+                font-size: 29px;
+                font-weight: 900;
+                line-height: 1.35;
+                overflow-wrap: anywhere;
+            }
+
+            #student-enroll-confirm .sec-fee-caption {
+                display: block;
+                margin-top: 5px;
+                color: #8993a3;
+                font-size: 10px;
+                line-height: 1.7;
+            }
+
+            #student-enroll-confirm .sec-summary-card {
+                position: sticky;
+                top: 20px;
+            }
+
+            #student-enroll-confirm .sec-summary-top {
+                padding: 22px;
+                background: linear-gradient(145deg, #c62828, #a61f24);
+                color: #ffffff;
+            }
+
+                #student-enroll-confirm .sec-summary-top .sec-summary-eyebrow {
+                    display: block;
+                    margin-bottom: 9px;
+                    color: #ffdede;
+                    font-size: 9px;
+                    font-weight: 850;
+                    letter-spacing: 1.2px;
+                }
+
+                #student-enroll-confirm .sec-summary-top h2 {
+                    margin: 0;
+                    color: #ffffff;
+                    font-size: 19px;
+                    font-weight: 850;
+                    line-height: 1.5;
+                }
+
+                #student-enroll-confirm .sec-summary-top p {
+                    margin: 8px 0 0;
+                    color: #ffe8e8;
+                    font-size: 11px;
+                    line-height: 1.7;
+                }
+
+            #student-enroll-confirm .sec-summary-body {
+                padding: 20px;
+            }
+
+            #student-enroll-confirm .sec-summary-row {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 12px 0;
+                border-bottom: 1px solid #edf0f5;
+                font-size: 11px;
+                line-height: 1.6;
+            }
+
+                #student-enroll-confirm .sec-summary-row:first-child {
+                    padding-top: 0;
+                }
+
+                #student-enroll-confirm .sec-summary-row:last-of-type {
+                    border-bottom: 0;
+                }
+
+                #student-enroll-confirm .sec-summary-row span {
+                    color: #8993a3;
+                }
+
+                #student-enroll-confirm .sec-summary-row strong {
+                    color: #344054;
+                    text-align: right;
+                    overflow-wrap: anywhere;
+                }
+
+            #student-enroll-confirm .sec-payment-notice {
+                display: flex;
+                align-items: flex-start;
+                gap: 9px;
+                margin-top: 15px;
+                padding: 12px;
+                border: 1px solid #f4e2b5;
+                border-radius: 9px;
+                background: #fff9eb;
+                color: #875b0c;
+                font-size: 10px;
+                line-height: 1.8;
+            }
+
+                #student-enroll-confirm .sec-payment-notice .bi {
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                    font-size: 14px;
+                }
+
+            #student-enroll-confirm .sec-actions {
+                display: grid;
+                gap: 9px;
+                margin-top: 19px;
+            }
+
+            #student-enroll-confirm .sec-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                width: 100%;
+                min-height: 43px;
+                padding: 11px 14px;
+                border: 1px solid transparent;
+                border-radius: 8px;
+                font-family: inherit;
+                font-size: 11px;
+                font-weight: 850;
+                line-height: 1.5;
+                text-align: center;
+                text-decoration: none;
+                cursor: pointer;
+                transition: all 0.18s ease;
+            }
+
+            #student-enroll-confirm .sec-btn-primary {
+                border-color: var(--sec-red);
+                background: var(--sec-red);
+                color: #ffffff;
+                box-shadow: 0 4px 10px rgba(198, 40, 40, 0.13);
+            }
+
+                #student-enroll-confirm .sec-btn-primary:hover {
+                    border-color: var(--sec-red-dark);
+                    background: var(--sec-red-dark);
+                    color: #ffffff;
+                }
+
+            #student-enroll-confirm .sec-btn-secondary {
+                border-color: #dfe4ec;
+                background: #ffffff;
+                color: #4b5565;
+            }
+
+                #student-enroll-confirm .sec-btn-secondary:hover {
+                    border-color: #e7c5c5;
+                    background: #fff6f6;
+                    color: var(--sec-red);
+                }
+
+            #student-enroll-confirm .sec-security-note {
+                display: flex;
+                align-items: flex-start;
+                gap: 7px;
+                margin-top: 15px;
+                color: #929aaa;
+                font-size: 9px;
+                line-height: 1.75;
+            }
+
+                #student-enroll-confirm .sec-security-note .bi {
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                    color: var(--sec-green);
+                }
+
+    @@media (max-width: 1000px) {
+        #student-enroll-confirm .sec-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        #student-enroll-confirm .sec-summary-card {
+            position: static;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        #student-enroll-confirm .sec-title {
+            font-size: 23px;
+        }
+
+        #student-enroll-confirm .sec-card-body {
+            padding: 15px;
+        }
+
+        #student-enroll-confirm .sec-card-header {
+            padding: 16px;
+        }
+
+        #student-enroll-confirm .sec-detail-list {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        #student-enroll-confirm .sec-course-banner {
+            padding: 14px;
+        }
+
+        #student-enroll-confirm .sec-course-art {
+            width: 46px;
+            height: 46px;
+            font-size: 20px;
+        }
+
+        #student-enroll-confirm .sec-course-name {
+            font-size: 15px;
+        }
+
+        #student-enroll-confirm .sec-fee-amount {
+            font-size: 25px;
+        }
+    }
+</style>
+
+<div class="student-portal" id="student-enroll-confirm">
+
+    <aside class="student-sidebar">
+
+        <a class="student-brand"
+           href="@Url.Action("StudentDashboard", "Home")">
+
+            <span class="student-brand-mark">
+                <i class="bi bi-book-half" aria-hidden="true"></i>
+            </span>
+
+            <span class="student-brand-text">
+                ELC PORTAL
+                <small>STUDENT SPACE</small>
+            </span>
+
+        </a>
+
+        <div class="student-sidebar-caption">
+            KHÔNG GIAN HỌC TẬP
+        </div>
+
+        <nav class="student-side-nav">
+
+            <a href="@Url.Action("StudentDashboard", "Home")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-grid-1x2-fill" aria-hidden="true"></i>
+                </span>
+
+                Dashboard
+            </a>
+
+            <a href="@Url.Action("StudentTimetable", "ClassSessions")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-calendar3-week-fill" aria-hidden="true"></i>
+                </span>
+
+                Thời khóa biểu
+            </a>
+
+            <a href="@Url.Action("StudentEnroll", "Enrollments")"
+               class="student-nav-link is-active"
+               aria-current="page">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-journal-plus" aria-hidden="true"></i>
+                </span>
+
+                Đăng ký lớp học
+            </a>
+
+            <a href="@Url.Action("StudentProgress", "Attendances")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
+                </span>
+
+                Kết quả học tập
+            </a>
+
+            <a href="@Url.Action("StudentLearningResources", "Assignments")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i>
+                </span>
+
+                Bài tập &amp; Tài liệu
+            </a>
+
+            <a href="@Url.Action("StudentPayments", "Payments")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-wallet2" aria-hidden="true"></i>
+                </span>
+
+                Học phí &amp; hóa đơn
+            </a>
+
+            <a href="@Url.Action("StudentProfile", "Profiles")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-person-vcard-fill" aria-hidden="true"></i>
+                </span>
+
+                Hồ sơ cá nhân
+            </a>
+
+        </nav>
+
+        <div class="student-sidebar-bottom">
+
+            <div class="student-support-card">
+
+                <span class="student-support-icon">
+                    <i class="bi bi-headset" aria-hidden="true"></i>
+                </span>
+
+                <strong>Cần hỗ trợ?</strong>
+
+                <p>Liên hệ trung tâm khi bạn cần giải đáp.</p>
+
+                @Html.ActionLink(
+                    "Liên hệ trung tâm →",
+                    "Contact",
+                    "Home",
+                    null,
+                    new { @class = "student-support-link" }
+                )
+
+            </div>
+
+            @Html.ActionLink(
+                "↪ Đăng xuất",
+                "Logout",
+                "Auth",
+                null,
+                new { @class = "student-logout-link" }
+            )
+
+        </div>
+
+    </aside>
+
+    <div class="student-main">
+
+        <header class="student-topbar">
+
+            <div class="student-topbar-title">
+                <span>CỔNG HỌC VIÊN</span>
+                <strong>Xác nhận đăng ký lớp học</strong>
+            </div>
+
+            <div class="student-topbar-actions">
+
+                <div class="student-topbar-user">
+
+                    <span class="student-avatar-small">
+                        @studentInitial
+                    </span>
+
+                    <span class="student-topbar-user-info">
+                        <strong>@studentName</strong>
+                        <small>Học viên</small>
+                    </span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <main class="student-content">
+
+            <div class="student-breadcrumb">
+                Trang chủ
+                <span>/</span>
+                Cổng học viên
+                <span>/</span>
+                Đăng ký lớp học
+                <span>/</span>
+                Xác nhận
+            </div>
+
+            <div class="sec-page">
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="sec-alert" role="alert">
+                        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+                        <span>@TempData["ErrorMessage"]</span>
+                    </div>
+                }
+
+                <section class="sec-heading">
+
+                    <div>
+                        <span class="sec-eyebrow">ENROLLMENT CONFIRMATION</span>
+
+                        <h1 class="sec-title">
+                            Xác nhận đăng ký lớp học
+                        </h1>
+
+                        <p class="sec-description">
+                            Vui lòng kiểm tra thông tin lớp và học phí trước khi
+                            gửi yêu cầu ghi danh.
+                        </p>
+                    </div>
+
+                    <span class="sec-step-badge">
+                        <i class="bi bi-clipboard-check-fill" aria-hidden="true"></i>
+                        Bước xác nhận
+                    </span>
+
+                </section>
+
+                <div class="sec-layout">
+
+                    <section class="sec-card">
+
+                        <header class="sec-card-header">
+
+                            <span class="sec-header-icon">
+                                <i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i>
+                            </span>
+
+                            <div>
+                                <h2 class="sec-card-title">
+                                    Thông tin lớp học
+                                </h2>
+
+                                <p class="sec-card-subtitle">
+                                    Kiểm tra khóa học và lịch dự kiến.
+                                </p>
+                            </div>
+
+                        </header>
+
+                        <div class="sec-card-body">
+
+                            <div class="sec-course-banner">
+
+                                <span class="sec-course-art">
+                                    <i class="bi bi-book-half" aria-hidden="true"></i>
+                                </span>
+
+                                <div class="sec-course-content">
+
+                                    <span class="sec-course-label">
+                                        KHÓA HỌC BẠN ĐÃ CHỌN
+                                    </span>
+
+                                    <h3 class="sec-course-name">
+                                        @(string.IsNullOrWhiteSpace(Model.CourseName)
+                                            ? "Chưa cập nhật tên khóa học"
+                                            : Model.CourseName)
+                                    </h3>
+
+                                    <div class="sec-class-name">
+                                        Lớp:
+                                        <strong>
+                                            @(string.IsNullOrWhiteSpace(Model.ClassName)
+                                                ? "Chưa cập nhật"
+                                                : Model.ClassName)
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="sec-detail-list">
+
+                                <div class="sec-detail-item">
+
+                                    <span class="sec-detail-icon">
+                                        <i class="bi bi-calendar3-week" aria-hidden="true"></i>
+                                    </span>
+
+                                    <div>
+                                        <span class="sec-detail-label">Ngày khai giảng</span>
+
+                                        <strong class="sec-detail-value">
+                                            @(Model.StartDate.HasValue
+                                                ? Model.StartDate.Value.ToString("dd/MM/yyyy")
+                                                : "Chưa cập nhật")
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+                                <div class="sec-detail-item">
+
+                                    <span class="sec-detail-icon">
+                                        <i class="bi bi-clock-fill" aria-hidden="true"></i>
+                                    </span>
+
+                                    <div>
+                                        <span class="sec-detail-label">Giờ học</span>
+
+                                        <strong class="sec-detail-value">
+                                            @startTime – @endTime
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+                                <div class="sec-detail-item">
+
+                                    <span class="sec-detail-icon">
+                                        <i class="bi bi-calendar-check-fill" aria-hidden="true"></i>
+                                    </span>
+
+                                    <div>
+                                        <span class="sec-detail-label">Các ngày học</span>
+
+                                        <strong class="sec-detail-value">
+                                            @scheduleDays
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+                                <div class="sec-detail-item">
+
+                                    <span class="sec-detail-icon">
+                                        <i class="bi bi-person-vcard-fill" aria-hidden="true"></i>
+                                    </span>
+
+                                    <div>
+                                        <span class="sec-detail-label">Học viên đăng ký</span>
+
+                                        <strong class="sec-detail-value">
+                                            @studentName
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="sec-fee-highlight">
+
+                                <span class="sec-fee-label">
+                                    HỌC PHÍ KHÓA HỌC
+                                </span>
+
+                                <strong class="sec-fee-amount">
+                                    @Model.TuitionFee.ToString("N0") VNĐ
+                                </strong>
+
+                                <span class="sec-fee-caption">
+                                    Học phí theo thông tin khóa học mà hệ thống cung cấp.
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                    <aside class="sec-card sec-summary-card">
+
+                        <div class="sec-summary-top">
+
+                            <span class="sec-summary-eyebrow">
+                                ENROLLMENT SUMMARY
+                            </span>
+
+                            <h2>Hoàn tất đăng ký</h2>
+
+                            <p>
+                                Xác nhận để gửi yêu cầu ghi danh và tạo công nợ
+                                theo quy trình của trung tâm.
+                            </p>
+
+                        </div>
+
+                        <div class="sec-summary-body">
+
+                            <div class="sec-summary-row">
+                                <span>Khóa học</span>
+                                <strong>@Model.CourseName</strong>
+                            </div>
+
+                            <div class="sec-summary-row">
+                                <span>Lớp học</span>
+                                <strong>@Model.ClassName</strong>
+                            </div>
+
+                            <div class="sec-summary-row">
+                                <span>Mã lớp</span>
+                                <strong>#@Model.ClassId</strong>
+                            </div>
+
+                            <div class="sec-summary-row">
+                                <span>Học phí</span>
+                                <strong style="color:#c62828;">
+                                    @Model.TuitionFee.ToString("N0") VNĐ
+                                </strong>
+                            </div>
+
+                            <div class="sec-payment-notice">
+
+                                <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+
+                                <span>
+                                    Khi xác nhận, hệ thống sẽ tạo đơn ghi danh ở
+                                    trạng thái chờ xử lý và tạo bản ghi học phí.
+                                    Bạn có thể theo dõi thông tin tại mục
+                                    <strong>Học phí &amp; hóa đơn</strong>.
+                                </span>
+
+                            </div>
+
+                            @using (Html.BeginForm(
+                                "StudentEnroll",
+                                "Enrollments",
+                                FormMethod.Post,
+                                new { id = "sec-confirm-form" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                @Html.HiddenFor(m => m.ClassId)
+
+                                <div class="sec-actions">
+
+                                    <button type="submit"
+                                            class="sec-btn sec-btn-primary"
+                                            onclick="return confirm('Bạn có chắc chắn muốn ghi danh vào lớp này không?');">
+
+                                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                                        Xác nhận đăng ký
+
+                                    </button>
+
+                                    <a href="@Url.Action("StudentEnroll", "Enrollments")"
+                                       class="sec-btn sec-btn-secondary">
+
+                                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                                        Quay lại danh sách lớp
+
+                                    </a>
+
+                                </div>
+                            }
+
+                            <div class="sec-security-note">
+
+                                <i class="bi bi-shield-check" aria-hidden="true"></i>
+
+                                <span>
+                                    Yêu cầu ghi danh sẽ được kiểm tra về tình trạng
+                                    lớp, sĩ số và lịch học trùng trước khi lưu.
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </aside>
+
+                </div>
+
+            </div>
+
+        </main>
+
+        <footer class="student-footer">
+            <span>
+                <i class="bi bi-book-half" aria-hidden="true"></i>
+                © @DateTime.Now.Year English Center
+            </span>
+            <span>Hệ thống quản lý trung tâm Anh ngữ · Cổng học viên</span>
+        </footer>
+
+    </div>
+
+</div>

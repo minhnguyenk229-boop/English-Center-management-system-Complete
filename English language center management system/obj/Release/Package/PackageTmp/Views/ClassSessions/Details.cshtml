@@ -1,0 +1,511 @@
+﻿
+@model English_language_center_management_system.Models.ClassSession
+
+@{
+    ViewBag.Title = "Chi tiết buổi học";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    string className = Model.Class != null
+        ? Model.Class.ClassName
+        : "Lớp #" + Model.ClassId;
+
+    string courseName = Model.Class != null && Model.Class.Course != null
+        ? Model.Class.Course.CourseName
+        : "Chưa xác định khóa học";
+
+    string roomName = Model.Room != null
+        ? Model.Room.RoomName
+        : "Chưa xếp phòng";
+
+    double durationMinutes = Math.Max(
+        0,
+        (Model.EndTime - Model.StartTime).TotalMinutes);
+
+    string durationText = (durationMinutes / 60.0).ToString("0.##") + " giờ";
+
+    string teacherName = Model.Class != null && Model.Class.Teacher != null
+        ? Model.Class.Teacher.FullName
+        : "Chưa phân công";
+}
+
+<style>
+    .csd-page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding-bottom: 22px;
+        color: #25324a;
+    }
+
+        .csd-page * {
+            box-sizing: border-box;
+        }
+
+    .csd-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 17px;
+    }
+
+    .csd-eyebrow {
+        margin-bottom: 6px;
+        color: #929db0;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+    }
+
+    .csd-header h1 {
+        margin: 0 0 5px;
+        color: #25324a;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .csd-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .csd-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .csd-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 36px;
+        padding: 8px 12px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+
+    .csd-btn-back {
+        border-color: #dce3ed;
+        background: #fff;
+        color: #526078;
+    }
+
+        .csd-btn-back:hover {
+            background: #f5f7fb;
+            color: #25324a;
+        }
+
+    .csd-btn-edit {
+        border-color: #c92828;
+        background: #c92828;
+        color: #fff;
+    }
+
+        .csd-btn-edit:hover {
+            border-color: #a91f1f;
+            background: #a91f1f;
+            color: #fff;
+        }
+
+    .csd-btn-delete {
+        border-color: #f0cccc;
+        background: #fff;
+        color: #c92828;
+    }
+
+        .csd-btn-delete:hover {
+            background: #fff0f0;
+            color: #a91f1f;
+        }
+
+    .csd-hero {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(26,42,69,.035);
+    }
+
+    .csd-hero-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 58px;
+        height: 58px;
+        flex-shrink: 0;
+        border-radius: 15px;
+        background: #eef4ff;
+        color: #2865bf;
+        font-size: 24px;
+    }
+
+    .csd-hero-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+        .csd-hero-content h2 {
+            margin: 0 0 6px;
+            color: #25324a;
+            font-size: 18px;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        .csd-hero-content p {
+            margin: 0;
+            color: #8995aa;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+    .csd-session-id {
+        align-self: flex-start;
+        padding: 6px 9px;
+        border-radius: 7px;
+        background: #f1f4f9;
+        color: #526078;
+        font-size: 11px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .csd-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .csd-stat {
+        min-width: 0;
+        padding: 14px 16px;
+        border: 1px solid #e3e9f1;
+        border-top: 3px solid var(--csd-accent);
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(26,42,69,.025);
+    }
+
+    .csd-stat-time {
+        --csd-accent: #2865bf;
+    }
+
+    .csd-stat-duration {
+        --csd-accent: #198754;
+    }
+
+    .csd-stat-room {
+        --csd-accent: #e2a000;
+    }
+
+    .csd-stat-label {
+        display: block;
+        margin-bottom: 7px;
+        color: #8995aa;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .csd-stat-value {
+        display: block;
+        color: #25324a;
+        font-size: 18px;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+
+    .csd-stat-note {
+        display: block;
+        margin-top: 5px;
+        color: #8995aa;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    .csd-card {
+        margin-bottom: 16px;
+        overflow: hidden;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(26,42,69,.035);
+    }
+
+    .csd-card-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid #edf0f5;
+        color: #29364d;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .csd-card-body {
+        padding: 5px 18px;
+    }
+
+    .csd-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 18px;
+        padding: 13px 0;
+        border-bottom: 1px solid #f0f2f6;
+    }
+
+        .csd-row:last-child {
+            border-bottom: none;
+        }
+
+    .csd-label {
+        flex-shrink: 0;
+        color: #8995aa;
+        font-size: 11px;
+    }
+
+    .csd-value {
+        color: #29364d;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: right;
+        overflow-wrap: anywhere;
+    }
+
+    .csd-value-muted {
+        color: #8995aa;
+        font-weight: 500;
+    }
+
+    .csd-highlight {
+        color: #245bb5;
+    }
+
+    .csd-room-badge {
+        display: inline-block;
+        padding: 6px 9px;
+        border-radius: 7px;
+        background: #eef4ff;
+        color: #245bb5;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .csd-note {
+        padding: 12px 14px;
+        border: 1px solid #dce8fa;
+        border-radius: 9px;
+        background: #f4f8ff;
+        color: #47658e;
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    @@media(max-width: 750px) {
+        .csd-stats {
+            grid-template-columns: 1fr;
+            gap: 9px;
+        }
+
+        .csd-hero {
+            padding: 15px;
+        }
+
+        .csd-header h1 {
+            font-size: 21px;
+        }
+    }
+
+    @@media(max-width: 550px) {
+        .csd-hero {
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .csd-hero-icon {
+            width: 45px;
+            height: 45px;
+            font-size: 19px;
+        }
+
+        .csd-row {
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .csd-value {
+            text-align: left;
+        }
+
+        .csd-card-body {
+            padding: 3px 14px;
+        }
+    }
+</style>
+
+<div class="csd-page">
+
+    <div class="csd-header">
+        <div>
+            <div class="csd-eyebrow">
+                ENGLISH LANGUAGE CENTER / QUẢN LÝ LỊCH HỌC
+            </div>
+
+            <h1>Chi tiết buổi học</h1>
+
+            <p>Xem thông tin lớp học, thời gian và phòng được phân công.</p>
+        </div>
+
+        <div class="csd-actions">
+
+            <a href="@Url.Action("Index", "ClassSessions")"
+               class="csd-btn csd-btn-back">
+                <i class="glyphicon glyphicon-list"></i>
+                Danh sách
+            </a>
+
+            <a href="@Url.Action("Edit", "ClassSessions", new { id = Model.Id })"
+               class="csd-btn csd-btn-edit">
+                <i class="glyphicon glyphicon-edit"></i>
+                Chỉnh sửa
+            </a>
+
+            <a href="@Url.Action("Delete", "ClassSessions", new { id = Model.Id })"
+               class="csd-btn csd-btn-delete">
+                <i class="glyphicon glyphicon-trash"></i>
+                Xóa
+            </a>
+
+        </div>
+    </div>
+
+    <section class="csd-hero">
+
+        <div class="csd-hero-icon">
+            <i class="glyphicon glyphicon-calendar"></i>
+        </div>
+
+        <div class="csd-hero-content">
+            <h2>@className</h2>
+            <p>@courseName</p>
+            <p>Ngày học: @Model.SessionDate.ToString("dd/MM/yyyy")</p>
+        </div>
+
+        <span class="csd-session-id">Buổi #@Model.Id</span>
+
+    </section>
+
+    <div class="csd-stats">
+
+        <div class="csd-stat csd-stat-time">
+            <span class="csd-stat-label">Khung giờ</span>
+            <strong class="csd-stat-value">
+                @Model.StartTime.ToString(@"hh\:mm")
+                – @Model.EndTime.ToString(@"hh\:mm")
+            </strong>
+            <span class="csd-stat-note">
+                @Model.SessionDate.ToString("dddd, dd/MM/yyyy")
+            </span>
+        </div>
+
+        <div class="csd-stat csd-stat-duration">
+            <span class="csd-stat-label">Thời lượng</span>
+            <strong class="csd-stat-value">@durationText</strong>
+            <span class="csd-stat-note">
+                Tính theo giờ bắt đầu và giờ kết thúc.
+            </span>
+        </div>
+
+        <div class="csd-stat csd-stat-room">
+            <span class="csd-stat-label">Phòng học</span>
+            <strong class="csd-stat-value">@(Model.Room != null ? Model.Room.RoomName : "Chưa xếp phòng")</strong>
+            <span class="csd-stat-note">Phòng được gán cho buổi học này.</span>
+        </div>
+
+    </div>
+
+    <section class="csd-card">
+
+        <div class="csd-card-header">
+            <i class="glyphicon glyphicon-info-sign"></i>
+            Thông tin buổi học
+        </div>
+
+        <div class="csd-card-body">
+
+            <div class="csd-row">
+                <span class="csd-label">Mã buổi học</span>
+                <span class="csd-value">#@Model.Id</span>
+            </div>
+
+            <div class="csd-row">
+                <span class="csd-label">Lớp học</span>
+                <span class="csd-value">@className</span>
+            </div>
+
+            <div class="csd-row">
+                <span class="csd-label">Khóa học</span>
+                <span class="csd-value">@courseName</span>
+            </div>
+
+            <div class="csd-row">
+                <span class="csd-label">Giáo viên</span>
+                <span class="csd-value">@teacherName</span>
+            </div>
+
+            <div class="csd-row">
+                <span class="csd-label">Ngày diễn ra</span>
+                <span class="csd-value">@Model.SessionDate.ToString("dd/MM/yyyy")</span>
+            </div>
+
+            <div class="csd-row">
+                <span class="csd-label">Giờ bắt đầu</span>
+                <span class="csd-value csd-highlight">
+                    @Model.StartTime.ToString(@"hh\:mm")
+                </span>
+            </div>
+
+            <div class="csd-row">
+                <span class="csd-label">Giờ kết thúc</span>
+                <span class="csd-value csd-highlight">
+                    @Model.EndTime.ToString(@"hh\:mm")
+                </span>
+            </div>
+
+            <div class="csd-row">
+                <span class="csd-label">Phòng học</span>
+                <span class="csd-value">
+                    @if (Model.Room != null)
+                    {
+                        <span class="csd-room-badge">@Model.Room.RoomName</span>
+                    }
+                    else
+                    {
+                        <span class="csd-value-muted">Chưa xếp phòng</span>
+                    }
+                </span>
+            </div>
+
+        </div>
+    </section>
+
+    <div class="csd-note">
+        <i class="glyphicon glyphicon-info-sign"></i>
+        Thông tin trên được hiển thị từ buổi học đang lưu trong hệ thống.
+        Nhấn <strong>Chỉnh sửa</strong> nếu cần cập nhật ngày, giờ hoặc phòng học.
+    </div>
+
+</div>

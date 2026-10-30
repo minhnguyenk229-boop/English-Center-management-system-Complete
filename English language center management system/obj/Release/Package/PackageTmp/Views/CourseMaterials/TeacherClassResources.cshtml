@@ -1,0 +1,1911 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Materials.TeacherClassResourcesViewModel
+
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using English_language_center_management_system.Models
+
+@{
+    ViewBag.Title = "Bài tập & tài liệu";
+
+    var availableClasses = Model.AvailableClasses
+        ?? new List<Class>();
+
+    var materials = Model.Materials
+        ?? new List<CourseMaterial>();
+
+    var assignments = Model.Assignments
+        ?? new List<Assignment>();
+
+    var selectedClass = Model.SelectedClass;
+
+    string teacherName = Session["FullName"] as string;
+
+    if (string.IsNullOrWhiteSpace(teacherName))
+    {
+        teacherName = Session["Username"] as string;
+    }
+
+    if (string.IsNullOrWhiteSpace(teacherName))
+    {
+        teacherName = "Giáo viên";
+    }
+
+    string teacherInitial = teacherName.Substring(0, 1).ToUpper();
+
+    DateTime currentTime = DateTime.Now;
+
+    int totalMaterials = materials.Count;
+
+    int homeworkMaterials = materials.Count(m =>
+        !string.IsNullOrWhiteSpace(m.FileUrl) &&
+        m.FileUrl.IndexOf(
+            "/Uploads/Assignments/",
+            StringComparison.OrdinalIgnoreCase) >= 0);
+
+    int totalAssignments = assignments.Count;
+
+    int overdueAssignments = assignments.Count(a =>
+        a.DueDate < currentTime);
+
+    int openAssignments = totalAssignments - overdueAssignments;
+
+    string courseName =
+        selectedClass != null && selectedClass.Course != null
+            ? selectedClass.Course.CourseName
+            : "Chưa cập nhật khóa học";
+}
+
+<style>
+    /* =====================================================
+       TEACHER CLASS RESOURCES
+       Giao diện riêng cho trang bài tập và tài liệu
+       ===================================================== */
+
+    #teacher-class-resources {
+        --tcr-primary: #c62828;
+        --tcr-primary-dark: #a61f24;
+        --tcr-primary-light: #fff0f0;
+        --tcr-text: #202938;
+        --tcr-muted: #7b8494;
+        --tcr-border: #e7eaf0;
+        --tcr-surface: #ffffff;
+        --tcr-bg: #f4f6fa;
+        --tcr-green: #16845b;
+        --tcr-green-light: #eaf8f0;
+        --tcr-blue: #2772c7;
+        --tcr-blue-light: #edf5ff;
+        --tcr-orange: #b96d0b;
+        --tcr-orange-light: #fff5e8;
+    }
+
+        #teacher-class-resources .tcr-page {
+            min-width: 0;
+        }
+
+        #teacher-class-resources .tcr-page-intro {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+            margin-bottom: 22px;
+        }
+
+        #teacher-class-resources .tcr-intro-text {
+            min-width: 0;
+            flex: 1;
+        }
+
+        #teacher-class-resources .tcr-eyebrow {
+            display: inline-block;
+            margin-bottom: 8px;
+            color: var(--tcr-primary);
+            font-size: 0.72rem;
+            font-weight: 850;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        #teacher-class-resources .tcr-page-title {
+            margin: 0;
+            color: var(--tcr-text);
+            font-size: 1.9rem;
+            font-weight: 850;
+            line-height: 1.3;
+            letter-spacing: -0.6px;
+        }
+
+        #teacher-class-resources .tcr-page-description {
+            max-width: 720px;
+            margin: 9px 0 0;
+            color: var(--tcr-muted);
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        #teacher-class-resources .tcr-class-filter {
+            width: 290px;
+            flex-shrink: 0;
+            padding: 16px;
+            border: 1px solid var(--tcr-border);
+            border-radius: 13px;
+            background: var(--tcr-surface);
+            box-shadow: 0 4px 16px rgba(25, 35, 55, 0.035);
+        }
+
+        #teacher-class-resources .tcr-filter-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #475166;
+            font-size: 0.76rem;
+            font-weight: 800;
+        }
+
+        #teacher-class-resources .tcr-form-control {
+            display: block;
+            width: 100%;
+            min-height: 43px;
+            padding: 10px 12px;
+            border: 1px solid #dce1e9;
+            border-radius: 8px;
+            background: #fff;
+            color: var(--tcr-text);
+            font-size: 0.84rem;
+            outline: none;
+            box-shadow: none;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+            #teacher-class-resources .tcr-form-control:focus {
+                border-color: var(--tcr-primary);
+                box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.09);
+            }
+
+        #teacher-class-resources textarea.tcr-form-control {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        #teacher-class-resources .tcr-alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 18px;
+            padding: 14px 16px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            font-size: 0.86rem;
+            line-height: 1.6;
+        }
+
+        #teacher-class-resources .tcr-alert-success {
+            border-color: #c8ead7;
+            background: #eefaf3;
+            color: #176b45;
+        }
+
+        #teacher-class-resources .tcr-alert-error {
+            border-color: #f3caca;
+            background: #fff1f1;
+            color: #a51f25;
+        }
+
+        #teacher-class-resources .tcr-alert-icon {
+            flex-shrink: 0;
+            font-size: 1rem;
+            font-weight: 850;
+        }
+
+        #teacher-class-resources .tcr-class-overview {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 22px 24px;
+            overflow: hidden;
+            border: 1px solid #f0dada;
+            border-radius: 15px;
+            background: radial-gradient(circle at 100% 0, rgba(198, 40, 40, 0.08), transparent 38%), #ffffff;
+            box-shadow: 0 4px 18px rgba(28, 39, 60, 0.035);
+        }
+
+        #teacher-class-resources .tcr-class-overview-main {
+            min-width: 0;
+        }
+
+        #teacher-class-resources .tcr-class-overview-label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--tcr-primary);
+            font-size: 0.7rem;
+            font-weight: 850;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        #teacher-class-resources .tcr-class-name {
+            margin: 0;
+            color: var(--tcr-text);
+            font-size: 1.35rem;
+            font-weight: 850;
+            overflow-wrap: anywhere;
+        }
+
+        #teacher-class-resources .tcr-class-course {
+            margin-top: 7px;
+            color: var(--tcr-muted);
+            font-size: 0.84rem;
+        }
+
+            #teacher-class-resources .tcr-class-course strong {
+                color: #424d60;
+            }
+
+        #teacher-class-resources .tcr-class-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            padding: 9px 13px;
+            border: 1px solid #f0d0d0;
+            border-radius: 9px;
+            background: var(--tcr-primary-light);
+            color: var(--tcr-primary);
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        /* Thống kê */
+
+        #teacher-class-resources .tcr-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        #teacher-class-resources .tcr-stat-card {
+            min-width: 0;
+            padding: 19px;
+            border: 1px solid var(--tcr-border);
+            border-radius: 13px;
+            background: #ffffff;
+            box-shadow: 0 4px 16px rgba(25, 35, 55, 0.025);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+            #teacher-class-resources .tcr-stat-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 22px rgba(25, 35, 55, 0.07);
+            }
+
+        #teacher-class-resources .tcr-stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        #teacher-class-resources .tcr-stat-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 43px;
+            height: 43px;
+            flex-shrink: 0;
+            border-radius: 11px;
+            font-size: 1.15rem;
+            font-weight: 850;
+        }
+
+        #teacher-class-resources .tcr-icon-red {
+            background: #fff0f0;
+            color: #c62828;
+        }
+
+        #teacher-class-resources .tcr-icon-blue {
+            background: #edf5ff;
+            color: #2772c7;
+        }
+
+        #teacher-class-resources .tcr-icon-green {
+            background: #eaf8f0;
+            color: #16845b;
+        }
+
+        #teacher-class-resources .tcr-icon-orange {
+            background: #fff5e8;
+            color: #b96d0b;
+        }
+
+        #teacher-class-resources .tcr-stat-caption {
+            color: var(--tcr-muted);
+            font-size: 0.76rem;
+            font-weight: 650;
+        }
+
+        #teacher-class-resources .tcr-stat-number {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--tcr-text);
+            font-size: 1.9rem;
+            font-weight: 850;
+            line-height: 1.2;
+        }
+
+        #teacher-class-resources .tcr-stat-description {
+            color: var(--tcr-muted);
+            font-size: 0.76rem;
+            line-height: 1.5;
+        }
+
+        /* Các panel chính */
+
+        #teacher-class-resources .tcr-panel {
+            margin-bottom: 24px;
+            overflow: hidden;
+            border: 1px solid var(--tcr-border);
+            border-radius: 15px;
+            background: #ffffff;
+            box-shadow: 0 4px 18px rgba(28, 39, 60, 0.035);
+        }
+
+        #teacher-class-resources .tcr-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 20px 22px;
+            border-bottom: 1px solid var(--tcr-border);
+        }
+
+        #teacher-class-resources .tcr-panel-title-group {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            gap: 12px;
+        }
+
+        #teacher-class-resources .tcr-panel-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 43px;
+            height: 43px;
+            flex-shrink: 0;
+            border-radius: 11px;
+            font-size: 1.2rem;
+            font-weight: 850;
+        }
+
+        #teacher-class-resources .tcr-panel-title {
+            margin: 0;
+            color: var(--tcr-text);
+            font-size: 1.02rem;
+            font-weight: 850;
+            line-height: 1.4;
+        }
+
+        #teacher-class-resources .tcr-panel-subtitle {
+            margin: 5px 0 0;
+            color: var(--tcr-muted);
+            font-size: 0.78rem;
+            line-height: 1.5;
+        }
+
+        #teacher-class-resources .tcr-count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 35px;
+            padding: 7px 10px;
+            border-radius: 8px;
+            background: #f3f5f8;
+            color: #5d6879;
+            font-size: 0.76rem;
+            font-weight: 850;
+        }
+
+        #teacher-class-resources .tcr-panel-body {
+            padding: 22px;
+        }
+
+        /* Form tạo mới */
+
+        #teacher-class-resources .tcr-create-box {
+            margin-bottom: 24px;
+            padding: 20px;
+            border: 1px solid #f0dada;
+            border-radius: 12px;
+            background: #fffafa;
+        }
+
+        #teacher-class-resources .tcr-create-heading {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+            margin-bottom: 19px;
+        }
+
+        #teacher-class-resources .tcr-create-heading-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            border-radius: 9px;
+            background: var(--tcr-primary-light);
+            color: var(--tcr-primary);
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        #teacher-class-resources .tcr-create-heading h3 {
+            margin: 1px 0 4px;
+            color: var(--tcr-text);
+            font-size: 0.92rem;
+            font-weight: 850;
+        }
+
+        #teacher-class-resources .tcr-create-heading p {
+            margin: 0;
+            color: var(--tcr-muted);
+            font-size: 0.78rem;
+            line-height: 1.6;
+        }
+
+        #teacher-class-resources .tcr-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 17px 18px;
+        }
+
+        #teacher-class-resources .tcr-form-group {
+            min-width: 0;
+            margin: 0;
+        }
+
+        #teacher-class-resources .tcr-form-group-full {
+            grid-column: 1 / -1;
+        }
+
+        #teacher-class-resources .tcr-field-label {
+            display: block;
+            margin-bottom: 7px;
+            color: #424d60;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        #teacher-class-resources .tcr-required {
+            color: var(--tcr-primary);
+        }
+
+        #teacher-class-resources .tcr-field-hint {
+            display: block;
+            margin-top: 6px;
+            color: #8a93a3;
+            font-size: 0.73rem;
+            line-height: 1.5;
+        }
+
+        #teacher-class-resources .tcr-file-input {
+            padding: 7px 9px;
+            background: #ffffff;
+        }
+
+        #teacher-class-resources .tcr-form-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            margin-top: 19px;
+            padding-top: 17px;
+            border-top: 1px solid #f0e4e4;
+        }
+
+        #teacher-class-resources .tcr-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 39px;
+            padding: 10px 15px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            line-height: 1.3;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+
+        #teacher-class-resources .tcr-btn-primary {
+            background: var(--tcr-primary);
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.12);
+        }
+
+            #teacher-class-resources .tcr-btn-primary:hover,
+            #teacher-class-resources .tcr-btn-primary:focus {
+                border-color: var(--tcr-primary-dark);
+                background: var(--tcr-primary-dark);
+                color: #ffffff;
+            }
+
+        #teacher-class-resources .tcr-btn-neutral {
+            border-color: #dfe3ea;
+            background: #ffffff;
+            color: #4b5565;
+        }
+
+            #teacher-class-resources .tcr-btn-neutral:hover {
+                border-color: #cbd1dc;
+                background: #f6f7f9;
+                color: var(--tcr-text);
+            }
+
+        #teacher-class-resources .tcr-btn-download {
+            min-height: 32px;
+            padding: 7px 10px;
+            border-color: #d6e7fb;
+            background: var(--tcr-blue-light);
+            color: var(--tcr-blue);
+            font-size: 0.74rem;
+        }
+
+            #teacher-class-resources .tcr-btn-download:hover {
+                border-color: var(--tcr-blue);
+                background: #e0edff;
+                color: #195ca8;
+            }
+
+        #teacher-class-resources .tcr-btn-delete {
+            min-height: 32px;
+            padding: 7px 10px;
+            border-color: #f0d0d0;
+            background: #fff3f3;
+            color: #b42329;
+            font-size: 0.74rem;
+        }
+
+            #teacher-class-resources .tcr-btn-delete:hover {
+                border-color: #dca7a7;
+                background: #ffe6e6;
+            }
+
+        /* Thanh tìm kiếm và bảng */
+
+        #teacher-class-resources .tcr-table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 13px;
+        }
+
+        #teacher-class-resources .tcr-table-toolbar-title {
+            margin: 0;
+            color: var(--tcr-text);
+            font-size: 0.84rem;
+            font-weight: 850;
+        }
+
+        #teacher-class-resources .tcr-search-wrap {
+            width: 250px;
+            max-width: 100%;
+            flex-shrink: 0;
+        }
+
+        #teacher-class-resources .tcr-search {
+            min-height: 38px;
+            padding: 8px 11px;
+            font-size: 0.78rem;
+        }
+
+        #teacher-class-resources .tcr-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--tcr-border);
+            border-radius: 10px;
+        }
+
+        #teacher-class-resources .tcr-table {
+            width: 100%;
+            min-width: 700px;
+            margin: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: #ffffff;
+        }
+
+            #teacher-class-resources .tcr-table thead th {
+                padding: 13px 15px;
+                border-bottom: 1px solid var(--tcr-border);
+                background: #f7f8fb;
+                color: #657084;
+                font-size: 0.7rem;
+                font-weight: 850;
+                letter-spacing: 0.35px;
+                text-align: left;
+                white-space: nowrap;
+            }
+
+            #teacher-class-resources .tcr-table tbody td {
+                padding: 14px 15px;
+                border-bottom: 1px solid #edf0f4;
+                color: #465164;
+                font-size: 0.79rem;
+                vertical-align: middle;
+            }
+
+            #teacher-class-resources .tcr-table tbody tr:last-child td {
+                border-bottom: 0;
+            }
+
+            #teacher-class-resources .tcr-table tbody tr:hover td {
+                background: #fffafa;
+            }
+
+        #teacher-class-resources .tcr-item-title {
+            display: block;
+            max-width: 310px;
+            color: var(--tcr-text);
+            font-size: 0.81rem;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        #teacher-class-resources .tcr-item-subtitle {
+            display: block;
+            margin-top: 5px;
+            color: #929aaa;
+            font-size: 0.72rem;
+        }
+
+        #teacher-class-resources .tcr-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 9px;
+            border-radius: 7px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        #teacher-class-resources .tcr-status-material {
+            background: var(--tcr-green-light);
+            color: var(--tcr-green);
+        }
+
+        #teacher-class-resources .tcr-status-homework {
+            background: var(--tcr-orange-light);
+            color: var(--tcr-orange);
+        }
+
+        #teacher-class-resources .tcr-status-open {
+            background: var(--tcr-blue-light);
+            color: var(--tcr-blue);
+        }
+
+        #teacher-class-resources .tcr-status-overdue {
+            background: #fff0f0;
+            color: #b42329;
+        }
+
+        #teacher-class-resources .tcr-action-cell {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        #teacher-class-resources .tcr-action-form {
+            display: inline-block;
+            margin: 0;
+        }
+
+        #teacher-class-resources .tcr-empty-state {
+            padding: 35px 20px;
+            text-align: center;
+        }
+
+        #teacher-class-resources .tcr-empty-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 53px;
+            height: 53px;
+            margin: 0 auto 13px;
+            border-radius: 15px;
+            background: #f5f6f9;
+            color: #919aaa;
+            font-size: 1.55rem;
+            font-weight: 800;
+        }
+
+        #teacher-class-resources .tcr-empty-state h3 {
+            margin: 0 0 7px;
+            color: #3a4558;
+            font-size: 0.92rem;
+            font-weight: 850;
+        }
+
+        #teacher-class-resources .tcr-empty-state p {
+            max-width: 440px;
+            margin: 0 auto;
+            color: var(--tcr-muted);
+            font-size: 0.8rem;
+            line-height: 1.7;
+        }
+
+        #teacher-class-resources .tcr-no-class {
+            padding: 50px 24px;
+            border: 1px dashed #d9dee8;
+            border-radius: 15px;
+            background: #ffffff;
+            text-align: center;
+        }
+
+            #teacher-class-resources .tcr-no-class h2 {
+                margin: 15px 0 8px;
+                color: var(--tcr-text);
+                font-size: 1.15rem;
+                font-weight: 850;
+            }
+
+            #teacher-class-resources .tcr-no-class p {
+                margin: 0;
+                color: var(--tcr-muted);
+                font-size: 0.85rem;
+                line-height: 1.7;
+            }
+
+        #teacher-class-resources .tcr-no-class-icon {
+            color: var(--tcr-primary);
+            font-size: 2rem;
+        }
+
+        #teacher-class-resources .tcr-note {
+            margin-top: 12px;
+            color: var(--tcr-muted);
+            font-size: 0.74rem;
+            line-height: 1.6;
+        }
+
+    @@media (max-width: 1200px) {
+        #teacher-class-resources .tcr-stat-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 768px) {
+        #teacher-class-resources .tcr-page-intro {
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        #teacher-class-resources .tcr-class-filter {
+            width: 100%;
+        }
+
+        #teacher-class-resources .tcr-class-overview {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 19px;
+        }
+
+        #teacher-class-resources .tcr-panel-header {
+            align-items: flex-start;
+            padding: 17px;
+        }
+
+        #teacher-class-resources .tcr-panel-body {
+            padding: 15px;
+        }
+
+        #teacher-class-resources .tcr-create-box {
+            padding: 15px;
+        }
+
+        #teacher-class-resources .tcr-form-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        #teacher-class-resources .tcr-form-group-full {
+            grid-column: auto;
+        }
+
+        #teacher-class-resources .tcr-table-toolbar {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        #teacher-class-resources .tcr-search-wrap {
+            width: 100%;
+        }
+
+        #teacher-class-resources .tcr-page-title {
+            font-size: 1.55rem;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        #teacher-class-resources .tcr-stat-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        #teacher-class-resources .tcr-form-actions {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+            #teacher-class-resources .tcr-form-actions .tcr-btn {
+                width: 100%;
+            }
+    }
+</style>
+
+<div class="teacher-portal" id="teacher-class-resources">
+
+    @* SIDEBAR - ĐỒNG BỘ VỚI TEACHER DASHBOARD *@
+    <aside class="teacher-sidebar">
+
+        <a class="teacher-brand"
+           href="@Url.Action("TeacherDashboard", "Home")">
+
+            <span class="teacher-brand-mark">EC</span>
+
+            <span class="teacher-brand-text">
+                ELC PORTAL
+                <small>TEACHER SPACE</small>
+            </span>
+
+        </a>
+
+        <div class="teacher-sidebar-caption">
+            KHÔNG GIAN GIẢNG DẠY
+        </div>
+
+        <nav class="teacher-side-nav">
+
+            <a href="@Url.Action("TeacherDashboard", "Home")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">⌂</span>
+                Dashboard
+            </a>
+
+            <a href="@Url.Action("TeacherTeachingSchedule", "ClassSessions")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">▦</span>
+                Lịch dạy + Lớp phụ trách
+            </a>
+
+            <a href="@Url.Action("TeacherAttendance", "Attendances")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">✓</span>
+                Điểm danh
+            </a>
+
+            <a href="@Url.Action("TeacherGrades", "AssessmentScores")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">A+</span>
+                Nhập điểm & đánh giá
+            </a>
+
+            <a href="@Url.Action("TeacherSubmissions", "Assignments")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">📄</span>
+                Bài nộp học viên
+            </a>
+
+            <a href="@Url.Action("TeacherClassResources", "CourseMaterials")"
+               class="teacher-nav-link is-active">
+                <span class="teacher-nav-icon">📚</span>
+                Bài tập & tài liệu
+            </a>
+
+            <a href="@Url.Action("TeacherProfile", "Profiles")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">◎</span>
+                Hồ sơ cá nhân
+            </a>
+
+        </nav>
+
+        <div class="teacher-sidebar-bottom">
+
+            <div class="teacher-support-card">
+
+                <span class="teacher-support-icon">?</span>
+
+                <strong>Cần hỗ trợ?</strong>
+
+                <p>
+                    Liên hệ trung tâm để được hỗ trợ
+                    về lịch dạy hoặc lớp học.
+                </p>
+
+                @Html.ActionLink(
+                    "Liên hệ trung tâm →",
+                    "Contact",
+                    "Home",
+                    null,
+                    new { @class = "teacher-support-link" }
+                )
+
+            </div>
+
+            @Html.ActionLink(
+                "↪ Đăng xuất",
+                "Logout",
+                "Auth",
+                null,
+                new { @class = "teacher-logout-link" }
+            )
+
+        </div>
+
+    </aside>
+
+    @* NỘI DUNG CHÍNH *@
+    <div class="teacher-main">
+
+        <header class="teacher-topbar">
+
+            <div class="teacher-topbar-title">
+                <span>CỔNG GIÁO VIÊN</span>
+                <strong>Bài tập & tài liệu</strong>
+            </div>
+
+            <div class="teacher-topbar-user">
+
+                <span class="teacher-avatar-small">
+                    @teacherInitial
+                </span>
+
+                <span class="teacher-topbar-user-info">
+                    <strong>@teacherName</strong>
+                    <small>Giáo viên</small>
+                </span>
+
+            </div>
+
+        </header>
+
+        <main class="teacher-content">
+
+            <div class="teacher-breadcrumb">
+                Trang chủ
+                <span>/</span>
+                Cổng giáo viên
+                <span>/</span>
+                Bài tập & tài liệu
+            </div>
+
+            <div class="tcr-page">
+
+                @* THÔNG BÁO *@
+
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="tcr-alert tcr-alert-success">
+                        <span class="tcr-alert-icon">✓</span>
+                        <div>@TempData["SuccessMessage"]</div>
+                    </div>
+                }
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="tcr-alert tcr-alert-error">
+                        <span class="tcr-alert-icon">!</span>
+                        <div>@TempData["ErrorMessage"]</div>
+                    </div>
+                }
+
+                @* TIÊU ĐỀ VÀ BỘ LỌC LỚP *@
+
+                <section class="tcr-page-intro">
+
+                    <div class="tcr-intro-text">
+
+                        <span class="tcr-eyebrow">
+                            TEACHING RESOURCES
+                        </span>
+
+                        <h1 class="tcr-page-title">
+                            Bài tập & tài liệu
+                        </h1>
+
+                        <p class="tcr-page-description">
+                            Quản lý giáo trình, đăng tài liệu học tập,
+                            chia sẻ tệp bài tập và theo dõi thời hạn nộp
+                            của từng lớp bạn phụ trách.
+                        </p>
+
+                    </div>
+
+                    <div class="tcr-class-filter">
+
+                        @using (Html.BeginForm(
+                            "TeacherClassResources",
+                            "CourseMaterials",
+                            FormMethod.Get,
+                            new { id = "tcr-class-filter-form" }))
+                        {
+                            <label for="tcr-class-select"
+                                   class="tcr-filter-label">
+                                LỚP HỌC ĐANG QUẢN LÝ
+                            </label>
+
+                            <select id="tcr-class-select"
+                                    name="classId"
+                                    class="tcr-form-control"
+                                    @(availableClasses.Any() ? "" : "disabled")>
+
+                                @if (!availableClasses.Any())
+                                {
+                                    <option value="">
+                                        Chưa có lớp được phân công
+                                    </option>
+                                }
+                                else
+                                {
+                                    foreach (var cls in availableClasses)
+                                    {
+                                        string optionText = cls.ClassName;
+
+                                        if (cls.Course != null &&
+                                            !string.IsNullOrWhiteSpace(cls.Course.CourseName))
+                                        {
+                                            optionText += " - " + cls.Course.CourseName;
+                                        }
+
+                                        if (Model.SelectedClassId == cls.Id)
+                                        {
+                                            <option value="@cls.Id" selected="selected">
+                                                @optionText
+                                            </option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@cls.Id">
+                                                @optionText
+                                            </option>
+                                        }
+                                    }
+                                }
+
+                            </select>
+
+                        }
+
+                    </div>
+
+                </section>
+
+                @if (selectedClass == null)
+                {
+                    <section class="tcr-no-class">
+
+                        <div class="tcr-no-class-icon">▤</div>
+
+                        <h2>Chưa có lớp học để quản lý</h2>
+
+                        <p>
+                            Hiện tại tài khoản chưa có lớp nào được phân công.
+                            Khi lớp học được phân công, bạn có thể đăng giáo trình,
+                            chia sẻ tài liệu và giao bài tập tại trang này.
+                        </p>
+
+                    </section>
+                }
+                else
+                {
+                    @* THÔNG TIN LỚP *@
+
+                    <section class="tcr-class-overview">
+
+                        <div class="tcr-class-overview-main">
+
+                            <span class="tcr-class-overview-label">
+                                LỚP HỌC ĐANG CHỌN
+                            </span>
+
+                            <h2 class="tcr-class-name">
+                                @selectedClass.ClassName
+                            </h2>
+
+                            <div class="tcr-class-course">
+                                Khóa học:
+                                <strong>@courseName</strong>
+                            </div>
+
+                        </div>
+
+                        <div class="tcr-class-badge">
+                            ✓ Lớp được phân công
+                        </div>
+
+                    </section>
+
+                    @* THỐNG KÊ NHANH *@
+
+                    <section class="tcr-stat-grid">
+
+                        <article class="tcr-stat-card">
+
+                            <div class="tcr-stat-top">
+                                <span class="tcr-stat-icon tcr-icon-red">
+                                    ▤
+                                </span>
+                                <span class="tcr-stat-caption">
+                                    Tài liệu
+                                </span>
+                            </div>
+
+                            <strong class="tcr-stat-number">
+                                @totalMaterials
+                            </strong>
+
+                            <div class="tcr-stat-description">
+                                Tổng số tài liệu đã đăng
+                            </div>
+
+                        </article>
+
+                        <article class="tcr-stat-card">
+
+                            <div class="tcr-stat-top">
+                                <span class="tcr-stat-icon tcr-icon-blue">
+                                    ✎
+                                </span>
+                                <span class="tcr-stat-caption">
+                                    Bài tập
+                                </span>
+                            </div>
+
+                            <strong class="tcr-stat-number">
+                                @totalAssignments
+                            </strong>
+
+                            <div class="tcr-stat-description">
+                                Tổng số đợt bài tập đã giao
+                            </div>
+
+                        </article>
+
+                        <article class="tcr-stat-card">
+
+                            <div class="tcr-stat-top">
+                                <span class="tcr-stat-icon tcr-icon-green">
+                                    ◷
+                                </span>
+                                <span class="tcr-stat-caption">
+                                    Đang mở
+                                </span>
+                            </div>
+
+                            <strong class="tcr-stat-number">
+                                @openAssignments
+                            </strong>
+
+                            <div class="tcr-stat-description">
+                                Bài tập chưa đến hạn nộp
+                            </div>
+
+                        </article>
+
+                        <article class="tcr-stat-card">
+
+                            <div class="tcr-stat-top">
+                                <span class="tcr-stat-icon tcr-icon-orange">
+                                    !
+                                </span>
+                                <span class="tcr-stat-caption">
+                                    Đã hết hạn
+                                </span>
+                            </div>
+
+                            <strong class="tcr-stat-number">
+                                @overdueAssignments
+                            </strong>
+
+                            <div class="tcr-stat-description">
+                                Bài tập đã qua thời hạn nộp
+                            </div>
+
+                        </article>
+
+                    </section>
+
+                    @* =========================================
+                        PHẦN 1: QUẢN LÝ TÀI LIỆU
+                        ========================================= *@
+
+                    <section class="tcr-panel">
+
+                        <header class="tcr-panel-header">
+
+                            <div class="tcr-panel-title-group">
+
+                                <span class="tcr-panel-icon tcr-icon-green">
+                                    ▤
+                                </span>
+
+                                <div>
+                                    <h2 class="tcr-panel-title">
+                                        Giáo trình & tài liệu học tập
+                                    </h2>
+
+                                    <p class="tcr-panel-subtitle">
+                                        Đăng tệp tài liệu hoặc đường dẫn để
+                                        học viên có thể truy cập.
+                                    </p>
+                                </div>
+
+                            </div>
+
+                            <span class="tcr-count-badge">
+                                @totalMaterials tài liệu
+                            </span>
+
+                        </header>
+
+                        <div class="tcr-panel-body">
+
+                            @* FORM ĐĂNG TÀI LIỆU *@
+
+                            <div class="tcr-create-box">
+
+                                <div class="tcr-create-heading">
+
+                                    <span class="tcr-create-heading-icon">
+                                        +
+                                    </span>
+
+                                    <div>
+                                        <h3>Đăng tài liệu mới</h3>
+
+                                        <p>
+                                            Nhập tiêu đề, phân loại và chọn tệp
+                                            hoặc cung cấp đường dẫn tài liệu.
+                                        </p>
+                                    </div>
+
+                                </div>
+
+                                @using (Html.BeginForm(
+                                    "CreateTeacherMaterial",
+                                    "CourseMaterials",
+                                    FormMethod.Post,
+                                    new
+                                    {
+                                        enctype = "multipart/form-data",
+                                        id = "tcr-material-form"
+                                    }))
+                                {
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden"
+                                           name="SelectedClassId"
+                                           value="@Model.SelectedClassId" />
+
+                                    <div class="tcr-form-grid">
+
+                                        <div class="tcr-form-group">
+
+                                            <label for="tcr-material-title"
+                                                   class="tcr-field-label">
+                                                Tên tài liệu
+                                                <span class="tcr-required">*</span>
+                                            </label>
+
+                                            <input type="text"
+                                                   id="tcr-material-title"
+                                                   name="NewMaterialTitle"
+                                                   class="tcr-form-control"
+                                                   maxlength="255"
+                                                   placeholder="Ví dụ: Giáo trình Unit 1"
+                                                   required />
+
+                                        </div>
+
+                                        <div class="tcr-form-group">
+
+                                            <label for="tcr-material-category"
+                                                   class="tcr-field-label">
+                                                Phân loại tài liệu
+                                                <span class="tcr-required">*</span>
+                                            </label>
+
+                                            <select id="tcr-material-category"
+                                                    name="materialCategory"
+                                                    class="tcr-form-control">
+
+                                                <option value="Material">
+                                                    Giáo trình / Tài liệu học tập
+                                                </option>
+
+                                                <option value="Assignment">
+                                                    Tài liệu / Đề bài tập về nhà
+                                                </option>
+
+                                            </select>
+
+                                        </div>
+
+                                        <div class="tcr-form-group">
+
+                                            <label for="tcr-material-file"
+                                                   class="tcr-field-label">
+                                                Chọn tệp từ máy tính
+                                            </label>
+
+                                            <input type="file"
+                                                   id="tcr-material-file"
+                                                   name="materialFile"
+                                                   class="tcr-form-control tcr-file-input" />
+
+                                            <span class="tcr-field-hint">
+                                                Chọn tệp cần chia sẻ với học viên.
+                                            </span>
+
+                                        </div>
+
+                                        <div class="tcr-form-group">
+
+                                            <label for="tcr-material-url"
+                                                   class="tcr-field-label">
+                                                Hoặc đường dẫn tài liệu
+                                            </label>
+
+                                            <input type="text"
+                                                   id="tcr-material-url"
+                                                   name="NewMaterialFileUrl"
+                                                   class="tcr-form-control"
+                                                   placeholder="https://..."
+                                                   autocomplete="url" />
+
+                                            <span class="tcr-field-hint">
+                                                Có thể bỏ trống nếu đã chọn tệp
+                                                từ máy tính.
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="tcr-form-actions">
+
+                                        <button type="reset"
+                                                class="tcr-btn tcr-btn-neutral">
+                                            Làm mới
+                                        </button>
+
+                                        <button type="submit"
+                                                class="tcr-btn tcr-btn-primary">
+                                            <span>↑</span>
+                                            Đăng tài liệu
+                                        </button>
+
+                                    </div>
+
+                                }
+
+                            </div>
+
+                            @* BẢNG TÀI LIỆU HIỆN CÓ *@
+
+                            <div class="tcr-table-toolbar">
+
+                                <h3 class="tcr-table-toolbar-title">
+                                    Danh sách tài liệu của lớp
+                                </h3>
+
+                                <div class="tcr-search-wrap">
+
+                                    <input type="search"
+                                           id="tcr-material-search"
+                                           class="tcr-form-control tcr-search"
+                                           placeholder="Tìm theo tên tài liệu..." />
+
+                                </div>
+
+                            </div>
+
+                            <div class="tcr-table-wrap">
+
+                                <table class="tcr-table">
+
+                                    <thead>
+                                        <tr>
+                                            <th>TÊN TÀI LIỆU</th>
+                                            <th>PHÂN LOẠI</th>
+                                            <th>NGÀY ĐĂNG</th>
+                                            <th>TỆP ĐÍNH KÈM</th>
+                                            <th style="text-align:right;">
+                                                THAO TÁC
+                                            </th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="tcr-material-table-body">
+
+                                        @if (!materials.Any())
+                                        {
+                                            <tr>
+                                                <td colspan="5">
+                                                    <div class="tcr-empty-state">
+
+                                                        <div class="tcr-empty-icon">
+                                                            ▤
+                                                        </div>
+
+                                                        <h3>Chưa có tài liệu nào</h3>
+
+                                                        <p>
+                                                            Hãy sử dụng biểu mẫu phía trên
+                                                            để đăng giáo trình hoặc tài liệu
+                                                            đầu tiên cho lớp này.
+                                                        </p>
+
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            foreach (var mat in materials)
+                                            {
+                                                bool isHomework =
+                                                    !string.IsNullOrWhiteSpace(mat.FileUrl) &&
+                                                    mat.FileUrl.IndexOf(
+                                                        "/Uploads/Assignments/",
+                                                        StringComparison.OrdinalIgnoreCase) >= 0;
+
+                                                <tr class="tcr-material-row"
+                                                    data-search="@(mat.Title ?? "")">
+
+                                                    <td>
+                                                        <span class="tcr-item-title">
+                                                            @mat.Title
+                                                        </span>
+
+                                                        <span class="tcr-item-subtitle">
+                                                            Mã tài liệu: @mat.Id
+                                                        </span>
+                                                    </td>
+
+                                                    <td>
+                                                        @if (isHomework)
+                                                        {
+                                                            <span class="tcr-status tcr-status-homework">
+                                                                Tài liệu bài tập
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="tcr-status tcr-status-material">
+                                                                Giáo trình
+                                                            </span>
+                                                        }
+                                                    </td>
+
+                                                    <td>
+                                                        @mat.UploadedAt.ToString("dd/MM/yyyy")
+                                                        <span class="tcr-item-subtitle">
+                                                            @mat.UploadedAt.ToString("HH:mm")
+                                                        </span>
+                                                    </td>
+
+                                                    <td>
+                                                        @if (!string.IsNullOrWhiteSpace(mat.FileUrl))
+                                                        {
+                                                            <a href="@mat.FileUrl"
+                                                               target="_blank"
+                                                               rel="noopener noreferrer"
+                                                               class="tcr-btn tcr-btn-download">
+                                                                ↗ Mở tài liệu
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="tcr-item-subtitle">
+                                                                Không có tệp
+                                                            </span>
+                                                        }
+                                                    </td>
+
+                                                    <td class="tcr-action-cell">
+
+                                                        @using (Html.BeginForm(
+                                                            "DeleteTeacherMaterial",
+                                                            "CourseMaterials",
+                                                            FormMethod.Post,
+                                                            new { @class = "tcr-action-form" }))
+                                                        {
+                                                            @Html.AntiForgeryToken()
+
+                                                            <input type="hidden"
+                                                                   name="id"
+                                                                   value="@mat.Id" />
+
+                                                            <input type="hidden"
+                                                                   name="classId"
+                                                                   value="@Model.SelectedClassId" />
+
+                                                            <button type="submit"
+                                                                    class="tcr-btn tcr-btn-delete"
+                                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa tài liệu này không? Tệp trên máy chủ cũng sẽ bị xóa.');">
+                                                                Xóa
+                                                            </button>
+                                                        }
+
+                                                    </td>
+
+                                                </tr>
+                                            }
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                            <p class="tcr-note">
+                                Lưu ý: thao tác xóa tài liệu sẽ gửi yêu cầu xóa
+                                đến hệ thống. Hãy kiểm tra kỹ trước khi xác nhận.
+                            </p>
+
+                        </div>
+
+                    </section>
+
+                    @* =========================================
+                        PHẦN 2: QUẢN LÝ BÀI TẬP
+                        ========================================= *@
+
+                    <section class="tcr-panel">
+
+                        <header class="tcr-panel-header">
+
+                            <div class="tcr-panel-title-group">
+
+                                <span class="tcr-panel-icon tcr-icon-blue">
+                                    ✎
+                                </span>
+
+                                <div>
+                                    <h2 class="tcr-panel-title">
+                                        Quản lý bài tập về nhà
+                                    </h2>
+
+                                    <p class="tcr-panel-subtitle">
+                                        Tạo đợt giao bài tập và theo dõi thời hạn
+                                        nộp của học viên.
+                                    </p>
+                                </div>
+
+                            </div>
+
+                            <span class="tcr-count-badge">
+                                @totalAssignments bài tập
+                            </span>
+
+                        </header>
+
+                        <div class="tcr-panel-body">
+
+                            @* FORM TẠO BÀI TẬP *@
+
+                            <div class="tcr-create-box">
+
+                                <div class="tcr-create-heading">
+
+                                    <span class="tcr-create-heading-icon">
+                                        +
+                                    </span>
+
+                                    <div>
+                                        <h3>Tạo đợt bài tập mới</h3>
+
+                                        <p>
+                                            Đặt tên bài tập và xác định thời hạn
+                                            học viên cần hoàn thành.
+                                        </p>
+                                    </div>
+
+                                </div>
+
+                                @using (Html.BeginForm(
+                                    "CreateTeacherAssignment",
+                                    "CourseMaterials",
+                                    FormMethod.Post,
+                                    new { id = "tcr-assignment-form" }))
+                                {
+                                    @Html.AntiForgeryToken()
+
+                                    <input type="hidden"
+                                           name="SelectedClassId"
+                                           value="@Model.SelectedClassId" />
+
+                                    <div class="tcr-form-grid">
+
+                                        <div class="tcr-form-group">
+
+                                            <label for="tcr-assignment-title"
+                                                   class="tcr-field-label">
+                                                Tiêu đề bài tập
+                                                <span class="tcr-required">*</span>
+                                            </label>
+
+                                            <input type="text"
+                                                   id="tcr-assignment-title"
+                                                   name="NewAssignmentTitle"
+                                                   class="tcr-form-control"
+                                                   maxlength="255"
+                                                   placeholder="Ví dụ: Bài tập ngữ pháp Unit 1"
+                                                   required />
+
+                                        </div>
+
+                                        <div class="tcr-form-group">
+
+                                            <label for="tcr-assignment-due"
+                                                   class="tcr-field-label">
+                                                Hạn nộp bài
+                                                <span class="tcr-required">*</span>
+                                            </label>
+
+                                            <input type="datetime-local"
+                                                   id="tcr-assignment-due"
+                                                   name="NewAssignmentDueDate"
+                                                   class="tcr-form-control"
+                                                   required />
+
+                                            <span class="tcr-field-hint">
+                                                Chọn ngày và giờ kết thúc nhận bài.
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="tcr-form-actions">
+
+                                        <button type="reset"
+                                                class="tcr-btn tcr-btn-neutral">
+                                            Làm mới
+                                        </button>
+
+                                        <button type="submit"
+                                                class="tcr-btn tcr-btn-primary">
+                                            <span>＋</span>
+                                            Tạo bài tập
+                                        </button>
+
+                                    </div>
+
+                                }
+
+                            </div>
+
+                            @* DANH SÁCH BÀI TẬP *@
+
+                            <div class="tcr-table-toolbar">
+
+                                <h3 class="tcr-table-toolbar-title">
+                                    Danh sách bài tập đã giao
+                                </h3>
+
+                                <div class="tcr-search-wrap">
+
+                                    <input type="search"
+                                           id="tcr-assignment-search"
+                                           class="tcr-form-control tcr-search"
+                                           placeholder="Tìm theo tên bài tập..." />
+
+                                </div>
+
+                            </div>
+
+                            <div class="tcr-table-wrap">
+
+                                <table class="tcr-table">
+
+                                    <thead>
+                                        <tr>
+                                            <th>TÊN BÀI TẬP</th>
+                                            <th>HẠN NỘP</th>
+                                            <th>TRẠNG THÁI</th>
+                                            <th style="text-align:right;">
+                                                THAO TÁC
+                                            </th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="tcr-assignment-table-body">
+
+                                        @if (!assignments.Any())
+                                        {
+                                            <tr>
+                                                <td colspan="4">
+                                                    <div class="tcr-empty-state">
+
+                                                        <div class="tcr-empty-icon">
+                                                            ✎
+                                                        </div>
+
+                                                        <h3>Chưa có bài tập nào</h3>
+
+                                                        <p>
+                                                            Tạo đợt bài tập mới bằng biểu mẫu
+                                                            phía trên để bắt đầu giao bài
+                                                            cho học viên của lớp.
+                                                        </p>
+
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            foreach (var assign in assignments)
+                                            {
+                                                bool isOverdue =
+                                                    assign.DueDate < currentTime;
+
+                                                <tr class="tcr-assignment-row"
+                                                    data-search="@(assign.Title ?? "")">
+
+                                                    <td>
+                                                        <span class="tcr-item-title">
+                                                            @assign.Title
+                                                        </span>
+
+                                                        <span class="tcr-item-subtitle">
+                                                            Mã bài tập: @assign.Id
+                                                        </span>
+                                                    </td>
+
+                                                    <td>
+                                                        <strong>
+                                                            @assign.DueDate.ToString("dd/MM/yyyy")
+                                                        </strong>
+
+                                                        <span class="tcr-item-subtitle">
+                                                            @assign.DueDate.ToString("HH:mm")
+                                                        </span>
+                                                    </td>
+
+                                                    <td>
+                                                        @if (isOverdue)
+                                                        {
+                                                            <span class="tcr-status tcr-status-overdue">
+                                                                Đã hết hạn
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="tcr-status tcr-status-open">
+                                                                Đang mở nộp
+                                                            </span>
+                                                        }
+                                                    </td>
+
+                                                    <td class="tcr-action-cell">
+
+                                                        @using (Html.BeginForm(
+                                                            "DeleteTeacherAssignment",
+                                                            "CourseMaterials",
+                                                            FormMethod.Post,
+                                                            new { @class = "tcr-action-form" }))
+                                                        {
+                                                            @Html.AntiForgeryToken()
+
+                                                            <input type="hidden"
+                                                                   name="id"
+                                                                   value="@assign.Id" />
+
+                                                            <input type="hidden"
+                                                                   name="classId"
+                                                                   value="@Model.SelectedClassId" />
+
+                                                            <button type="submit"
+                                                                    class="tcr-btn tcr-btn-delete"
+                                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa bài tập này không?');">
+                                                                Xóa
+                                                            </button>
+                                                        }
+
+                                                    </td>
+
+                                                </tr>
+                                            }
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                            <p class="tcr-note">
+                                Trạng thái được xác định dựa trên hạn nộp và
+                                thời gian hiện tại. Bài tập đã có học viên nộp
+                                có thể không được phép xóa theo quy tắc của hệ thống.
+                            </p>
+
+                        </div>
+
+                    </section>
+                }
+
+            </div>
+
+        </main>
+
+        <footer class="teacher-footer">
+            <span>© @DateTime.Now.Year English Center</span>
+            <span>Teacher Information System</span>
+        </footer>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+                $(function () {
+
+                    // Chọn lớp khác thì tải lại dữ liệu của lớp đó.
+                    $('#tcr-class-select').on('change', function () {
+                        $('#tcr-class-filter-form').trigger('submit');
+                    });
+
+                    // Tìm kiếm tài liệu theo tên.
+                    $('#tcr-material-search').on('input', function () {
+                        var keyword = $.trim($(this).val()).toLowerCase();
+
+                        $('#tcr-material-table-body .tcr-material-row').each(function () {
+                            var title = ($(this).attr('data-search') || '').toLowerCase();
+
+                            $(this).toggle(title.indexOf(keyword) !== -1);
+                        });
+                    });
+
+                    // Tìm kiếm bài tập theo tên.
+                    $('#tcr-assignment-search').on('input', function () {
+                        var keyword = $.trim($(this).val()).toLowerCase();
+
+                        $('#tcr-assignment-table-body .tcr-assignment-row').each(function () {
+                            var title = ($(this).attr('data-search') || '').toLowerCase();
+
+                            $(this).toggle(title.indexOf(keyword) !== -1);
+                        });
+                    });
+
+                    // Tài liệu phải có tệp tải lên hoặc đường dẫn.
+                    $('#tcr-material-form').on('submit', function (event) {
+                        var fileValue = $('#tcr-material-file').val();
+                        var urlValue = $.trim($('#tcr-material-url').val());
+
+                        if (!fileValue && !urlValue) {
+                            event.preventDefault();
+
+                            alert('Vui lòng chọn tệp từ máy tính hoặc nhập đường dẫn tài liệu.');
+
+                            $('#tcr-material-file').focus();
+                            return false;
+                        }
+
+                        return true;
+                    });
+
+                });
+    </script>
+}

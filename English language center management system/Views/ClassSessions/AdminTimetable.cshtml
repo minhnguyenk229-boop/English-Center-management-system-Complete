@@ -1,0 +1,1597 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Classes.AdminTimetableViewModel
+
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using System.Globalization
+@using English_language_center_management_system.Models
+
+@{
+    ViewBag.Title = "Thời khóa biểu";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var sessions = Model != null && Model.Sessions != null
+        ? Model.Sessions
+        : new List<ClassSession>();
+
+    var roomConflicts = Model != null && Model.RoomConflictSessionIds != null
+        ? Model.RoomConflictSessionIds
+        : new List<int>();
+
+    var teacherConflicts = Model != null && Model.TeacherConflictSessionIds != null
+        ? Model.TeacherConflictSessionIds
+        : new List<int>();
+
+    DateTime weekStart = Model != null && Model.WeekStart != default(DateTime)
+        ? Model.WeekStart.Date
+        : DateTime.Today;
+
+    DateTime weekEnd = Model != null && Model.WeekEnd != default(DateTime)
+        ? Model.WeekEnd.Date
+        : weekStart.AddDays(6);
+
+    string[] dayNames =
+    {
+        "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"
+    };
+
+    int weekOffset = Model != null ? Model.WeekOffset : 0;
+
+    int attendedCount = Model != null
+        ? Model.AttendedSessionsCount
+        : 0;
+
+    int totalSessions = Model != null
+        ? Model.TotalSessionsInWeek
+        : 0;
+
+    int pendingCount = Math.Max(0, totalSessions - attendedCount);
+
+    const int pixelsPerHour = 72;
+
+    // Mỗi thẻ có tối thiểu 72px để giữ chỗ cho trạng thái và nút thao tác.
+    // Những buổi có khoảng cách ngắn sẽ được xếp thành các làn riêng khi cần.
+    double minimumVisualMinutes = pixelsPerHour * 60.0 / 72.0;
+
+    int calendarStartHour = 8;
+    int calendarEndHour = 21;
+
+    if (sessions.Any())
+    {
+        double earliestStart = sessions.Min(
+            s => s.StartTime.TotalMinutes);
+
+        double latestVisualEnd = sessions.Max(s =>
+            Math.Max(
+                Math.Max(
+                    s.StartTime.TotalMinutes,
+                    s.EndTime.TotalMinutes),
+                s.StartTime.TotalMinutes + minimumVisualMinutes));
+
+        calendarStartHour = Math.Min(
+            8,
+            (int)Math.Floor(earliestStart / 60.0));
+
+        calendarEndHour = Math.Max(
+            21,
+            (int)Math.Ceiling(latestVisualEnd / 60.0));
+    }
+
+    calendarStartHour = Math.Max(0, calendarStartHour);
+    calendarEndHour = Math.Min(24, calendarEndHour);
+
+    if (calendarEndHour <= calendarStartHour)
+    {
+        calendarStartHour = Math.Max(0, calendarEndHour - 1);
+    }
+
+    int calendarStartMinutes = calendarStartHour * 60;
+    int calendarEndMinutes = calendarEndHour * 60;
+
+    int calendarHeightPx =
+        (calendarEndHour - calendarStartHour) * pixelsPerHour;
+
+    string selectedDateValue = weekStart.ToString("yyyy-MM-dd");
+
+    /*
+       Chia các buổi trùng giờ hoặc quá gần nhau về mặt hiển thị
+       thành các làn ngang riêng.
+
+       Chỉ thay đổi cách bố trí thẻ trên View, không sửa dữ liệu.
+    */
+    var laneBySession = new Dictionary<int, int>();
+    var laneCountBySession = new Dictionary<int, int>();
+
+    for (int dayIndex = 0; dayIndex < 7; dayIndex++)
+    {
+        DateTime targetDate = weekStart.AddDays(dayIndex).Date;
+
+        var dayItems = sessions
+            .Where(s => s.SessionDate.Date == targetDate)
+            .OrderBy(s => s.StartTime)
+            .ThenBy(s => s.EndTime)
+            .ToList();
+
+        int clusterStart = 0;
+
+        while (clusterStart < dayItems.Count)
+        {
+            int clusterEnd = clusterStart + 1;
+
+            double firstStart =
+                dayItems[clusterStart].StartTime.TotalMinutes;
+
+            double clusterMaxEnd = Math.Max(
+                dayItems[clusterStart].EndTime.TotalMinutes,
+                firstStart + minimumVisualMinutes);
+
+            while (clusterEnd < dayItems.Count &&
+                   dayItems[clusterEnd].StartTime.TotalMinutes < clusterMaxEnd)
+            {
+                var candidate = dayItems[clusterEnd];
+
+                clusterMaxEnd = Math.Max(
+                    clusterMaxEnd,
+                    Math.Max(
+                        candidate.EndTime.TotalMinutes,
+                        candidate.StartTime.TotalMinutes + minimumVisualMinutes));
+
+                clusterEnd++;
+            }
+
+            var laneEnds = new List<double>();
+
+            for (int i = clusterStart; i < clusterEnd; i++)
+            {
+                var item = dayItems[i];
+
+                double start = item.StartTime.TotalMinutes;
+
+                double visualEnd = Math.Max(
+                    item.EndTime.TotalMinutes,
+                    start + minimumVisualMinutes);
+
+                int lane = laneEnds.FindIndex(
+                    laneEnd => laneEnd <= start);
+
+                if (lane < 0)
+                {
+                    lane = laneEnds.Count;
+                    laneEnds.Add(visualEnd);
+                }
+                else
+                {
+                    laneEnds[lane] = visualEnd;
+                }
+
+                laneBySession[item.Id] = lane;
+            }
+
+            int laneCount = Math.Max(1, laneEnds.Count);
+
+            for (int i = clusterStart; i < clusterEnd; i++)
+            {
+                laneCountBySession[dayItems[i].Id] = laneCount;
+            }
+
+            clusterStart = clusterEnd;
+        }
+    }
+}
+
+<style>
+    .at-page {
+        padding: 0 0 22px;
+        color: #25324a;
+    }
+
+        .at-page * {
+            box-sizing: border-box;
+        }
+
+    /* Header */
+    .at-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px;
+        padding: 20px 22px;
+        margin-bottom: 16px;
+        border: 1px solid #e0e7f0;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 4px 15px rgba(26,42,69,.035);
+    }
+
+    .at-eyebrow {
+        margin-bottom: 6px;
+        color: #929db0;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+    }
+
+    .at-header h1 {
+        margin: 0 0 6px;
+        color: #25324a;
+        font-size: 23px;
+        font-weight: 800;
+    }
+
+    .at-header p {
+        max-width: 720px;
+        margin: 0;
+        color: #8995aa;
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    .at-header-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .at-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 36px;
+        padding: 8px 12px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        text-decoration: none !important;
+        white-space: nowrap;
+        transition: .2s ease;
+        cursor: pointer;
+    }
+
+    .at-btn-list {
+        border-color: #dce3ed;
+        background: #fff;
+        color: #526078;
+    }
+
+        .at-btn-list:hover {
+            border-color: #cbd5e3;
+            background: #f5f7fb;
+            color: #25324a;
+        }
+
+    .at-btn-primary {
+        border-color: #c92828;
+        background: #c92828;
+        color: #fff;
+    }
+
+        .at-btn-primary:hover {
+            border-color: #a91f1f;
+            background: #a91f1f;
+            color: #fff;
+        }
+
+    /* Notifications */
+    .at-alert {
+        margin-bottom: 14px;
+        padding: 11px 14px;
+        border-radius: 9px;
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    .at-alert-success {
+        border: 1px solid #b9ebce;
+        background: #ecfaf2;
+        color: #137646;
+    }
+
+    .at-alert-error {
+        border: 1px solid #ffdada;
+        background: #fff4f4;
+        color: #a92323;
+    }
+
+    .at-alert-conflict {
+        border: 1px solid #f2c4c7;
+        border-left: 4px solid #dc3545;
+        background: #fff5f5;
+        color: #842029;
+    }
+
+    /* Statistics */
+    .at-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .at-stat {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 0;
+        padding: 14px 15px;
+        border: 1px solid #e3e9f1;
+        border-radius: 11px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(26,42,69,.025);
+    }
+
+    .at-stat-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 39px;
+        height: 39px;
+        flex-shrink: 0;
+        border-radius: 11px;
+        background: #eef4ff;
+        color: #2865bf;
+        font-size: 16px;
+    }
+
+    .at-stat:nth-child(2) .at-stat-icon {
+        background: #e8f8ef;
+        color: #198754;
+    }
+
+    .at-stat:nth-child(3) .at-stat-icon {
+        background: #fff6e2;
+        color: #a87405;
+    }
+
+    .at-stat:nth-child(4) .at-stat-icon {
+        background: #fff0f0;
+        color: #c92828;
+    }
+
+    .at-stat-text {
+        min-width: 0;
+    }
+
+        .at-stat-text span {
+            display: block;
+            margin-bottom: 4px;
+            color: #8995aa;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+
+        .at-stat-text strong {
+            display: block;
+            color: #25324a;
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+    /* Panels */
+    .at-panel {
+        margin-bottom: 16px;
+        overflow: hidden;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(26,42,69,.025);
+    }
+
+    .at-panel-header {
+        padding: 14px 17px;
+        border-bottom: 1px solid #edf0f5;
+        color: #29364d;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    /* Filters */
+    .at-filter-body {
+        padding: 15px 17px;
+    }
+
+    .at-filter-form {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+        align-items: end;
+        gap: 12px;
+    }
+
+    .at-field {
+        min-width: 0;
+    }
+
+        .at-field label {
+            display: block;
+            margin-bottom: 6px;
+            color: #435169;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+    .at-control {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        min-height: 38px;
+        padding: 8px 10px;
+        border: 1px solid #d9e1ec;
+        border-radius: 8px;
+        background: #fff;
+        color: #25324a;
+        font-family: inherit;
+        font-size: 11px;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .at-control:focus {
+            border-color: #c92828;
+            box-shadow: 0 0 0 3px rgba(201,40,40,.07);
+        }
+
+    .at-filter-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+    }
+
+    .at-filter-submit {
+        border-color: #c92828;
+        background: #c92828;
+        color: #fff;
+    }
+
+    .at-filter-reset {
+        border-color: #dce3ed;
+        background: #fff;
+        color: #526078;
+    }
+
+    .at-filter-submit:hover {
+        background: #a91f1f;
+        color: #fff;
+    }
+
+    .at-filter-reset:hover {
+        background: #f5f7fb;
+        color: #25324a;
+    }
+
+    /* Week navigation */
+    .at-week-body {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 13px 17px;
+    }
+
+    .at-week-nav {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 7px;
+    }
+
+    .at-week-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 33px;
+        padding: 7px 10px;
+        border: 1px solid #dce3ed;
+        border-radius: 7px;
+        background: #fff;
+        color: #526078;
+        font-size: 10px;
+        font-weight: 700;
+        text-decoration: none !important;
+        white-space: nowrap;
+    }
+
+        .at-week-link:hover {
+            border-color: #c92828;
+            background: #fff5f5;
+            color: #c92828;
+        }
+
+    .at-week-link-current {
+        border-color: #c7dcff;
+        background: #edf4ff;
+        color: #245bb5;
+    }
+
+    .at-week-range {
+        margin-left: 5px;
+        color: #29364d;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .at-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 11px;
+        color: #728098;
+        font-size: 10px;
+    }
+
+    .at-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .at-legend-dot {
+        width: 10px;
+        height: 10px;
+        border: 1px solid;
+        border-radius: 3px;
+    }
+
+    .at-dot-scheduled {
+        border-color: #1976d2;
+        background: #eef7ff;
+    }
+
+    .at-dot-attended {
+        border-color: #198754;
+        background: #edf9f0;
+    }
+
+    .at-dot-conflict {
+        border-color: #dc3545;
+        background: #fff0f0;
+    }
+
+    /* Calendar heading */
+    .at-calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 14px 17px;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+        .at-calendar-header h2 {
+            margin: 0 0 4px;
+            color: #29364d;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .at-calendar-header p {
+            margin: 0;
+            color: #8995aa;
+            font-size: 10px;
+            line-height: 1.7;
+        }
+
+    .at-calendar-hours {
+        padding: 6px 9px;
+        border-radius: 7px;
+        background: #f1f4f9;
+        color: #526078;
+        font-size: 10px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    /* Calendar grid */
+    .at-calendar-scroll {
+        width: 100%;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+    }
+
+    .at-calendar-head,
+    .at-calendar-body {
+        display: grid;
+        grid-template-columns: 76px repeat(7, minmax(280px, 1fr));
+        min-width: 2036px;
+    }
+
+    .at-calendar-head {
+        position: relative;
+        z-index: 3;
+        border-bottom: 1px solid #dce3ed;
+        background: #f6f8fb;
+    }
+
+    .at-time-head {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 11px 4px;
+        border-right: 1px solid #e3e9f1;
+        color: #526078;
+        font-size: 10px;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    .at-day-head {
+        min-width: 0;
+        padding: 10px 5px;
+        border-right: 1px solid #e3e9f1;
+        text-align: center;
+    }
+
+        .at-day-head:last-child {
+            border-right: none;
+        }
+
+        .at-day-head.is-today {
+            background: #eaf2ff;
+        }
+
+    .at-day-name {
+        display: block;
+        margin-bottom: 5px;
+        color: #29364d;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .at-day-date {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        background: #e9eef5;
+        color: #66748b;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .at-day-head.is-today .at-day-date {
+        background: #2865bf;
+        color: #fff;
+    }
+
+    .at-calendar-body {
+        align-items: stretch;
+    }
+
+    .at-time-track {
+        position: relative;
+        border-right: 1px solid #dce3ed;
+        background-color: #fbfcfd;
+        background-image: repeating-linear-gradient( to bottom, #dfe6ef 0, #dfe6ef 1px, transparent 1px, transparent 72px ), repeating-linear-gradient( to bottom, transparent 0, transparent 35px, #edf1f6 35px, #edf1f6 36px, transparent 36px, transparent 72px );
+    }
+
+    .at-time-label {
+        position: absolute;
+        left: 0;
+        right: 0;
+        padding: 0 3px;
+        color: #66748b;
+        font-size: 10px;
+        font-weight: 800;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .at-day-track {
+        position: relative;
+        min-width: 0;
+        border-right: 1px solid #e5eaf1;
+        background-color: #fff;
+        background-image: repeating-linear-gradient( to bottom, #dfe6ef 0, #dfe6ef 1px, transparent 1px, transparent 72px ), repeating-linear-gradient( to bottom, transparent 0, transparent 35px, #f0f3f8 35px, #f0f3f8 36px, transparent 36px, transparent 72px );
+    }
+
+        .at-day-track.is-today {
+            background-color: #fcfdff;
+        }
+
+        .at-day-track:last-child {
+            border-right: none;
+        }
+
+    /* Session card: reserve a separate footer for action buttons */
+    .at-session-card {
+        position: absolute;
+        z-index: 2;
+        min-width: 0;
+        margin: 0;
+        padding: 5px 6px 31px;
+        overflow: hidden;
+        border: 1px solid #cfe2f5;
+        border-left: 4px solid #1976d2;
+        border-radius: 8px;
+        background: #eef7ff;
+        color: #0d3c61;
+        font-size: 10px;
+        line-height: 1.4;
+        box-shadow: 0 1px 3px rgba(0,0,0,.055);
+        transition: box-shadow .15s ease, filter .15s ease;
+    }
+
+        .at-session-card:hover {
+            z-index: 20;
+            filter: saturate(1.03);
+            box-shadow: 0 5px 14px rgba(26,42,69,.17);
+        }
+
+        .at-session-card.at-attended {
+            border-color: #ccebd5;
+            border-left-color: #198754;
+            background: #edf9f0;
+            color: #155724;
+        }
+
+        .at-session-card.at-conflict {
+            border-color: #f2c4c7;
+            border-left-color: #dc3545;
+            background: #fff0f0;
+            color: #842029;
+        }
+
+    .at-session-class {
+        display: block;
+        margin-bottom: 3px;
+        color: inherit;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .at-session-time {
+        display: block;
+        margin-bottom: 4px;
+        color: inherit;
+        font-size: 10px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .at-session-course {
+        display: block;
+        margin-bottom: 4px;
+        color: inherit;
+        font-size: 9px;
+        line-height: 1.4;
+        opacity: .86;
+        overflow-wrap: anywhere;
+    }
+
+    .at-session-meta {
+        margin-top: 3px;
+        font-size: 9px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    /* Attendance badges remain visible in compact cards */
+    .at-session-badges {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 3px;
+        margin-top: 4px;
+        margin-bottom: 2px;
+    }
+
+    .at-badge {
+        display: inline-block;
+        max-width: 100%;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-size: 8px;
+        font-weight: 800;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .at-badge-attended {
+        background: #198754;
+        color: #fff;
+    }
+
+    .at-badge-unattended {
+        background: #697586;
+        color: #fff;
+    }
+
+    .at-badge-conflict-room {
+        background: #dc3545;
+        color: #fff;
+    }
+
+    .at-badge-conflict-teacher {
+        background: #bd5a13;
+        color: #fff;
+    }
+
+    /* Dedicated footer with opaque background */
+    .at-session-actions {
+        position: absolute;
+        z-index: 6;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+        min-height: 27px;
+        padding: 3px 4px;
+        border-top: 1px solid #cfe2f5;
+        border-radius: 0 0 7px 7px;
+        background: #eef7ff;
+    }
+
+    .at-session-card.at-attended .at-session-actions {
+        border-top-color: #ccebd5;
+        background: #edf9f0;
+    }
+
+    .at-session-card.at-conflict .at-session-actions {
+        border-top-color: #f2c4c7;
+        background: #fff0f0;
+    }
+
+    .at-session-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 1 auto;
+        min-width: 0;
+        min-height: 21px;
+        padding: 2px 5px;
+        border: 1px solid #cbdcf4;
+        border-radius: 5px;
+        background: #fff;
+        color: #245bb5 !important;
+        font-family: inherit;
+        font-size: 8px;
+        font-weight: 800;
+        line-height: 1.2;
+        text-align: center;
+        text-decoration: none !important;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+        .at-session-action:hover {
+            border-color: #245bb5;
+            background: #edf4ff;
+            color: #17468c !important;
+        }
+
+    .at-session-card.at-attended .at-session-action {
+        border-color: #ccebd5;
+        color: #157347 !important;
+    }
+
+    .at-session-card.at-conflict .at-session-action {
+        border-color: #f2c4c7;
+        color: #b42323 !important;
+    }
+
+    /* Shorter sessions: hide only secondary details, never attendance */
+    .at-session-compact {
+        padding: 4px 5px 30px;
+    }
+
+        .at-session-compact .at-session-class {
+            margin-bottom: 2px;
+            font-size: 9px;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .at-session-compact .at-session-time {
+            margin-bottom: 2px;
+            font-size: 9px;
+            line-height: 1.2;
+        }
+
+        .at-session-compact .at-session-course,
+        .at-session-compact .at-session-meta {
+            display: none;
+        }
+
+        .at-session-compact .at-session-badges {
+            margin-top: 2px;
+            margin-bottom: 0;
+            gap: 2px;
+        }
+
+        .at-session-compact .at-badge {
+            max-width: 100%;
+            padding: 1px 3px;
+            font-size: 7px;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .at-session-compact .at-session-actions {
+            min-height: 26px;
+            gap: 3px;
+            padding: 3px;
+        }
+
+        .at-session-compact .at-session-action {
+            min-height: 20px;
+            padding: 2px 4px;
+            font-size: 8px;
+        }
+
+    .at-empty-day {
+        position: absolute;
+        top: 15px;
+        left: 4px;
+        right: 4px;
+        color: #bac4d2;
+        font-size: 9px;
+        text-align: center;
+        pointer-events: none;
+    }
+
+    .at-calendar-footer {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px 17px;
+        border-top: 1px solid #edf0f5;
+        background: #fbfcfe;
+        color: #8995aa;
+        font-size: 10px;
+        line-height: 1.7;
+    }
+
+    @@media(max-width: 1100px) {
+        .at-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .at-filter-form {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .at-filter-actions {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @@media(max-width: 650px) {
+        .at-header {
+            padding: 16px;
+        }
+
+            .at-header h1 {
+                font-size: 20px;
+            }
+
+        .at-header-actions {
+            width: 100%;
+        }
+
+            .at-header-actions .at-btn {
+                flex: 1;
+            }
+
+        .at-stats {
+            gap: 8px;
+        }
+
+        .at-stat {
+            gap: 8px;
+            padding: 10px;
+        }
+
+        .at-stat-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 13px;
+        }
+
+        .at-stat-text span {
+            font-size: 9px;
+        }
+
+        .at-stat-text strong {
+            font-size: 16px;
+        }
+
+        .at-filter-form {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .at-filter-actions {
+            grid-column: auto;
+        }
+
+        .at-week-body {
+            padding: 12px;
+        }
+
+        .at-week-range {
+            width: 100%;
+            margin: 5px 0 0;
+        }
+
+        .at-legend {
+            gap: 8px;
+        }
+
+        .at-calendar-header,
+        .at-calendar-footer {
+            padding: 12px;
+        }
+    }
+</style>
+
+<div class="at-page">
+
+    <!-- Header -->
+    <div class="at-header">
+
+        <div>
+            <div class="at-eyebrow">
+                ENGLISH LANGUAGE CENTER / QUẢN LÝ LỊCH HỌC
+            </div>
+
+            <h1>Thời khóa biểu trung tâm</h1>
+
+            <p>
+                Theo dõi các buổi học theo giờ thực tế, phòng học,
+                giáo viên, điểm danh và cảnh báo xung đột lịch.
+            </p>
+        </div>
+
+        <div class="at-header-actions">
+
+            <a href="@Url.Action("Index", "ClassSessions")"
+               class="at-btn at-btn-list">
+                <i class="glyphicon glyphicon-list"></i>
+                Xem dạng danh sách
+            </a>
+
+            <a href="@Url.Action("Create", "ClassSessions")"
+               class="at-btn at-btn-primary">
+                <i class="glyphicon glyphicon-plus"></i>
+                Thêm buổi học lẻ
+            </a>
+
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="at-alert at-alert-success">
+            <i class="glyphicon glyphicon-ok-circle"></i>
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="at-alert at-alert-error">
+            <i class="glyphicon glyphicon-exclamation-sign"></i>
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    @if (Model != null && Model.ConflictSessionsCount > 0)
+    {
+        <div class="at-alert at-alert-conflict">
+            <strong>
+                <i class="glyphicon glyphicon-warning-sign"></i>
+                Cảnh báo xung đột lịch học:
+            </strong>
+
+            Có @Model.ConflictSessionsCount buổi học bị trùng phòng hoặc giáo viên.
+            Những buổi liên quan được đánh dấu đỏ trên lịch.
+        </div>
+    }
+
+    <!-- Statistics -->
+    <div class="at-stats">
+
+        <div class="at-stat">
+            <div class="at-stat-icon">
+                <i class="glyphicon glyphicon-calendar"></i>
+            </div>
+            <div class="at-stat-text">
+                <span>Tổng buổi học trong tuần</span>
+                <strong>@totalSessions</strong>
+            </div>
+        </div>
+
+        <div class="at-stat">
+            <div class="at-stat-icon">
+                <i class="glyphicon glyphicon-check"></i>
+            </div>
+            <div class="at-stat-text">
+                <span>Đã điểm danh</span>
+                <strong>@attendedCount</strong>
+            </div>
+        </div>
+
+        <div class="at-stat">
+            <div class="at-stat-icon">
+                <i class="glyphicon glyphicon-time"></i>
+            </div>
+            <div class="at-stat-text">
+                <span>Chưa điểm danh</span>
+                <strong>@pendingCount</strong>
+            </div>
+        </div>
+
+        <div class="at-stat">
+            <div class="at-stat-icon">
+                <i class="glyphicon glyphicon-alert"></i>
+            </div>
+            <div class="at-stat-text">
+                <span>Buổi bị xung đột</span>
+                <strong>@(Model != null ? Model.ConflictSessionsCount : 0)</strong>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Filters -->
+    <section class="at-panel">
+
+        <div class="at-panel-header">
+            <i class="glyphicon glyphicon-filter"></i>
+            Bộ lọc thời khóa biểu
+        </div>
+
+        <div class="at-filter-body">
+
+            @using (Html.BeginForm(
+                "AdminTimetable",
+                "ClassSessions",
+                FormMethod.Get,
+                new { @class = "at-filter-form" }))
+            {
+                <input type="hidden" name="weekOffset" value="@weekOffset" />
+
+                <div class="at-field">
+                    <label for="atCourseId">Khóa học</label>
+
+                    <select id="atCourseId" name="courseId" class="at-control">
+                        <option value="">Tất cả khóa học</option>
+
+                        @if (Model != null && Model.Courses != null)
+                        {
+                            foreach (var course in Model.Courses)
+                            {
+                                if (Model.SelectedCourseId == course.Id)
+                                {
+                                    <option value="@course.Id" selected="selected">
+                                        @course.CourseName
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="@course.Id">
+                                        @course.CourseName
+                                    </option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="at-field">
+                    <label for="atClassId">Lớp học</label>
+
+                    <select id="atClassId" name="classId" class="at-control">
+                        <option value="">Tất cả lớp học</option>
+
+                        @if (Model != null && Model.Classes != null)
+                        {
+                            foreach (var cls in Model.Classes)
+                            {
+                                if (Model.SelectedClassId == cls.Id)
+                                {
+                                    <option value="@cls.Id" selected="selected">
+                                        @cls.ClassName
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="@cls.Id">
+                                        @cls.ClassName
+                                    </option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="at-field">
+                    <label for="atSelectedDate">Ngày trong tuần</label>
+
+                    <input type="date"
+                           id="atSelectedDate"
+                           name="selectedDate"
+                           value="@selectedDateValue"
+                           class="at-control" />
+                </div>
+
+                <div class="at-filter-actions">
+
+                    <button type="submit" class="at-btn at-filter-submit">
+                        <i class="glyphicon glyphicon-filter"></i>
+                        Xem lịch
+                    </button>
+
+                    <a href="@Url.Action("AdminTimetable", "ClassSessions")"
+                       class="at-btn at-filter-reset">
+                        Đặt lại
+                    </a>
+
+                </div>
+            }
+
+        </div>
+    </section>
+
+    <!-- Week navigation and legend -->
+    <section class="at-panel">
+
+        <div class="at-week-body">
+
+            <div class="at-week-nav">
+
+                <a href="@Url.Action("AdminTimetable", "ClassSessions", new {
+                        courseId = Model.SelectedCourseId,
+                        classId = Model.SelectedClassId,
+                        weekOffset = weekOffset - 1
+                    })"
+                   class="at-week-link">
+                    ‹ Tuần trước
+                </a>
+
+                <a href="@Url.Action("AdminTimetable", "ClassSessions", new {
+                        courseId = Model.SelectedCourseId,
+                        classId = Model.SelectedClassId,
+                        weekOffset = 0
+                    })"
+                   class="at-week-link @(weekOffset == 0 ? "at-week-link-current" : "")">
+                    Tuần hiện tại
+                </a>
+
+                <a href="@Url.Action("AdminTimetable", "ClassSessions", new {
+                        courseId = Model.SelectedCourseId,
+                        classId = Model.SelectedClassId,
+                        weekOffset = weekOffset + 1
+                    })"
+                   class="at-week-link">
+                    Tuần sau ›
+                </a>
+
+                <span class="at-week-range">
+                    Tuần: @weekStart.ToString("dd/MM/yyyy")
+                    – @weekEnd.ToString("dd/MM/yyyy")
+                </span>
+
+            </div>
+
+            <div class="at-legend">
+
+                <span class="at-legend-item">
+                    <span class="at-legend-dot at-dot-scheduled"></span>
+                    Chưa điểm danh
+                </span>
+
+                <span class="at-legend-item">
+                    <span class="at-legend-dot at-dot-attended"></span>
+                    Đã điểm danh
+                </span>
+
+                <span class="at-legend-item">
+                    <span class="at-legend-dot at-dot-conflict"></span>
+                    Xung đột lịch
+                </span>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Calendar -->
+    <section class="at-panel">
+
+        <div class="at-calendar-header">
+            <div>
+                <h2>Lịch học theo khung giờ thực tế</h2>
+                <p>
+                    Đường kẻ lớn là mỗi giờ; đường kẻ mảnh là nửa giờ.
+                    Vị trí thẻ dựa trên giờ bắt đầu và giờ kết thúc.
+                </p>
+            </div>
+
+            <span class="at-calendar-hours">
+                @calendarStartHour.ToString("00"):00
+                – @calendarEndHour.ToString("00"):00
+            </span>
+        </div>
+
+        <div class="at-calendar-scroll">
+
+            <div class="at-calendar-head">
+
+                <div class="at-time-head">
+                    Khung giờ
+                </div>
+
+                @for (int d = 0; d < 7; d++)
+                {
+                    DateTime colDate = weekStart.AddDays(d);
+                    bool isToday = colDate.Date == DateTime.Today;
+
+                    <div class="at-day-head @(isToday ? "is-today" : "")">
+                        <span class="at-day-name">@dayNames[d]</span>
+
+                        <span class="at-day-date">
+                            @colDate.ToString("dd/MM/yyyy")
+                        </span>
+                    </div>
+                }
+
+            </div>
+
+            <div class="at-calendar-body">
+
+                <!-- Time axis -->
+                <div class="at-time-track"
+                     style="height:@(calendarHeightPx)px;">
+
+                    @for (int hour = calendarStartHour;
+                          hour < calendarEndHour;
+                          hour++)
+                    {
+                        int timeLabelTop =
+                            (hour - calendarStartHour) * pixelsPerHour + 3;
+
+                        <div class="at-time-label"
+                             style="top:@(timeLabelTop)px;">
+                            @(hour.ToString("00")):00
+                        </div>
+                    }
+
+                </div>
+
+                <!-- Day columns -->
+                @for (int d = 0; d < 7; d++)
+                {
+                    DateTime cellDate = weekStart.AddDays(d).Date;
+                    bool isTodayCol = cellDate == DateTime.Today;
+
+                    var daySessions = sessions
+                        .Where(s => s.SessionDate.Date == cellDate)
+                        .OrderBy(s => s.StartTime)
+                        .ThenBy(s => s.EndTime)
+                        .ToList();
+
+                    <div class="at-day-track @(isTodayCol ? "is-today" : "")"
+                         style="height:@(calendarHeightPx)px;">
+
+                        @if (!daySessions.Any())
+                        {
+                            <div class="at-empty-day">Không có buổi học</div>
+                        }
+
+                        @foreach (var s in daySessions)
+                        {
+                            bool isRoomConflict = roomConflicts.Contains(s.Id);
+                            bool isTeacherConflict = teacherConflicts.Contains(s.Id);
+                            bool hasConflict = isRoomConflict || isTeacherConflict;
+
+                            bool isAttended =
+                                s.Attendances != null &&
+                                s.Attendances.Any();
+
+                            string cardStatusClass = hasConflict
+                                ? "at-conflict"
+                                : (isAttended ? "at-attended" : "");
+
+                            string className = s.Class != null
+                                ? s.Class.ClassName
+                                : "Lớp #" + s.ClassId;
+
+                            string courseName =
+                                s.Class != null &&
+                                s.Class.Course != null
+                                    ? s.Class.Course.CourseName
+                                    : "Chưa xác định khóa học";
+
+                            string roomName = s.Room != null
+                                ? s.Room.RoomName
+                                : "Chưa xếp phòng";
+
+                            string teacherName =
+                                s.Class != null &&
+                                s.Class.Teacher != null
+                                    ? s.Class.Teacher.FullName
+                                    : "Chưa phân công";
+
+                            string startText = s.StartTime.ToString(@"hh\:mm");
+                            string endText = s.EndTime.ToString(@"hh\:mm");
+                            string timeText = startText + " – " + endText;
+
+                            int attendanceCount = s.Attendances != null
+                                ? s.Attendances.Count
+                                : 0;
+
+                            double startMinutes = s.StartTime.TotalMinutes;
+                            double endMinutes = Math.Max(
+                                startMinutes,
+                                s.EndTime.TotalMinutes);
+
+                            double visibleStartMinutes = Math.Max(
+                                startMinutes,
+                                calendarStartMinutes);
+
+                            double visibleEndMinutes = Math.Min(
+                                endMinutes,
+                                calendarEndMinutes);
+
+                            int topPx = (int)Math.Round(
+                                (visibleStartMinutes - calendarStartMinutes)
+                                * pixelsPerHour / 60.0);
+
+                            int actualHeightPx = (int)Math.Round(
+                                (visibleEndMinutes - visibleStartMinutes)
+                                * pixelsPerHour / 60.0);
+
+                            // Chiều cao tối thiểu để status và nút không đè nhau.
+                            int remainingCalendarHeight = Math.Max(
+                                0,
+                                calendarHeightPx - topPx);
+
+                            int heightPx = Math.Min(
+                                remainingCalendarHeight,
+                                Math.Max(pixelsPerHour, actualHeightPx));
+
+                            int lane = laneBySession.ContainsKey(s.Id)
+                                ? laneBySession[s.Id]
+                                : 0;
+
+                            int laneCount = laneCountBySession.ContainsKey(s.Id)
+                                ? laneCountBySession[s.Id]
+                                : 1;
+
+                            string leftCss = (100.0 * lane / laneCount)
+                                .ToString("0.##", CultureInfo.InvariantCulture);
+
+                            string widthCss = (100.0 / laneCount)
+                                .ToString("0.##", CultureInfo.InvariantCulture);
+
+                            bool isCompactCard = actualHeightPx < 145;
+
+                            string compactClass = isCompactCard
+                                ? "at-session-compact"
+                                : "";
+
+                            string fullTitle =
+                                className + " | " +
+                                courseName + " | " +
+                                timeText + " | Phòng: " +
+                                roomName + " | Giáo viên: " +
+                                teacherName;
+
+                            <article class="at-session-card @cardStatusClass @compactClass"
+                                     style="top:@(topPx)px;
+                                            height:@(heightPx)px;
+                                            left:calc(@(leftCss)% + 3px);
+                                            width:calc(@(widthCss)% - 6px);"
+                                     title="@fullTitle">
+
+                                <span class="at-session-class">
+                                    @className
+                                </span>
+
+                                <span class="at-session-time">
+                                    @timeText
+                                </span>
+
+                                <span class="at-session-course">
+                                    @courseName
+                                </span>
+
+                                <div class="at-session-meta">
+                                    <i class="glyphicon glyphicon-home"></i>
+                                    @roomName
+                                </div>
+
+                                <div class="at-session-meta">
+                                    <i class="glyphicon glyphicon-user"></i>
+                                    @teacherName
+                                </div>
+
+                                <!-- Attendance is kept outside the action area -->
+                                <div class="at-session-badges">
+
+                                    @if (isAttended)
+                                    {
+                                        <span class="at-badge at-badge-attended">
+                                            Đã điểm danh (@attendanceCount)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="at-badge at-badge-unattended">
+                                            Chưa điểm danh
+                                        </span>
+                                    }
+
+                                    @if (isRoomConflict)
+                                    {
+                                        <span class="at-badge at-badge-conflict-room">
+                                            Trùng phòng
+                                        </span>
+                                    }
+
+                                    @if (isTeacherConflict)
+                                    {
+                                        <span class="at-badge at-badge-conflict-teacher">
+                                            Trùng giáo viên
+                                        </span>
+                                    }
+
+                                </div>
+
+                                <!-- Dedicated footer for action buttons -->
+                                <div class="at-session-actions">
+
+                                    <a href="@Url.Action("Details", "ClassSessions", new { id = s.Id })"
+                                       class="at-session-action"
+                                       title="Chi tiết buổi học"
+                                       aria-label="Chi tiết buổi học @s.Id">
+                                        <i class="glyphicon glyphicon-eye-open"></i>
+                                        Chi tiết
+                                    </a>
+
+                                    <a href="@Url.Action("Edit", "ClassSessions", new { id = s.Id })"
+                                       class="at-session-action"
+                                       title="Sửa buổi học"
+                                       aria-label="Sửa buổi học @s.Id">
+                                        <i class="glyphicon glyphicon-edit"></i>
+                                        Sửa
+                                    </a>
+
+                                </div>
+
+                            </article>
+                        }
+
+                    </div>
+                }
+
+            </div>
+        </div>
+
+        <div class="at-calendar-footer">
+            <span>
+                Tổng cộng @sessions.Count buổi học trong tuần đang xem.
+            </span>
+
+            <span>
+                Cuộn ngang để xem đủ 7 ngày nếu màn hình không đủ rộng.
+            </span>
+        </div>
+
+    </section>
+
+</div>

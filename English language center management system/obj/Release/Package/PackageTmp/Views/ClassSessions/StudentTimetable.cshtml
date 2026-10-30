@@ -1,0 +1,2042 @@
+﻿@model English_language_center_management_system.Models.ViewModels.ClassSessions.StudentTimetableViewModel
+
+@using System
+@using System.Linq
+@using System.Collections.Generic
+@using System.Globalization
+@using English_language_center_management_system.Models
+
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewBag.Title = "Thời khóa biểu học tập";
+
+    var sessions = Model != null && Model.Sessions != null
+        ? Model.Sessions
+        : new List<ClassSession>();
+
+    var enrolledCourses = Model != null && Model.EnrolledCourses != null
+        ? Model.EnrolledCourses
+        : new List<Course>();
+
+    string studentName = Model != null && Model.StudentInfo != null
+        ? Model.StudentInfo.FullName
+        : null;
+
+    if (string.IsNullOrWhiteSpace(studentName))
+    {
+        studentName = Session["FullName"] as string;
+    }
+
+    if (string.IsNullOrWhiteSpace(studentName))
+    {
+        studentName = Session["Username"] as string;
+    }
+
+    if (string.IsNullOrWhiteSpace(studentName))
+    {
+        studentName = "Học viên";
+    }
+
+    string studentInitial = studentName.Substring(0, 1).ToUpperInvariant();
+
+    int currentStudentId = Model != null && Model.StudentInfo != null
+        ? Model.StudentInfo.Id
+        : Convert.ToInt32(Session["UserId"] ?? 0);
+
+    DateTime weekStart = Model != null && Model.WeekStart != default(DateTime)
+        ? Model.WeekStart.Date
+        : DateTime.Today;
+
+    DateTime weekEnd = Model != null && Model.WeekEnd != default(DateTime)
+        ? Model.WeekEnd.Date
+        : weekStart.AddDays(6);
+
+    int weekOffset = Model != null ? Model.WeekOffset : 0;
+    int? selectedCourseId = Model != null ? Model.SelectedCourseId : null;
+
+    string[] dayNames =
+    {
+        "Thứ 2",
+        "Thứ 3",
+        "Thứ 4",
+        "Thứ 5",
+        "Thứ 6",
+        "Thứ 7",
+        "Chủ Nhật"
+    };
+
+    int totalSessions = sessions.Count;
+
+    int attendedSessions = sessions.Count(s =>
+        s.Attendances != null &&
+        s.Attendances.Any(a =>
+            a.StudentId == currentStudentId &&
+            (a.Status == "Present" || a.Status == "Late")));
+
+    int upcomingSessions = sessions.Count(s =>
+        s.SessionDate.Date >= DateTime.Today);
+
+    int absentSessions = sessions.Count(s =>
+        s.Attendances != null &&
+        s.Attendances.Any(a =>
+            a.StudentId == currentStudentId &&
+            a.Status == "Absent"));
+
+    string selectedCourseName = "Tất cả môn học";
+
+    if (selectedCourseId.HasValue)
+    {
+        var matchedCourse = enrolledCourses.FirstOrDefault(
+            c => c.Id == selectedCourseId.Value
+        );
+
+        if (matchedCourse != null)
+        {
+            selectedCourseName = matchedCourse.CourseName;
+        }
+    }
+}
+
+<style>
+    /* ================================================
+       STUDENT TIMETABLE
+       Đồng bộ với StudentDashboard
+       ================================================ */
+
+    #student-timetable-page {
+        --stt-primary: #c62828;
+        --stt-primary-dark: #a61f24;
+        --stt-primary-light: #fff0f0;
+        --stt-text: #202938;
+        --stt-muted: #7b8495;
+        --stt-border: #e7eaf0;
+        --stt-background: #f4f6fa;
+        --stt-white: #ffffff;
+        --stt-blue: #2563eb;
+        --stt-blue-light: #eff6ff;
+        --stt-green: #16834f;
+        --stt-green-light: #effaf3;
+        --stt-orange: #b96b0b;
+        --stt-orange-light: #fff7e8;
+        min-width: 0;
+        color: var(--stt-text);
+    }
+
+        #student-timetable-page,
+        #student-timetable-page * {
+            box-sizing: border-box;
+        }
+
+            #student-timetable-page .stt-page {
+                min-width: 0;
+            }
+
+            /* Tiêu đề trang */
+
+            #student-timetable-page .stt-page-heading {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 20px;
+                margin-bottom: 22px;
+            }
+
+            #student-timetable-page .stt-heading-content {
+                min-width: 0;
+            }
+
+            #student-timetable-page .stt-eyebrow {
+                display: block;
+                margin-bottom: 8px;
+                color: var(--stt-primary);
+                font-size: 10px;
+                font-weight: 850;
+                letter-spacing: 1.5px;
+            }
+
+            #student-timetable-page .stt-page-title {
+                margin: 0;
+                color: var(--stt-text);
+                font-size: 28px;
+                font-weight: 850;
+                line-height: 1.35;
+                letter-spacing: -0.5px;
+            }
+
+            #student-timetable-page .stt-page-description {
+                max-width: 720px;
+                margin: 9px 0 0;
+                color: var(--stt-muted);
+                font-size: 12px;
+                line-height: 1.8;
+            }
+
+            #student-timetable-page .stt-heading-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                flex-shrink: 0;
+                padding: 10px 12px;
+                border: 1px solid #f0d7d7;
+                border-radius: 9px;
+                background: #fff6f6;
+                color: #b42329;
+                font-size: 11px;
+                font-weight: 800;
+                white-space: nowrap;
+            }
+
+                #student-timetable-page .stt-heading-badge .bi {
+                    font-size: 14px;
+                }
+
+            /* Thông báo */
+
+            #student-timetable-page .stt-alert {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                margin-bottom: 19px;
+                padding: 13px 15px;
+                border: 1px solid transparent;
+                border-radius: 10px;
+                font-size: 12px;
+                line-height: 1.7;
+            }
+
+                #student-timetable-page .stt-alert .bi {
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                    font-size: 16px;
+                }
+
+            #student-timetable-page .stt-alert-success {
+                border-color: #c9ead7;
+                background: #effaf4;
+                color: #176b45;
+            }
+
+            #student-timetable-page .stt-alert-error {
+                border-color: #f0cccc;
+                background: #fff2f2;
+                color: #a51f25;
+            }
+
+            /* Thẻ thống kê */
+
+            #student-timetable-page .stt-stats {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 15px;
+                margin-bottom: 23px;
+            }
+
+            #student-timetable-page .stt-stat-card {
+                min-width: 0;
+                padding: 19px 20px;
+                border: 1px solid var(--stt-border);
+                border-radius: 13px;
+                background: #ffffff;
+                box-shadow: 0 4px 16px rgba(28, 39, 60, 0.03);
+                transition: transform 0.18s ease, box-shadow 0.18s ease;
+            }
+
+                #student-timetable-page .stt-stat-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 7px 20px rgba(28, 39, 60, 0.07);
+                }
+
+            #student-timetable-page .stt-stat-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                margin-bottom: 16px;
+            }
+
+            #student-timetable-page .stt-stat-label {
+                color: var(--stt-muted);
+                font-size: 10px;
+                font-weight: 850;
+                letter-spacing: 0.4px;
+                line-height: 1.6;
+            }
+
+            #student-timetable-page .stt-stat-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                flex-shrink: 0;
+                border-radius: 11px;
+                background: #fff0f0;
+                color: var(--stt-primary);
+                font-size: 19px;
+            }
+
+                #student-timetable-page .stt-stat-icon.blue {
+                    background: #edf5ff;
+                    color: #2563a6;
+                }
+
+                #student-timetable-page .stt-stat-icon.green {
+                    background: #eaf8f0;
+                    color: #16814e;
+                }
+
+                #student-timetable-page .stt-stat-icon.orange {
+                    background: #fff4e5;
+                    color: var(--stt-orange);
+                }
+
+            #student-timetable-page .stt-stat-number {
+                display: block;
+                margin-bottom: 6px;
+                color: var(--stt-text);
+                font-size: 29px;
+                font-weight: 850;
+                line-height: 1.2;
+                overflow-wrap: anywhere;
+            }
+
+            #student-timetable-page .stt-stat-description {
+                display: block;
+                color: #8b94a3;
+                font-size: 11px;
+                line-height: 1.7;
+            }
+
+            /* Panel */
+
+            #student-timetable-page .stt-panel {
+                margin-bottom: 22px;
+                overflow: hidden;
+                border: 1px solid var(--stt-border);
+                border-radius: 14px;
+                background: #ffffff;
+                box-shadow: 0 4px 16px rgba(28, 39, 60, 0.03);
+            }
+
+            #student-timetable-page .stt-panel-heading {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 15px;
+                padding: 19px 22px;
+                border-bottom: 1px solid #edf0f5;
+            }
+
+            #student-timetable-page .stt-panel-heading-main {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-width: 0;
+            }
+
+            #student-timetable-page .stt-panel-heading-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                flex-shrink: 0;
+                border-radius: 11px;
+                background: var(--stt-primary-light);
+                color: var(--stt-primary);
+                font-size: 18px;
+            }
+
+                #student-timetable-page .stt-panel-heading-icon.blue {
+                    background: var(--stt-blue-light);
+                    color: var(--stt-blue);
+                }
+
+            #student-timetable-page .stt-panel-heading-text {
+                min-width: 0;
+            }
+
+            #student-timetable-page .stt-panel-eyebrow {
+                display: block;
+                margin-bottom: 4px;
+                color: var(--stt-primary);
+                font-size: 9px;
+                font-weight: 850;
+                letter-spacing: 1.2px;
+            }
+
+            #student-timetable-page .stt-panel-title {
+                margin: 0;
+                color: #273247;
+                font-size: 15px;
+                font-weight: 850;
+                line-height: 1.5;
+            }
+
+            #student-timetable-page .stt-panel-subtitle {
+                margin: 4px 0 0;
+                color: #8993a3;
+                font-size: 11px;
+                line-height: 1.7;
+            }
+
+            #student-timetable-page .stt-panel-body {
+                padding: 21px 22px;
+            }
+
+            /* Bộ lọc môn học */
+
+            #student-timetable-page .stt-course-filter {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-width: 0;
+            }
+
+            #student-timetable-page .stt-filter-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                flex-shrink: 0;
+                color: #4d596c;
+                font-size: 11px;
+                font-weight: 800;
+            }
+
+                #student-timetable-page .stt-filter-label .bi {
+                    color: var(--stt-primary);
+                    font-size: 14px;
+                }
+
+            #student-timetable-page .stt-course-select {
+                width: 100%;
+                min-width: 0;
+                max-width: 380px;
+                min-height: 41px;
+                padding: 9px 12px;
+                border: 1px solid #dfe4ec;
+                border-radius: 8px;
+                background: #ffffff;
+                color: #344054;
+                font-family: inherit;
+                font-size: 12px;
+                outline: none;
+                transition: border-color 0.18s ease, box-shadow 0.18s ease;
+            }
+
+                #student-timetable-page .stt-course-select:focus {
+                    border-color: var(--stt-primary);
+                    box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.08);
+                }
+
+            #student-timetable-page .stt-filter-hint {
+                margin: 9px 0 0;
+                color: #969eac;
+                font-size: 10px;
+                line-height: 1.7;
+            }
+
+            /* Điều hướng tuần */
+
+            #student-timetable-page .stt-week-nav {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 13px;
+                margin-top: 19px;
+                padding-top: 18px;
+                border-top: 1px solid #edf0f5;
+            }
+
+            #student-timetable-page .stt-week-nav-buttons {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 7px;
+            }
+
+            #student-timetable-page .stt-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 7px;
+                min-height: 38px;
+                padding: 9px 12px;
+                border: 1px solid #dfe4ec;
+                border-radius: 8px;
+                background: #ffffff;
+                color: #4b5565;
+                font-family: inherit;
+                font-size: 11px;
+                font-weight: 800;
+                line-height: 1.4;
+                text-decoration: none;
+                white-space: nowrap;
+                transition: all 0.18s ease;
+            }
+
+                #student-timetable-page .stt-btn:hover {
+                    border-color: #efcaca;
+                    background: #fff5f5;
+                    color: var(--stt-primary);
+                    text-decoration: none;
+                }
+
+            #student-timetable-page .stt-btn-current {
+                border-color: #f0d4d4;
+                background: var(--stt-primary-light);
+                color: var(--stt-primary);
+            }
+
+            #student-timetable-page .stt-btn .bi {
+                font-size: 13px;
+            }
+
+            #student-timetable-page .stt-week-range {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                color: #344054;
+                font-size: 12px;
+                font-weight: 800;
+            }
+
+            #student-timetable-page .stt-week-range-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 35px;
+                height: 35px;
+                flex-shrink: 0;
+                border-radius: 9px;
+                background: #f3f5f9;
+                color: #68758a;
+                font-size: 15px;
+            }
+
+            #student-timetable-page .stt-week-range-text {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            #student-timetable-page .stt-week-range-label {
+                color: #929aaa;
+                font-size: 9px;
+                font-weight: 850;
+                letter-spacing: 0.8px;
+            }
+
+            #student-timetable-page .stt-week-range-dates {
+                color: #344054;
+                font-size: 12px;
+                font-weight: 850;
+                white-space: nowrap;
+            }
+
+            /* Chú giải trạng thái */
+
+            #student-timetable-page .stt-legend {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+
+            #student-timetable-page .stt-legend-label {
+                margin-right: 3px;
+                color: #6d7788;
+                font-size: 10px;
+                font-weight: 800;
+            }
+
+            #student-timetable-page .stt-legend-item {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 8px;
+                border: 1px solid #e7eaf0;
+                border-radius: 7px;
+                background: #ffffff;
+                color: #667085;
+                font-size: 10px;
+                font-weight: 750;
+            }
+
+            #student-timetable-page .stt-legend-dot {
+                width: 8px;
+                height: 8px;
+                flex-shrink: 0;
+                border-radius: 3px;
+                background: #3b82f6;
+            }
+
+                #student-timetable-page .stt-legend-dot.present {
+                    background: #22a06b;
+                }
+
+                #student-timetable-page .stt-legend-dot.absent {
+                    background: #dc3545;
+                }
+
+                #student-timetable-page .stt-legend-dot.late {
+                    background: #e5a000;
+                }
+
+            /* Vùng bảng lịch */
+
+            #student-timetable-page .stt-table-scroll {
+                width: 100%;
+                overflow: auto;
+                border: 1px solid #e3e8ef;
+                border-radius: 10px;
+                background: #ffffff;
+                scrollbar-width: thin;
+                scrollbar-color: #cbd2dd #f5f6f8;
+            }
+
+            #student-timetable-page .stt-matrix {
+                width: 100%;
+                min-width: 1250px;
+                margin: 0;
+                border-collapse: separate;
+                border-spacing: 0;
+                table-layout: fixed;
+                background: #ffffff;
+            }
+
+                #student-timetable-page .stt-matrix th,
+                #student-timetable-page .stt-matrix td {
+                    border-right: 1px solid #e8ecf2;
+                    border-bottom: 1px solid #e8ecf2;
+                }
+
+                #student-timetable-page .stt-matrix tr > *:last-child {
+                    border-right: 0;
+                }
+
+                #student-timetable-page .stt-matrix tbody tr:last-child > * {
+                    border-bottom: 0;
+                }
+
+                #student-timetable-page .stt-matrix thead th {
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                    height: 66px;
+                    padding: 11px 6px;
+                    background: #f7f8fb;
+                    color: #566176;
+                    font-size: 11px;
+                    font-weight: 850;
+                    text-align: center;
+                    vertical-align: middle;
+                }
+
+                #student-timetable-page .stt-matrix .stt-time-heading {
+                    position: sticky;
+                    left: 0;
+                    z-index: 12;
+                    width: 88px;
+                    min-width: 88px;
+                    max-width: 88px;
+                    background: #f1f3f8;
+                    color: #68758a;
+                }
+
+            #student-timetable-page .stt-day-heading {
+                background: #f7f8fb;
+            }
+
+                #student-timetable-page .stt-day-heading.stt-today-heading {
+                    background: #fff0f0;
+                    box-shadow: inset 0 -3px 0 #c62828;
+                    color: #b42329;
+                }
+
+            #student-timetable-page .stt-day-name {
+                display: block;
+                color: inherit;
+                font-size: 11px;
+                font-weight: 850;
+            }
+
+            #student-timetable-page .stt-day-date {
+                display: block;
+                margin-top: 5px;
+                color: #8d97a7;
+                font-size: 10px;
+                font-weight: 650;
+            }
+
+            #student-timetable-page .stt-today-heading .stt-day-date {
+                color: #b42329;
+            }
+
+            #student-timetable-page .stt-time-cell {
+                position: sticky;
+                left: 0;
+                z-index: 6;
+                width: 88px;
+                min-width: 88px;
+                max-width: 88px;
+                height: 76px;
+                padding: 8px 5px;
+                background: #f7f8fb;
+                color: #677286;
+                font-size: 11px;
+                font-weight: 800;
+                text-align: center;
+                vertical-align: top;
+                white-space: nowrap;
+            }
+
+                #student-timetable-page .stt-time-cell span {
+                    display: block;
+                    margin-top: 3px;
+                    color: #a0a7b4;
+                    font-size: 9px;
+                    font-weight: 600;
+                }
+
+            #student-timetable-page .stt-slot-cell {
+                position: relative;
+                height: 76px;
+                min-width: 0;
+                padding: 0;
+                background: #ffffff;
+                vertical-align: top;
+            }
+
+                #student-timetable-page .stt-slot-cell.stt-today-cell {
+                    background: #fffdfd;
+                }
+
+                #student-timetable-page .stt-slot-cell:hover {
+                    background: #fafbfe;
+                }
+
+                #student-timetable-page .stt-slot-cell.stt-today-cell:hover {
+                    background: #fff8f8;
+                }
+
+            /* Thẻ buổi học đặt tuyệt đối theo thời điểm bắt đầu */
+
+            #student-timetable-page .stt-session-card {
+                position: absolute;
+                z-index: 5;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                min-width: 0;
+                padding: 7px;
+                overflow: hidden;
+                border: 1px solid transparent;
+                border-left-width: 4px;
+                border-radius: 7px;
+                box-shadow: 0 2px 5px rgba(30, 41, 59, 0.06);
+                font-size: 10px;
+                line-height: 1.45;
+                text-align: left;
+                transition: box-shadow 0.18s ease, transform 0.18s ease;
+            }
+
+                #student-timetable-page .stt-session-card:hover {
+                    z-index: 15;
+                    transform: translateY(-1px);
+                    box-shadow: 0 5px 13px rgba(30, 41, 59, 0.15);
+                }
+
+            #student-timetable-page .stt-status-scheduled {
+                border-color: #cfe0ff;
+                border-left-color: #3b82f6;
+                background: #eff6ff;
+            }
+
+            #student-timetable-page .stt-status-present {
+                border-color: #c7ecd4;
+                border-left-color: #22a06b;
+                background: #effaf3;
+            }
+
+            #student-timetable-page .stt-status-absent {
+                border-color: #f5cccc;
+                border-left-color: #dc3545;
+                background: #fff3f3;
+            }
+
+            #student-timetable-page .stt-status-late,
+            #student-timetable-page .stt-status-excused {
+                border-color: #f5dfaa;
+                border-left-color: #e5a000;
+                background: #fff9eb;
+            }
+
+            #student-timetable-page .stt-session-content {
+                min-width: 0;
+            }
+
+            #student-timetable-page .stt-course-name {
+                display: block;
+                max-width: 100%;
+                overflow: hidden;
+                color: #2563a6;
+                font-size: 9px;
+                font-weight: 850;
+                letter-spacing: 0.2px;
+                text-overflow: ellipsis;
+                text-transform: uppercase;
+                white-space: nowrap;
+            }
+
+            #student-timetable-page .stt-session-class {
+                display: -webkit-box;
+                overflow: hidden;
+                margin-top: 3px;
+                color: #273247;
+                font-size: 11px;
+                font-weight: 850;
+                line-height: 1.4;
+                overflow-wrap: anywhere;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 2;
+            }
+
+            #student-timetable-page .stt-session-meta {
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+                margin-top: 6px;
+                color: #566176;
+                font-size: 9px;
+                line-height: 1.4;
+            }
+
+                #student-timetable-page .stt-session-meta span {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 4px;
+                    min-width: 0;
+                    overflow-wrap: anywhere;
+                }
+
+                #student-timetable-page .stt-session-meta .bi {
+                    flex-shrink: 0;
+                    margin-top: 1px;
+                    font-size: 10px;
+                }
+
+            #student-timetable-page .stt-session-room {
+                color: #2466a9;
+                font-weight: 800;
+            }
+
+            #student-timetable-page .stt-session-teacher {
+                display: block;
+                overflow: hidden;
+                margin-top: 5px;
+                color: #697588;
+                font-size: 9px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            #student-timetable-page .stt-attendance-wrap {
+                margin-top: 6px;
+                padding-top: 5px;
+                border-top: 1px dashed rgba(80, 90, 110, 0.17);
+                text-align: right;
+            }
+
+            #student-timetable-page .stt-attendance-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                max-width: 100%;
+                padding: 3px 5px;
+                border-radius: 5px;
+                background: #e2e8f0;
+                color: #475569;
+                font-size: 9px;
+                font-weight: 800;
+                line-height: 1.35;
+            }
+
+            #student-timetable-page .stt-attendance-present {
+                background: #22a06b;
+                color: #ffffff;
+            }
+
+            #student-timetable-page .stt-attendance-absent {
+                background: #dc3545;
+                color: #ffffff;
+            }
+
+            #student-timetable-page .stt-attendance-late {
+                background: #e5a000;
+                color: #ffffff;
+            }
+
+            #student-timetable-page .stt-attendance-excused {
+                background: #a86c0b;
+                color: #ffffff;
+            }
+
+            /* Trạng thái rỗng */
+
+            #student-timetable-page .stt-empty-state {
+                display: flex;
+                align-items: flex-start;
+                gap: 13px;
+                margin-bottom: 17px;
+                padding: 17px;
+                border: 1px dashed #dce2eb;
+                border-radius: 10px;
+                background: #fafbfe;
+            }
+
+            #student-timetable-page .stt-empty-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 41px;
+                height: 41px;
+                flex-shrink: 0;
+                border-radius: 11px;
+                background: #fff0f0;
+                color: #c62828;
+                font-size: 18px;
+            }
+
+            #student-timetable-page .stt-empty-title {
+                margin: 0 0 5px;
+                color: #344054;
+                font-size: 12px;
+                font-weight: 850;
+            }
+
+            #student-timetable-page .stt-empty-description {
+                margin: 0;
+                color: #8993a3;
+                font-size: 11px;
+                line-height: 1.8;
+            }
+
+            #student-timetable-page .stt-table-note {
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+                margin-top: 13px;
+                color: #8a93a3;
+                font-size: 10px;
+                line-height: 1.7;
+            }
+
+                #student-timetable-page .stt-table-note .bi {
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                    color: #b42329;
+                }
+
+            /* Footer */
+
+            #student-timetable-page .stt-panel-footer {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 8px;
+                padding: 12px 22px;
+                border-top: 1px solid #edf0f5;
+                background: #fafbfc;
+                color: #8791a1;
+                font-size: 10px;
+                line-height: 1.6;
+            }
+
+                #student-timetable-page .stt-panel-footer strong {
+                    color: #566176;
+                }
+
+    /* Responsive */
+
+    @@media (max-width: 1150px) {
+        #student-timetable-page .stt-page-heading {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #student-timetable-page .stt-stats {
+            gap: 12px;
+        }
+
+        #student-timetable-page .stt-stat-card {
+            padding: 16px;
+        }
+
+        #student-timetable-page .stt-panel-body {
+            padding: 17px;
+        }
+    }
+
+    @@media (max-width: 760px) {
+        #student-timetable-page .stt-page-title {
+            font-size: 23px;
+        }
+
+        #student-timetable-page .stt-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        #student-timetable-page .stt-course-filter {
+            align-items: stretch;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #student-timetable-page .stt-course-select {
+            max-width: none;
+        }
+
+        #student-timetable-page .stt-week-nav {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        #student-timetable-page .stt-week-nav-buttons {
+            width: 100%;
+        }
+
+        #student-timetable-page .stt-panel-heading {
+            padding: 16px;
+        }
+
+        #student-timetable-page .stt-panel-body {
+            padding: 14px;
+        }
+
+        #student-timetable-page .stt-panel-footer {
+            padding: 12px 14px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        #student-timetable-page .stt-stats {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        #student-timetable-page .stt-stat-card {
+            padding: 15px;
+        }
+
+        #student-timetable-page .stt-stat-number {
+            font-size: 26px;
+        }
+
+        #student-timetable-page .stt-week-nav-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+            #student-timetable-page .stt-week-nav-buttons .stt-btn {
+                width: 100%;
+            }
+
+            #student-timetable-page .stt-week-nav-buttons .stt-btn-current {
+                grid-column: 1 / -1;
+                grid-row: 1;
+            }
+
+        #student-timetable-page .stt-week-range-dates {
+            font-size: 11px;
+        }
+    }
+</style>
+
+<div class="student-portal" id="student-timetable-page">
+
+    @* =========================================
+        SIDEBAR - ĐỒNG BỘ VỚI STUDENT DASHBOARD
+        ========================================= *@
+
+    <aside class="student-sidebar">
+
+        <a class="student-brand"
+           href="@Url.Action("StudentDashboard", "Home")">
+
+            <span class="student-brand-mark">
+                <i class="bi bi-book-half" aria-hidden="true"></i>
+            </span>
+
+            <span class="student-brand-text">
+                ELC PORTAL
+                <small>STUDENT SPACE</small>
+            </span>
+
+        </a>
+
+        <div class="student-sidebar-caption">
+            KHÔNG GIAN HỌC TẬP
+        </div>
+
+        <nav class="student-side-nav">
+
+            <a href="@Url.Action("StudentDashboard", "Home")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-grid-1x2-fill" aria-hidden="true"></i>
+                </span>
+
+                Dashboard
+
+            </a>
+
+            <a href="@Url.Action("StudentTimetable", "ClassSessions")"
+               class="student-nav-link is-active"
+               aria-current="page">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-calendar3-week-fill" aria-hidden="true"></i>
+                </span>
+
+                Thời khóa biểu
+
+            </a>
+
+            <a href="@Url.Action("StudentEnroll", "Enrollments")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-journal-plus" aria-hidden="true"></i>
+                </span>
+
+                Đăng ký lớp học
+
+            </a>
+
+            <a href="@Url.Action("StudentProgress", "Attendances")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
+                </span>
+
+                Kết quả học tập
+
+            </a>
+
+            <a href="@Url.Action("StudentLearningResources", "Assignments")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i>
+                </span>
+
+                Bài tập &amp; Tài liệu
+
+            </a>
+
+            <a href="@Url.Action("StudentPayments", "Payments")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-wallet2" aria-hidden="true"></i>
+                </span>
+
+                Học phí &amp; hóa đơn
+
+            </a>
+
+            <a href="@Url.Action("StudentProfile", "Profiles")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-person-vcard-fill" aria-hidden="true"></i>
+                </span>
+
+                Hồ sơ cá nhân
+
+            </a>
+
+        </nav>
+
+        <div class="student-sidebar-bottom">
+
+            <div class="student-support-card">
+
+                <span class="student-support-icon">
+                    <i class="bi bi-headset" aria-hidden="true"></i>
+                </span>
+
+                <strong>Cần hỗ trợ?</strong>
+
+                <p>
+                    Liên hệ trung tâm khi bạn cần giải đáp.
+                </p>
+
+                @Html.ActionLink(
+                    "Liên hệ trung tâm →",
+                    "Contact",
+                    "Home",
+                    null,
+                    new { @class = "student-support-link" }
+                )
+
+            </div>
+
+            @Html.ActionLink(
+                "↪ Đăng xuất",
+                "Logout",
+                "Auth",
+                null,
+                new { @class = "student-logout-link" }
+            )
+
+        </div>
+
+    </aside>
+
+    @* =========================================
+        NỘI DUNG CHÍNH
+        ========================================= *@
+
+    <div class="student-main">
+
+        <header class="student-topbar">
+
+            <div class="student-topbar-title">
+                <span>CỔNG HỌC VIÊN</span>
+                <strong>Thời khóa biểu</strong>
+            </div>
+
+            <div class="student-topbar-actions">
+
+                <div class="student-topbar-user">
+
+                    <span class="student-avatar-small">
+                        @studentInitial
+                    </span>
+
+                    <span class="student-topbar-user-info">
+                        <strong>@studentName</strong>
+                        <small>Học viên</small>
+                    </span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <main class="student-content">
+
+            <div class="student-breadcrumb">
+                Trang chủ
+                <span>/</span>
+                Cổng học viên
+                <span>/</span>
+                Thời khóa biểu
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="stt-alert stt-alert-success" role="status">
+
+                    <i class="bi bi-check-circle-fill"
+                       aria-hidden="true"></i>
+
+                    <span>@TempData["SuccessMessage"]</span>
+
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="stt-alert stt-alert-error" role="alert">
+
+                    <i class="bi bi-exclamation-circle-fill"
+                       aria-hidden="true"></i>
+
+                    <span>@TempData["ErrorMessage"]</span>
+
+                </div>
+            }
+
+            <div class="stt-page">
+
+                @* TIÊU ĐỀ *@
+
+                <section class="stt-page-heading">
+
+                    <div class="stt-heading-content">
+
+                        <span class="stt-eyebrow">
+                            YOUR LEARNING JOURNEY
+                        </span>
+
+                        <h1 class="stt-page-title">
+                            Thời khóa biểu học tập
+                        </h1>
+
+                        <p class="stt-page-description">
+                            Theo dõi lịch học của bạn theo từng tuần,
+                            kiểm tra thời gian, phòng học, giáo viên
+                            và tình trạng chuyên cần của từng buổi.
+                        </p>
+
+                    </div>
+
+                    <div class="stt-heading-badge">
+
+                        <i class="bi bi-calendar-check-fill"
+                           aria-hidden="true"></i>
+
+                        Lịch học cá nhân
+
+                    </div>
+
+                </section>
+
+                @* THỐNG KÊ *@
+
+                <section class="stt-stats">
+
+                    <article class="stt-stat-card">
+
+                        <div class="stt-stat-top">
+
+                            <span class="stt-stat-label">
+                                BUỔI HỌC TRONG TUẦN
+                            </span>
+
+                            <span class="stt-stat-icon">
+                                <i class="bi bi-calendar2-week-fill"
+                                   aria-hidden="true"></i>
+                            </span>
+
+                        </div>
+
+                        <strong class="stt-stat-number">
+                            @totalSessions
+                        </strong>
+
+                        <span class="stt-stat-description">
+                            Tổng số buổi học trong tuần được chọn
+                        </span>
+
+                    </article>
+
+                    <article class="stt-stat-card">
+
+                        <div class="stt-stat-top">
+
+                            <span class="stt-stat-label">
+                                ĐÃ THAM GIA
+                            </span>
+
+                            <span class="stt-stat-icon green">
+                                <i class="bi bi-person-check-fill"
+                                   aria-hidden="true"></i>
+                            </span>
+
+                        </div>
+
+                        <strong class="stt-stat-number">
+                            @attendedSessions
+                        </strong>
+
+                        <span class="stt-stat-description">
+                            Buổi có trạng thái có mặt hoặc đi muộn
+                        </span>
+
+                    </article>
+
+                    <article class="stt-stat-card">
+
+                        <div class="stt-stat-top">
+
+                            <span class="stt-stat-label">
+                                BUỔI HỌC SẮP TỚI
+                            </span>
+
+                            <span class="stt-stat-icon blue">
+                                <i class="bi bi-clock-history"
+                                   aria-hidden="true"></i>
+                            </span>
+
+                        </div>
+
+                        <strong class="stt-stat-number">
+                            @upcomingSessions
+                        </strong>
+
+                        <span class="stt-stat-description">
+                            Buổi học từ hôm nay trở đi trong tuần được chọn
+                        </span>
+
+                    </article>
+
+                </section>
+
+                @* BỘ LỌC VÀ ĐIỀU HƯỚNG TUẦN *@
+
+                <section class="stt-panel">
+
+                    <header class="stt-panel-heading">
+
+                        <div class="stt-panel-heading-main">
+
+                            <span class="stt-panel-heading-icon">
+                                <i class="bi bi-sliders"
+                                   aria-hidden="true"></i>
+                            </span>
+
+                            <div class="stt-panel-heading-text">
+
+                                <span class="stt-panel-eyebrow">
+                                    SCHEDULE SETTINGS
+                                </span>
+
+                                <h2 class="stt-panel-title">
+                                    Lọc và xem lịch học
+                                </h2>
+
+                                <p class="stt-panel-subtitle">
+                                    Chọn khóa học và tuần bạn muốn theo dõi.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </header>
+
+                    <div class="stt-panel-body">
+
+                        @using (Html.BeginForm(
+                            "StudentTimetable",
+                            "ClassSessions",
+                            FormMethod.Get,
+                            new { id = "stt-course-filter-form" }))
+                        {
+                            <input type="hidden"
+                                   name="weekOffset"
+                                   value="@weekOffset" />
+
+                            <div class="stt-course-filter">
+
+                                <label for="stt-course-select"
+                                       class="stt-filter-label">
+
+                                    <i class="bi bi-book-half"
+                                       aria-hidden="true"></i>
+
+                                    Lọc theo môn học
+
+                                </label>
+
+                                <select name="courseId"
+                                        id="stt-course-select"
+                                        class="stt-course-select">
+
+                                    <option value="">
+                                        Tất cả môn đã đăng ký / đang học
+                                    </option>
+
+                                    @foreach (var course in enrolledCourses)
+                                    {
+                                        if (selectedCourseId == course.Id)
+                                        {
+                                            <option value="@course.Id" selected="selected">
+                                                @course.CourseName (@course.Level)
+                                            </option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@course.Id">
+                                                @course.CourseName (@course.Level)
+                                            </option>
+                                        }
+                                    }
+
+                                </select>
+
+                            </div>
+
+                            <p class="stt-filter-hint">
+                                Danh sách chỉ bao gồm các khóa học đã đăng ký
+                                hoặc đang học theo trạng thái ghi danh của hệ thống.
+                            </p>
+                        }
+
+                        <div class="stt-week-nav">
+
+                            <div class="stt-week-nav-buttons">
+
+                                <a href="@Url.Action(
+                                    "StudentTimetable",
+                                    "ClassSessions",
+                                    new {
+                                        courseId = selectedCourseId,
+                                        weekOffset = weekOffset - 1
+                                    })"
+                                   class="stt-btn">
+
+                                    <i class="bi bi-chevron-left"
+                                       aria-hidden="true"></i>
+
+                                    Tuần trước
+
+                                </a>
+
+                                <a href="@Url.Action(
+                                    "StudentTimetable",
+                                    "ClassSessions",
+                                    new {
+                                        courseId = selectedCourseId,
+                                        weekOffset = 0
+                                    })"
+                                   class="stt-btn stt-btn-current">
+
+                                    <i class="bi bi-calendar-check"
+                                       aria-hidden="true"></i>
+
+                                    Tuần hiện tại
+
+                                </a>
+
+                                <a href="@Url.Action(
+                                    "StudentTimetable",
+                                    "ClassSessions",
+                                    new {
+                                        courseId = selectedCourseId,
+                                        weekOffset = weekOffset + 1
+                                    })"
+                                   class="stt-btn">
+
+                                    Tuần sau
+
+                                    <i class="bi bi-chevron-right"
+                                       aria-hidden="true"></i>
+
+                                </a>
+
+                            </div>
+
+                            <div class="stt-week-range">
+
+                                <span class="stt-week-range-icon">
+                                    <i class="bi bi-calendar3"
+                                       aria-hidden="true"></i>
+                                </span>
+
+                                <span class="stt-week-range-text">
+
+                                    <span class="stt-week-range-label">
+                                        TUẦN ĐANG XEM
+                                    </span>
+
+                                    <span class="stt-week-range-dates">
+                                        @weekStart.ToString("dd/MM/yyyy")
+                                        –
+                                        @weekEnd.ToString("dd/MM/yyyy")
+                                    </span>
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                @* BẢNG THỜI KHÓA BIỂU *@
+
+                <section class="stt-panel">
+
+                    <header class="stt-panel-heading">
+
+                        <div class="stt-panel-heading-main">
+
+                            <span class="stt-panel-heading-icon blue">
+                                <i class="bi bi-calendar3-week-fill"
+                                   aria-hidden="true"></i>
+                            </span>
+
+                            <div class="stt-panel-heading-text">
+
+                                <span class="stt-panel-eyebrow">
+                                    WEEKLY TIMETABLE
+                                </span>
+
+                                <h2 class="stt-panel-title">
+                                    Lịch học theo tuần
+                                </h2>
+
+                                <p class="stt-panel-subtitle">
+                                    Khung thời gian từ 08:00 đến 22:00.
+                                    Bảng có thể cuộn ngang trên màn hình nhỏ.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                        <span class="stt-heading-badge">
+
+                            <i class="bi bi-bookmark-check-fill"
+                               aria-hidden="true"></i>
+
+                            @selectedCourseName
+
+                        </span>
+
+                    </header>
+
+                    <div class="stt-panel-body">
+
+                        @if (!enrolledCourses.Any())
+                        {
+                            <div class="stt-empty-state">
+
+                                <span class="stt-empty-icon">
+                                    <i class="bi bi-journal-x"
+                                       aria-hidden="true"></i>
+                                </span>
+
+                                <div>
+
+                                    <h3 class="stt-empty-title">
+                                        Bạn chưa có khóa học đang hoạt động
+                                    </h3>
+
+                                    <p class="stt-empty-description">
+                                        Khi lượt ghi danh được duyệt hoặc chuyển
+                                        sang trạng thái đang học, lịch các buổi
+                                        học sẽ được hiển thị tại đây.
+                                    </p>
+
+                                </div>
+
+                            </div>
+                        }
+                        else if (!sessions.Any())
+                        {
+                            <div class="stt-empty-state">
+
+                                <span class="stt-empty-icon">
+                                    <i class="bi bi-calendar2-x"
+                                       aria-hidden="true"></i>
+                                </span>
+
+                                <div>
+
+                                    <h3 class="stt-empty-title">
+                                        Chưa có buổi học trong tuần này
+                                    </h3>
+
+                                    <p class="stt-empty-description">
+                                        Không có buổi học nào phù hợp với khóa
+                                        học và khoảng thời gian đang chọn.
+                                        Bạn có thể chuyển sang tuần khác hoặc
+                                        xem tất cả môn học.
+                                    </p>
+
+                                </div>
+
+                            </div>
+                        }
+
+                        @* CHÚ GIẢI *@
+
+                        <div class="stt-legend">
+
+                            <span class="stt-legend-label">
+                                CHÚ GIẢI:
+                            </span>
+
+                            <span class="stt-legend-item">
+                                <span class="stt-legend-dot"></span>
+                                Chưa điểm danh
+                            </span>
+
+                            <span class="stt-legend-item">
+                                <span class="stt-legend-dot present"></span>
+                                Có mặt
+                            </span>
+
+                            <span class="stt-legend-item">
+                                <span class="stt-legend-dot absent"></span>
+                                Vắng mặt
+                            </span>
+
+                            <span class="stt-legend-item">
+                                <span class="stt-legend-dot late"></span>
+                                Đi muộn / Có phép
+                            </span>
+
+                        </div>
+
+                        @* MA TRẬN LỊCH *@
+
+                        <div class="stt-table-scroll">
+
+                            <table class="stt-matrix">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th class="stt-time-heading">
+                                            <i class="bi bi-clock"
+                                               aria-hidden="true"></i>
+                                            Khung giờ
+                                        </th>
+
+                                        @for (int d = 0; d < 7; d++)
+                                        {
+                                            DateTime colDate = weekStart.AddDays(d);
+                                            bool isToday = colDate.Date == DateTime.Today;
+
+                                            <th class="stt-day-heading @(isToday ? "stt-today-heading" : "")">
+
+                                                <span class="stt-day-name">
+                                                    @dayNames[d]
+
+                                                    @if (isToday)
+                                                    {
+                                                        <i class="bi bi-circle-fill"
+                                                           style="font-size:6px; margin-left:3px;"
+                                                           aria-label="Hôm nay"></i>
+                                                    }
+                                                </span>
+
+                                                <span class="stt-day-date">
+                                                    @colDate.ToString("dd/MM/yyyy")
+                                                </span>
+
+                                            </th>
+                                        }
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    @{
+                                        const int startHour = 8;
+                                        const int endHour = 22;
+                                        double rowHeightPx = 76.0;
+                                    }
+
+                                    @for (int hour = startHour; hour < endHour; hour++)
+                                    {
+                                        <tr>
+
+                                            <td class="stt-time-cell">
+
+                                                @string.Format("{0:00}:00", hour)
+
+                                                <span>
+                                                    @(hour < 12
+                                                        ? "Buổi sáng"
+                                                        : hour < 18
+                                                            ? "Buổi chiều"
+                                                            : "Buổi tối")
+                                                </span>
+
+                                            </td>
+
+                                            @for (int d = 0; d < 7; d++)
+                                            {
+                                                DateTime cellDate = weekStart.AddDays(d).Date;
+                                                bool isTodayCol = cellDate == DateTime.Today;
+
+                                                var cellSessions = sessions
+                                                    .Where(s =>
+                                                        s.SessionDate.Date == cellDate &&
+                                                        s.StartTime.Hours == hour)
+                                                    .OrderBy(s => s.StartTime)
+                                                    .ToList();
+
+                                                <td class="stt-slot-cell @(isTodayCol ? "stt-today-cell" : "")">
+
+                                                    @for (int idx = 0; idx < cellSessions.Count; idx++)
+                                                    {
+                                                        var s = cellSessions[idx];
+
+                                                        double durationHours =
+                                                            (s.EndTime - s.StartTime).TotalHours;
+
+                                                        if (durationHours <= 0)
+                                                        {
+                                                            durationHours = 1.0;
+                                                        }
+
+                                                        /*
+                                                         * Kết thúc bảng tại 22:00.
+                                                         * Chỉ giới hạn chiều cao phần nằm ngoài
+                                                         * khung lịch hiển thị.
+                                                         */
+                                                        double maxRemainHours =
+                                                            endHour - s.StartTime.TotalHours;
+
+                                                        double displayHours = Math.Min(
+                                                            durationHours,
+                                                            Math.Max(0.0, maxRemainHours)
+                                                        );
+
+                                                        if (displayHours <= 0)
+                                                        {
+                                                            displayHours = 0.5;
+                                                        }
+
+                                                        double topOffsetPx =
+                                                            (s.StartTime.Minutes / 60.0)
+                                                            * rowHeightPx + 2;
+
+                                                        double cardHeightPx = Math.Max(
+                                                            36,
+                                                            displayHours * rowHeightPx - 5
+                                                        );
+
+                                                        double widthPercent =
+                                                            100.0 / cellSessions.Count;
+
+                                                        double leftPercent =
+                                                            idx * widthPercent;
+
+                                                        var myAttendance =
+                                                            s.Attendances != null
+                                                                ? s.Attendances.FirstOrDefault(
+                                                                    a => a.StudentId == currentStudentId)
+                                                                : null;
+
+                                                        string cardStatusClass = "stt-status-scheduled";
+                                                        string badgeStatusClass = "";
+                                                        string attendanceText = "Chưa điểm danh";
+                                                        string attendanceIcon = "bi-clock-history";
+
+                                                        if (myAttendance != null)
+                                                        {
+                                                            if (myAttendance.Status == "Present")
+                                                            {
+                                                                cardStatusClass = "stt-status-present";
+                                                                badgeStatusClass = "stt-attendance-present";
+                                                                attendanceText = "Có mặt";
+                                                                attendanceIcon = "bi-check-circle-fill";
+                                                            }
+                                                            else if (myAttendance.Status == "Absent")
+                                                            {
+                                                                cardStatusClass = "stt-status-absent";
+                                                                badgeStatusClass = "stt-attendance-absent";
+                                                                attendanceText = "Vắng mặt";
+                                                                attendanceIcon = "bi-x-circle-fill";
+                                                            }
+                                                            else if (myAttendance.Status == "Late")
+                                                            {
+                                                                cardStatusClass = "stt-status-late";
+                                                                badgeStatusClass = "stt-attendance-late";
+                                                                attendanceText = "Đi muộn";
+                                                                attendanceIcon = "bi-clock-fill";
+                                                            }
+                                                            else if (myAttendance.Status == "Excused")
+                                                            {
+                                                                cardStatusClass = "stt-status-excused";
+                                                                badgeStatusClass = "stt-attendance-excused";
+                                                                attendanceText = "Có phép";
+                                                                attendanceIcon = "bi-shield-check";
+                                                            }
+                                                        }
+
+                                                        string roomName =
+                                                            s.Room != null &&
+                                                            !string.IsNullOrWhiteSpace(s.Room.RoomName)
+                                                                ? s.Room.RoomName
+                                                                : "Chưa xếp phòng";
+
+                                                        string courseName =
+                                                            s.Class != null &&
+                                                            s.Class.Course != null &&
+                                                            !string.IsNullOrWhiteSpace(s.Class.Course.CourseName)
+                                                                ? s.Class.Course.CourseName
+                                                                : "Môn học";
+
+                                                        string className =
+                                                            s.Class != null &&
+                                                            !string.IsNullOrWhiteSpace(s.Class.ClassName)
+                                                                ? s.Class.ClassName
+                                                                : "Lớp học";
+
+                                                        string teacherDisplayName =
+                                                            s.Class != null &&
+                                                            s.Class.Teacher != null &&
+                                                            !string.IsNullOrWhiteSpace(s.Class.Teacher.FullName)
+                                                                ? s.Class.Teacher.FullName
+                                                                : "Đang cập nhật";
+
+                                                        string inlinePositionStyle = string.Format(
+                                                            CultureInfo.InvariantCulture,
+                                                            "position:absolute;top:{0:0.#}px;height:{1:0.#}px;left:calc({2:0.#}% + 3px);width:calc({3:0.#}% - 6px);",
+                                                            topOffsetPx,
+                                                            cardHeightPx,
+                                                            leftPercent,
+                                                            widthPercent
+                                                        );
+
+                                                        <article class="stt-session-card @cardStatusClass"
+                                                                 style="@inlinePositionStyle"
+                                                                 title="@courseName - @className">
+
+                                                            <div class="stt-session-content">
+
+                                                                <span class="stt-course-name"
+                                                                      title="@courseName">
+                                                                    @courseName
+                                                                </span>
+
+                                                                <strong class="stt-session-class"
+                                                                        title="@className">
+                                                                    @className
+                                                                </strong>
+
+                                                                <div class="stt-session-meta">
+
+                                                                    <span title="Thời gian học">
+
+                                                                        <i class="bi bi-clock"
+                                                                           aria-hidden="true"></i>
+
+                                                                        @s.StartTime.ToString(@"hh\:mm")
+                                                                        –
+                                                                        @s.EndTime.ToString(@"hh\:mm")
+
+                                                                    </span>
+
+                                                                    <span class="stt-session-room"
+                                                                          title="Phòng học">
+
+                                                                        <i class="bi bi-geo-alt-fill"
+                                                                           aria-hidden="true"></i>
+
+                                                                        @roomName
+
+                                                                    </span>
+
+                                                                </div>
+
+                                                                <span class="stt-session-teacher"
+                                                                      title="@teacherDisplayName">
+
+                                                                    <i class="bi bi-person-fill"
+                                                                       aria-hidden="true"></i>
+
+                                                                    @teacherDisplayName
+
+                                                                </span>
+
+                                                            </div>
+
+                                                            <div class="stt-attendance-wrap">
+
+                                                                <span class="stt-attendance-badge @badgeStatusClass">
+
+                                                                    <i class="bi @attendanceIcon"
+                                                                       aria-hidden="true"></i>
+
+                                                                    @attendanceText
+
+                                                                </span>
+
+                                                            </div>
+
+                                                        </article>
+                                                    }
+
+                                                </td>
+                                            }
+
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                        <div class="stt-table-note">
+
+                            <i class="bi bi-info-circle-fill"
+                               aria-hidden="true"></i>
+
+                            <span>
+                                Trên màn hình nhỏ, kéo ngang bảng để xem tất cả
+                                các ngày trong tuần. Màu của từng buổi học thể
+                                hiện trạng thái điểm danh đã được ghi nhận.
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <footer class="stt-panel-footer">
+
+                        <span>
+                            Tuần:
+                            <strong>
+                                @weekStart.ToString("dd/MM/yyyy")
+                                – @weekEnd.ToString("dd/MM/yyyy")
+                            </strong>
+                        </span>
+
+                        <span>
+                            <strong>@totalSessions</strong>
+                            buổi học trong lịch đang xem
+                        </span>
+
+                    </footer>
+
+                </section>
+
+            </div>
+
+        </main>
+
+        <footer class="student-footer">
+
+            <span>
+                <i class="bi bi-book-half" aria-hidden="true"></i>
+                © @DateTime.Now.Year English Center
+            </span>
+
+            <span>
+                Hệ thống quản lý trung tâm Anh ngữ · Cổng học viên
+            </span>
+
+        </footer>
+
+    </div>
+
+</div>
+
+@section scripts {
+    <script>
+                $(function () {
+
+                    // Tự động lọc lịch khi học viên chọn môn khác.
+                    $('#stt-course-select').on('change', function () {
+                        $('#stt-course-filter-form').trigger('submit');
+                    });
+
+                });
+    </script>
+}

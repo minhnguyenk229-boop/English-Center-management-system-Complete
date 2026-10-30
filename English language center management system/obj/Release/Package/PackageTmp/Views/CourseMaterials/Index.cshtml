@@ -1,0 +1,1428 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Materials.AdminMaterialManagementViewModel
+
+@using System
+@using System.Linq
+@using System.Collections.Generic
+@using English_language_center_management_system.Models
+@using English_language_center_management_system.Models.ViewModels.Materials
+
+@{
+    ViewBag.Title = "Quản lý tài liệu và bài nộp";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var documents = Model.Documents
+        ?? new List<AdminDocumentItemViewModel>();
+
+    var classes = Model.Classes
+        ?? new List<Class>();
+
+    int totalCount = Model.TotalCount;
+    int teacherCount = Model.TeacherMaterialsCount;
+    int studentCount = Model.StudentSubmissionsCount;
+
+    int documentsWithFiles = documents.Count(d =>
+        !string.IsNullOrWhiteSpace(d.FileUrl));
+
+    int gradedSubmissions = documents.Count(d =>
+        d.UploaderRole == "Student" && d.Grade.HasValue);
+
+    string currentRole = Model.SelectedUploaderRole ?? "";
+}
+
+<style>
+    /* ==============================================
+       ADMIN COURSE MATERIALS
+       Giao diện quản trị tài liệu và bài nộp
+       ============================================== */
+
+    #course-materials-page {
+        --cm-primary: #c62828;
+        --cm-primary-dark: #a61f24;
+        --cm-primary-light: #fff0f0;
+        --cm-text: #263247;
+        --cm-muted: #7b8596;
+        --cm-border: #e6eaf0;
+        --cm-surface: #ffffff;
+        --cm-blue: #2563eb;
+        --cm-blue-light: #ecf4ff;
+        --cm-green: #17814a;
+        --cm-green-light: #eaf9f0;
+        --cm-orange: #c66a0a;
+        --cm-orange-light: #fff4e5;
+        min-width: 0;
+        color: var(--cm-text);
+    }
+
+        #course-materials-page,
+        #course-materials-page * {
+            box-sizing: border-box;
+        }
+
+            #course-materials-page .cm-page {
+                width: 100%;
+                max-width: 1700px;
+                margin: 0 auto;
+            }
+
+            /* ===== Tiêu đề trang ===== */
+
+            #course-materials-page .cm-welcome {
+                margin-bottom: 23px;
+            }
+
+                #course-materials-page .cm-welcome h1 {
+                    margin: 0 0 9px;
+                    color: var(--cm-text);
+                    font-size: clamp(23px, 2.6vw, 30px);
+                    font-weight: 850;
+                    line-height: 1.35;
+                    letter-spacing: -0.5px;
+                }
+
+                #course-materials-page .cm-welcome p {
+                    max-width: 760px;
+                    margin: 0;
+                    color: #718096;
+                    font-size: 13px;
+                    line-height: 1.8;
+                }
+
+            #course-materials-page .cm-welcome-meta {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 9px;
+                margin-top: 15px;
+            }
+
+            #course-materials-page .cm-meta-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                padding: 7px 10px;
+                border: 1px solid #e8ebf1;
+                border-radius: 7px;
+                background: #ffffff;
+                color: #647084;
+                font-size: 11px;
+                font-weight: 750;
+            }
+
+                #course-materials-page .cm-meta-chip.red {
+                    border-color: #f1d4d4;
+                    background: #fff5f5;
+                    color: var(--cm-primary);
+                }
+
+            /* ===== Thống kê nhanh ===== */
+
+            #course-materials-page .cm-stat-grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 17px;
+                margin-bottom: 23px;
+            }
+
+            #course-materials-page .cm-stat-card {
+                min-width: 0;
+                padding: 21px;
+                border: 1px solid var(--cm-border);
+                border-radius: 13px;
+                background: #ffffff;
+                box-shadow: 0 4px 16px rgba(26, 42, 70, 0.035);
+                transition: transform 0.18s ease, box-shadow 0.18s ease;
+            }
+
+                #course-materials-page .cm-stat-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 23px rgba(26, 42, 70, 0.07);
+                }
+
+            #course-materials-page .cm-stat-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                margin-bottom: 18px;
+            }
+
+            #course-materials-page .cm-stat-label {
+                color: #7b8596;
+                font-size: 10px;
+                font-weight: 850;
+                letter-spacing: 0.5px;
+                line-height: 1.6;
+                text-transform: uppercase;
+            }
+
+            #course-materials-page .cm-stat-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                flex-shrink: 0;
+                border-radius: 11px;
+                font-size: 20px;
+                font-weight: 850;
+            }
+
+                #course-materials-page .cm-stat-icon.red {
+                    background: var(--cm-primary-light);
+                    color: var(--cm-primary);
+                }
+
+                #course-materials-page .cm-stat-icon.green {
+                    background: var(--cm-green-light);
+                    color: var(--cm-green);
+                }
+
+                #course-materials-page .cm-stat-icon.orange {
+                    background: var(--cm-orange-light);
+                    color: var(--cm-orange);
+                }
+
+            #course-materials-page .cm-stat-number {
+                display: block;
+                margin-bottom: 8px;
+                color: var(--cm-text);
+                font-size: clamp(26px, 2.3vw, 32px);
+                font-weight: 850;
+                line-height: 1.25;
+                overflow-wrap: anywhere;
+            }
+
+            #course-materials-page .cm-stat-description {
+                display: block;
+                color: #8b94a3;
+                font-size: 11px;
+                line-height: 1.7;
+            }
+
+            /* ===== Panel chung ===== */
+
+            #course-materials-page .cm-panel {
+                min-width: 0;
+                margin-bottom: 23px;
+                overflow: hidden;
+                border: 1px solid var(--cm-border);
+                border-radius: 14px;
+                background: #ffffff;
+                box-shadow: 0 4px 16px rgba(26, 42, 70, 0.035);
+            }
+
+            #course-materials-page .cm-panel-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 18px;
+                padding: 21px 23px;
+                border-bottom: 1px solid #edf0f5;
+            }
+
+            #course-materials-page .cm-panel-heading {
+                display: flex;
+                align-items: center;
+                min-width: 0;
+                gap: 12px;
+            }
+
+            #course-materials-page .cm-panel-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 43px;
+                height: 43px;
+                flex-shrink: 0;
+                border-radius: 11px;
+                background: var(--cm-primary-light);
+                color: var(--cm-primary);
+                font-size: 20px;
+                font-weight: 850;
+            }
+
+                #course-materials-page .cm-panel-icon.blue {
+                    background: var(--cm-blue-light);
+                    color: var(--cm-blue);
+                }
+
+            #course-materials-page .cm-panel-title {
+                margin: 0;
+                color: var(--cm-text);
+                font-size: 17px;
+                font-weight: 850;
+                line-height: 1.45;
+            }
+
+            #course-materials-page .cm-panel-description {
+                margin: 5px 0 0;
+                color: var(--cm-muted);
+                font-size: 12px;
+                line-height: 1.7;
+            }
+
+            #course-materials-page .cm-panel-body {
+                padding: 22px;
+            }
+
+            #course-materials-page .cm-count-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                min-width: 37px;
+                padding: 8px 11px;
+                border: 1px solid #e8ebf1;
+                border-radius: 8px;
+                background: #f7f8fb;
+                color: #596579;
+                font-size: 11px;
+                font-weight: 850;
+            }
+
+            /* ===== Bộ lọc ===== */
+
+            #course-materials-page .cm-filter-panel {
+                margin-bottom: 23px;
+            }
+
+            #course-materials-page .cm-filter-body {
+                padding: 22px;
+            }
+
+            #course-materials-page .cm-filter-grid {
+                display: grid;
+                grid-template-columns: minmax(170px, 1.1fr) minmax(180px, 1fr) minmax(230px, 1.5fr);
+                gap: 17px;
+                align-items: end;
+            }
+
+            #course-materials-page .cm-field {
+                min-width: 0;
+            }
+
+                #course-materials-page .cm-field label {
+                    display: block;
+                    margin-bottom: 8px;
+                    color: #424d60;
+                    font-size: 12px;
+                    font-weight: 800;
+                }
+
+            #course-materials-page .cm-form-control {
+                display: block;
+                width: 100%;
+                min-width: 0;
+                min-height: 43px;
+                padding: 10px 12px;
+                border: 1px solid #dfe4ec;
+                border-radius: 8px;
+                background: #ffffff;
+                color: var(--cm-text);
+                font-family: inherit;
+                font-size: 12px;
+                outline: none;
+                box-shadow: none;
+                transition: border-color 0.18s ease, box-shadow 0.18s ease;
+            }
+
+                #course-materials-page .cm-form-control:focus {
+                    border-color: var(--cm-primary);
+                    box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.08);
+                }
+
+                #course-materials-page .cm-form-control::placeholder {
+                    color: #a1a9b7;
+                }
+
+            #course-materials-page .cm-filter-actions {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 19px;
+                padding-top: 17px;
+                border-top: 1px solid #edf0f5;
+            }
+
+            #course-materials-page .cm-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                min-height: 39px;
+                padding: 10px 15px;
+                border: 1px solid transparent;
+                border-radius: 8px;
+                font-family: inherit;
+                font-size: 12px;
+                font-weight: 800;
+                line-height: 1.4;
+                text-align: center;
+                text-decoration: none;
+                white-space: nowrap;
+                cursor: pointer;
+                transition: all 0.18s ease;
+            }
+
+            #course-materials-page .cm-btn-primary {
+                border-color: var(--cm-primary);
+                background: var(--cm-primary);
+                color: #ffffff;
+                box-shadow: 0 4px 10px rgba(198, 40, 40, 0.1);
+            }
+
+                #course-materials-page .cm-btn-primary:hover {
+                    border-color: var(--cm-primary-dark);
+                    background: var(--cm-primary-dark);
+                    color: #ffffff;
+                    text-decoration: none;
+                }
+
+            #course-materials-page .cm-btn-light {
+                border-color: #dfe4ec;
+                background: #ffffff;
+                color: #4b5565;
+            }
+
+                #course-materials-page .cm-btn-light:hover {
+                    border-color: #cbd2dd;
+                    background: #f7f8fa;
+                    color: var(--cm-text);
+                    text-decoration: none;
+                }
+
+            #course-materials-page .cm-btn-file {
+                min-height: 32px;
+                padding: 7px 10px;
+                border-color: #d5e5fa;
+                background: var(--cm-blue-light);
+                color: var(--cm-blue);
+                font-size: 11px;
+            }
+
+                #course-materials-page .cm-btn-file:hover {
+                    border-color: #b8d3f4;
+                    background: #e0edff;
+                    color: #174fa8;
+                    text-decoration: none;
+                }
+
+            #course-materials-page .cm-btn-delete {
+                min-height: 32px;
+                padding: 7px 10px;
+                border-color: #f0d0d0;
+                background: #fff3f3;
+                color: #b42329;
+                font-size: 11px;
+            }
+
+                #course-materials-page .cm-btn-delete:hover {
+                    border-color: #e1b0b0;
+                    background: #ffe6e6;
+                    color: #991b1b;
+                }
+
+            /* ===== Thông tin kết quả ===== */
+
+            #course-materials-page .cm-results-toolbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 12px;
+                margin-bottom: 17px;
+            }
+
+            #course-materials-page .cm-results-title {
+                margin: 0;
+                color: var(--cm-text);
+                font-size: 15px;
+                font-weight: 850;
+            }
+
+            #course-materials-page .cm-results-subtitle {
+                margin: 5px 0 0;
+                color: #8993a3;
+                font-size: 11px;
+                line-height: 1.6;
+            }
+
+            #course-materials-page .cm-results-summary {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                padding: 8px 11px;
+                border: 1px solid #e7ebf2;
+                border-radius: 8px;
+                background: #f8f9fc;
+                color: #596579;
+                font-size: 11px;
+                font-weight: 750;
+            }
+
+                #course-materials-page .cm-results-summary strong {
+                    color: var(--cm-primary);
+                    font-weight: 900;
+                }
+
+            /* ===== Bảng dữ liệu ===== */
+
+            #course-materials-page .cm-table-wrap {
+                width: 100%;
+                overflow-x: auto;
+                border: 1px solid var(--cm-border);
+                border-radius: 10px;
+            }
+
+            #course-materials-page .cm-table {
+                width: 100%;
+                min-width: 1080px;
+                margin: 0;
+                border-collapse: separate;
+                border-spacing: 0;
+                background: #ffffff;
+            }
+
+                #course-materials-page .cm-table thead th {
+                    padding: 14px 13px;
+                    border-bottom: 1px solid var(--cm-border);
+                    background: #f7f8fb;
+                    color: #7c8798;
+                    font-size: 10px;
+                    font-weight: 850;
+                    letter-spacing: 0.4px;
+                    line-height: 1.5;
+                    text-align: left;
+                    white-space: nowrap;
+                }
+
+                #course-materials-page .cm-table tbody td {
+                    padding: 15px 13px;
+                    border-bottom: 1px solid #edf0f5;
+                    color: #4f5b6d;
+                    font-size: 12px;
+                    line-height: 1.65;
+                    vertical-align: middle;
+                }
+
+                #course-materials-page .cm-table tbody tr:last-child td {
+                    border-bottom: 0;
+                }
+
+                #course-materials-page .cm-table tbody tr:hover td {
+                    background: #fffafa;
+                }
+
+            #course-materials-page .cm-document-cell {
+                min-width: 200px;
+            }
+
+            #course-materials-page .cm-document-title {
+                display: block;
+                max-width: 320px;
+                color: #263247;
+                font-size: 12px;
+                font-weight: 800;
+                line-height: 1.65;
+                overflow-wrap: anywhere;
+            }
+
+            #course-materials-page .cm-document-subtitle {
+                display: block;
+                margin-top: 5px;
+                color: #929bad;
+                font-size: 10px;
+                line-height: 1.55;
+            }
+
+            #course-materials-page .cm-type-badge,
+            #course-materials-page .cm-role-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                padding: 6px 8px;
+                border-radius: 6px;
+                font-size: 10px;
+                font-weight: 800;
+                line-height: 1.5;
+            }
+
+            #course-materials-page .cm-type-material {
+                background: var(--cm-green-light);
+                color: var(--cm-green);
+            }
+
+            #course-materials-page .cm-type-submission {
+                background: var(--cm-orange-light);
+                color: var(--cm-orange);
+            }
+
+            #course-materials-page .cm-role-teacher {
+                background: #eaf9f0;
+                color: #17814a;
+            }
+
+            #course-materials-page .cm-role-student {
+                background: #fff4e5;
+                color: #b56308;
+            }
+
+            #course-materials-page .cm-class-name {
+                display: block;
+                color: #334155;
+                font-size: 12px;
+                font-weight: 800;
+            }
+
+            #course-materials-page .cm-course-name {
+                display: block;
+                margin-top: 4px;
+                color: #8993a3;
+                font-size: 10px;
+            }
+
+            #course-materials-page .cm-uploader-name {
+                display: block;
+                margin-bottom: 5px;
+                color: #344054;
+                font-size: 12px;
+                font-weight: 800;
+                overflow-wrap: anywhere;
+            }
+
+            #course-materials-page .cm-uploader-username {
+                display: block;
+                margin-top: 5px;
+                color: #929bad;
+                font-size: 10px;
+                overflow-wrap: anywhere;
+            }
+
+            #course-materials-page .cm-date {
+                color: #465164;
+                font-size: 11px;
+                font-weight: 750;
+                white-space: nowrap;
+            }
+
+            #course-materials-page .cm-time {
+                display: block;
+                margin-top: 4px;
+                color: #929bad;
+                font-size: 10px;
+                white-space: nowrap;
+            }
+
+            #course-materials-page .cm-grade {
+                display: inline-flex;
+                align-items: center;
+                padding: 5px 8px;
+                border-radius: 6px;
+                background: var(--cm-green-light);
+                color: var(--cm-green);
+                font-size: 11px;
+                font-weight: 850;
+                white-space: nowrap;
+            }
+
+            #course-materials-page .cm-grade-pending {
+                display: inline-flex;
+                align-items: center;
+                padding: 5px 8px;
+                border-radius: 6px;
+                background: #f3f4f6;
+                color: #697386;
+                font-size: 10px;
+                font-weight: 750;
+            }
+
+            #course-materials-page .cm-no-file {
+                color: #9aa3b2;
+                font-size: 11px;
+            }
+
+            #course-materials-page .cm-action-cell {
+                text-align: right;
+                white-space: nowrap;
+            }
+
+            #course-materials-page .cm-delete-form {
+                display: inline-block;
+                margin: 0;
+            }
+
+            #course-materials-page .cm-table-empty {
+                padding: 0 !important;
+                text-align: center;
+            }
+
+            #course-materials-page .cm-empty-state {
+                padding: 43px 20px;
+                text-align: center;
+            }
+
+            #course-materials-page .cm-empty-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 58px;
+                height: 58px;
+                margin: 0 auto 14px;
+                border-radius: 17px;
+                background: #f4f6fa;
+                color: #7d899a;
+                font-size: 25px;
+            }
+
+            #course-materials-page .cm-empty-state h3 {
+                margin: 0 0 8px;
+                color: #263247;
+                font-size: 14px;
+                font-weight: 850;
+            }
+
+            #course-materials-page .cm-empty-state p {
+                max-width: 440px;
+                margin: 0 auto;
+                color: #8993a3;
+                font-size: 12px;
+                line-height: 1.8;
+            }
+
+            #course-materials-page .cm-table-footer {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 14px;
+                color: #8993a3;
+                font-size: 11px;
+                line-height: 1.7;
+            }
+
+                #course-materials-page .cm-table-footer strong {
+                    color: #596579;
+                }
+
+    /* ===== Responsive ===== */
+
+    @@media (max-width: 1200px) {
+        #course-materials-page .cm-filter-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        #course-materials-page .cm-filter-search {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @@media (max-width: 850px) {
+        #course-materials-page .cm-panel-header {
+            align-items: flex-start;
+            padding: 17px;
+        }
+
+        #course-materials-page .cm-panel-body,
+        #course-materials-page .cm-filter-body {
+            padding: 17px;
+        }
+
+        #course-materials-page .cm-stat-grid {
+            gap: 12px;
+        }
+
+        #course-materials-page .cm-stat-card {
+            padding: 17px;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        #course-materials-page .cm-stat-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        #course-materials-page .cm-filter-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        #course-materials-page .cm-filter-search {
+            grid-column: auto;
+        }
+
+        #course-materials-page .cm-filter-actions {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+            #course-materials-page .cm-filter-actions .cm-btn {
+                width: 100%;
+            }
+
+        #course-materials-page .cm-welcome-icon {
+            display: none;
+        }
+
+        #course-materials-page .cm-panel-header {
+            gap: 10px;
+        }
+
+        #course-materials-page .cm-panel-title {
+            font-size: 15px;
+        }
+
+        #course-materials-page .cm-count-badge {
+            font-size: 10px;
+        }
+    }
+</style>
+
+<div class="cm-page" id="course-materials-page">
+
+    @* ==========================================
+        PHẦN 1: TIÊU ĐỀ
+        ========================================== *@
+
+    <section class="admin-welcome-banner cm-welcome">
+
+        <div>
+            <span class="admin-eyebrow">
+                DOCUMENT MANAGEMENT
+            </span>
+
+            <h1>Quản lý tài liệu & bài nộp</h1>
+
+            <p>
+                Theo dõi tập trung giáo trình và bài tập do giảng viên đăng,
+                bài làm học viên gửi lên, thông tin lớp học và trạng thái chấm điểm
+                trên toàn trung tâm.
+            </p>
+
+            <div class="cm-welcome-meta">
+
+                <span class="cm-meta-chip red">
+                    <span>▤</span>
+                    Quản lý tài liệu
+                </span>
+
+                <span class="cm-meta-chip">
+                    <span>✓</span>
+                    Theo dõi bài nộp
+                </span>
+
+                <span class="cm-meta-chip">
+                    <span>⌕</span>
+                    Lọc và tìm kiếm
+                </span>
+
+            </div>
+        </div>
+
+        <div class="admin-welcome-icon cm-welcome-icon">
+            ▤
+        </div>
+
+    </section>
+
+    @* ==========================================
+        PHẦN 2: THỐNG KÊ
+        ========================================== *@
+
+    <section class="cm-stat-grid">
+
+        <article class="cm-stat-card">
+
+            <div class="cm-stat-top">
+
+                <span class="cm-stat-label">
+                    TỔNG TÀI LIỆU / BÀI NỘP
+                </span>
+
+                <span class="cm-stat-icon red">
+                    ▤
+                </span>
+
+            </div>
+
+            <strong class="cm-stat-number">
+                @totalCount
+            </strong>
+
+            <span class="cm-stat-description">
+                Tổng số bản ghi khớp với bộ lọc hiện tại
+            </span>
+
+        </article>
+
+        <article class="cm-stat-card">
+
+            <div class="cm-stat-top">
+
+                <span class="cm-stat-label">
+                    GIÁO TRÌNH / BÀI TẬP CỦA GV
+                </span>
+
+                <span class="cm-stat-icon green">
+                    ▣
+                </span>
+
+            </div>
+
+            <strong class="cm-stat-number">
+                @teacherCount
+            </strong>
+
+            <span class="cm-stat-description">
+                Tài liệu được đăng bởi giảng viên
+            </span>
+
+        </article>
+
+        <article class="cm-stat-card">
+
+            <div class="cm-stat-top">
+
+                <span class="cm-stat-label">
+                    BÀI NỘP CỦA HỌC VIÊN
+                </span>
+
+                <span class="cm-stat-icon orange">
+                    ↑
+                </span>
+
+            </div>
+
+            <strong class="cm-stat-number">
+                @studentCount
+            </strong>
+
+            <span class="cm-stat-description">
+                @gradedSubmissions bài đã có điểm trong danh sách hiện tại
+            </span>
+
+        </article>
+
+    </section>
+
+    @* ==========================================
+        PHẦN 3: BỘ LỌC
+        ========================================== *@
+
+    <section class="cm-panel cm-filter-panel">
+
+        <header class="cm-panel-header">
+
+            <div class="cm-panel-heading">
+
+                <span class="cm-panel-icon">
+                    ⌕
+                </span>
+
+                <div>
+                    <h2 class="cm-panel-title">
+                        Bộ lọc dữ liệu
+                    </h2>
+
+                    <p class="cm-panel-description">
+                        Thu hẹp danh sách theo lớp học, người đăng
+                        hoặc tên tài liệu.
+                    </p>
+                </div>
+
+            </div>
+
+        </header>
+
+        <div class="cm-filter-body">
+
+            @using (Html.BeginForm(
+                "Index",
+                "CourseMaterials",
+                FormMethod.Get,
+                new { id = "cm-filter-form" }))
+            {
+                <div class="cm-filter-grid">
+
+                    @* Lọc theo lớp *@
+
+                    <div class="cm-field">
+
+                        <label for="cm-class-filter">
+                            LỚP HỌC
+                        </label>
+
+                        <select id="cm-class-filter"
+                                name="classId"
+                                class="cm-form-control">
+
+                            <option value="">
+                                Tất cả các lớp
+                            </option>
+
+                            @foreach (var cls in classes)
+                            {
+                                string courseName = cls.Course != null
+                                    ? " (" + cls.Course.CourseName + ")"
+                                    : "";
+
+                                if (Model.SelectedClassId == cls.Id)
+                                {
+                                    <option value="@cls.Id" selected="selected">
+                                        @cls.ClassName @courseName
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="@cls.Id">
+                                        @cls.ClassName @courseName
+                                    </option>
+                                }
+                            }
+
+                        </select>
+
+                    </div>
+
+                    @* Lọc theo người đăng *@
+
+                    <div class="cm-field">
+
+                        <label for="cm-role-filter">
+                            LOẠI NGƯỜI ĐĂNG
+                        </label>
+
+                        <select id="cm-role-filter"
+                                name="uploaderRole"
+                                class="cm-form-control">
+
+                            @if (string.IsNullOrEmpty(currentRole))
+                            {
+                                <option value="" selected="selected">
+                                    Tất cả giảng viên và học viên
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="">
+                                    Tất cả giảng viên và học viên
+                                </option>
+                            }
+
+                            @if (currentRole == "Teacher")
+                            {
+                                <option value="Teacher" selected="selected">
+                                    Giảng viên
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="Teacher">
+                                    Giảng viên
+                                </option>
+                            }
+
+                            @if (currentRole == "Student")
+                            {
+                                <option value="Student" selected="selected">
+                                    Học viên
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="Student">
+                                    Học viên
+                                </option>
+                            }
+
+                        </select>
+
+                    </div>
+
+                    @* Tìm kiếm *@
+
+                    <div class="cm-field cm-filter-search">
+
+                        <label for="cm-search-term">
+                            TÌM KIẾM
+                        </label>
+
+                        <input type="text"
+                               id="cm-search-term"
+                               name="searchTerm"
+                               value="@Model.SearchTerm"
+                               class="cm-form-control"
+                               maxlength="200"
+                               placeholder="Tên tài liệu, người đăng, username hoặc lớp..." />
+
+                    </div>
+
+                </div>
+
+                <div class="cm-filter-actions">
+
+                    <button type="submit"
+                            class="cm-btn cm-btn-primary">
+                        <span>⌕</span>
+                        Áp dụng bộ lọc
+                    </button>
+
+                    <a href="@Url.Action("Index", "CourseMaterials")"
+                       class="cm-btn cm-btn-light">
+                        ↻ Xóa bộ lọc
+                    </a>
+
+                </div>
+            }
+
+        </div>
+
+    </section>
+
+    @* ==========================================
+        PHẦN 4: BẢNG QUẢN LÝ TÀI LIỆU
+        ========================================== *@
+
+    <section class="cm-panel">
+
+        <header class="cm-panel-header">
+
+            <div class="cm-panel-heading">
+
+                <span class="cm-panel-icon blue">
+                    ▦
+                </span>
+
+                <div>
+                    <h2 class="cm-panel-title">
+                        Danh sách tài liệu & bài nộp
+                    </h2>
+
+                    <p class="cm-panel-description">
+                        Xem thông tin tài liệu, người đăng, lớp học,
+                        thời gian tải lên và tệp đính kèm.
+                    </p>
+                </div>
+
+            </div>
+
+            <span class="cm-count-badge">
+                @documents.Count bản ghi
+            </span>
+
+        </header>
+
+        <div class="cm-panel-body">
+
+            <div class="cm-results-toolbar">
+
+                <div>
+                    <h3 class="cm-results-title">
+                        Dữ liệu quản lý
+                    </h3>
+
+                    <p class="cm-results-subtitle">
+                        Danh sách được sắp xếp theo thời gian tải lên mới nhất.
+                    </p>
+                </div>
+
+                <div class="cm-results-summary">
+                    <span>Đang hiển thị</span>
+                    <strong>@documents.Count</strong>
+                    <span>bản ghi</span>
+                </div>
+
+            </div>
+
+            <div class="cm-table-wrap">
+
+                <table class="cm-table">
+
+                    <thead>
+                        <tr>
+                            <th style="width: 175px;">
+                                PHÂN LOẠI
+                            </th>
+
+                            <th>
+                                TÊN TÀI LIỆU / BÀI NỘP
+                            </th>
+
+                            <th>
+                                LỚP HỌC
+                            </th>
+
+                            <th>
+                                NGƯỜI ĐĂNG
+                            </th>
+
+                            <th>
+                                THỜI GIAN
+                            </th>
+
+                            <th>
+                                TỆP ĐÍNH KÈM
+                            </th>
+
+                            <th style="width: 90px; text-align:right;">
+                                THAO TÁC
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @if (!documents.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="cm-table-empty">
+
+                                    <div class="cm-empty-state">
+
+                                        <span class="cm-empty-icon">
+                                            ▤
+                                        </span>
+
+                                        <h3>Không tìm thấy dữ liệu</h3>
+
+                                        <p>
+                                            Không có tài liệu hoặc bài nộp phù hợp
+                                            với bộ lọc hiện tại. Bạn hãy thử chọn
+                                            lớp khác hoặc xóa bộ lọc để xem toàn bộ dữ liệu.
+                                        </p>
+
+                                        <div style="margin-top:17px;">
+                                            <a href="@Url.Action("Index", "CourseMaterials")"
+                                               class="cm-btn cm-btn-light">
+                                                Xem toàn bộ dữ liệu
+                                            </a>
+                                        </div>
+
+                                    </div>
+
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in documents)
+                            {
+                                bool isTeacherDocument =
+                                    item.UploaderRole == "Teacher";
+
+                                <tr>
+
+                                    @* PHÂN LOẠI *@
+
+                                    <td>
+
+                                        @if (isTeacherDocument)
+                                        {
+                                            <span class="cm-type-badge cm-type-material">
+                                                ▣
+                                                @(string.IsNullOrWhiteSpace(item.DocumentTypeLabel)
+                                                    ? "Giáo trình / BTVN"
+                                                    : item.DocumentTypeLabel)
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="cm-type-badge cm-type-submission">
+                                                ↑
+                                                @(string.IsNullOrWhiteSpace(item.DocumentTypeLabel)
+                                                    ? "Bài tập đã nộp"
+                                                    : item.DocumentTypeLabel)
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    @* TÊN TÀI LIỆU *@
+
+                                    <td class="cm-document-cell">
+
+                                        <strong class="cm-document-title">
+                                            @item.Title
+                                        </strong>
+
+                                        @if (item.UploaderRole == "Student")
+                                        {
+                                            <div style="margin-top:8px;">
+
+                                                @if (item.Grade.HasValue)
+                                                {
+                                                    <span class="cm-grade">
+                                                        Điểm:
+                                                        @item.Grade.Value.ToString("0.##")/10
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="cm-grade-pending">
+                                                        Chưa chấm điểm
+                                                    </span>
+                                                }
+
+                                            </div>
+                                        }
+
+                                    </td>
+
+                                    @* LỚP HỌC *@
+
+                                    <td>
+
+                                        <span class="cm-class-name">
+                                            @item.ClassName
+                                        </span>
+
+                                        @if (!string.IsNullOrWhiteSpace(item.CourseName))
+                                        {
+                                            <span class="cm-course-name">
+                                                @item.CourseName
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    @* NGƯỜI ĐĂNG *@
+
+                                    <td>
+
+                                        <span class="cm-uploader-name">
+                                            @(string.IsNullOrWhiteSpace(item.UploaderName)
+                                                ? "Chưa xác định"
+                                                : item.UploaderName)
+                                        </span>
+
+                                        @if (isTeacherDocument)
+                                        {
+                                            <span class="cm-role-badge cm-role-teacher">
+                                                Giảng viên
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="cm-role-badge cm-role-student">
+                                                Học viên
+                                            </span>
+                                        }
+
+                                        @if (!string.IsNullOrWhiteSpace(item.UploaderUsername))
+                                        {
+                                            <span class="cm-uploader-username">
+                                                @("@" + item.UploaderUsername)
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    @* THỜI GIAN *@
+
+                                    <td>
+
+                                        <span class="cm-date">
+                                            @item.UploadedAt.ToString("dd/MM/yyyy")
+                                        </span>
+
+                                        <span class="cm-time">
+                                            @item.UploadedAt.ToString("HH:mm")
+                                        </span>
+
+                                    </td>
+
+                                    @* TỆP ĐÍNH KÈM *@
+
+                                    <td>
+
+                                        @if (!string.IsNullOrWhiteSpace(item.FileUrl))
+                                        {
+                                            <a href="@item.FileUrl"
+                                               target="_blank"
+                                               rel="noopener noreferrer"
+                                               class="cm-btn cm-btn-file"
+                                               title="Mở tệp đính kèm">
+                                                ↗ Xem / Mở file
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="cm-no-file">
+                                                Không có tệp
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    @* THAO TÁC XÓA *@
+
+                                    <td class="cm-action-cell">
+
+                                        @using (Html.BeginForm(
+                                            "DeleteDocument",
+                                            "CourseMaterials",
+                                            FormMethod.Post,
+                                            new { @class = "cm-delete-form" }))
+                                        {
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="id"
+                                                   value="@item.Id" />
+
+                                            <input type="hidden"
+                                                   name="documentType"
+                                                   value="@item.DocumentType" />
+
+                                            <input type="hidden"
+                                                   name="returnClassId"
+                                                   value="@Model.SelectedClassId" />
+
+                                            <input type="hidden"
+                                                   name="returnRole"
+                                                   value="@Model.SelectedUploaderRole" />
+
+                                            <input type="hidden"
+                                                   name="returnSearch"
+                                                   value="@Model.SearchTerm" />
+
+                                            <button type="submit"
+                                                    class="cm-btn cm-btn-delete"
+                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa bản ghi này không? Tệp trên máy chủ, nếu có, cũng sẽ bị xóa vĩnh viễn.');">
+                                                <span>×</span>
+                                                Xóa
+                                            </button>
+                                        }
+
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div class="cm-table-footer">
+
+                <span>
+                    Tổng số bản ghi theo bộ lọc:
+                    <strong>@documents.Count</strong>
+                </span>
+
+                <span>
+                    Số bản ghi có tệp đính kèm:
+                    <strong>@documentsWithFiles</strong>
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>

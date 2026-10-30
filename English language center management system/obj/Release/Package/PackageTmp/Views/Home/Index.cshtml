@@ -1,0 +1,452 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Home.HomeViewModel
+
+@{
+    ViewBag.Title = "Trang chủ";
+}
+
+<style>
+    /* VIDEO GIỚI THIỆU ENGLISH CENTER */
+    .home-page .video-player {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        min-height: 0;
+        height: auto;
+        padding: 16px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        background: #ffffff;
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(32, 41, 56, 0.06);
+    }
+
+    .home-page .video-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        border-radius: 12px;
+        background: #171717;
+    }
+
+        .home-page .video-frame video {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #171717;
+        }
+
+    .home-page .video-player h3 {
+        margin: 17px 0 8px;
+        color: #202938;
+        font-size: 19px;
+        font-weight: 800;
+        line-height: 1.4;
+    }
+
+    .home-page .video-player p {
+        margin: 0 0 5px;
+        color: #6b7280;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    @@media (max-width: 768px) {
+        .home-page .video-player {
+            padding: 10px;
+            border-radius: 14px;
+        }
+
+            .home-page .video-player h3 {
+                margin-top: 13px;
+                font-size: 16px;
+            }
+
+            .home-page .video-player p {
+                font-size: 12px;
+            }
+    }
+</style>
+
+<div class="home-page">
+
+    @* Hiển thị thông báo từ Controller *@
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (Model == null)
+    {
+        <div class="alert alert-danger">
+            Không tải được dữ liệu trang chủ.
+        </div>
+    }
+    else
+    {
+        @* 1. HERO SECTION *@
+        <section class="hero-section">
+
+            <div class="hero-content">
+                <span class="eyebrow">
+                    ENGLISH CENTER - LEARN YOUR WAY
+                </span>
+
+                <h1>
+                    Chinh phục tiếng Anh
+                    <span>theo cách của bạn</span>
+                </h1>
+
+                <p>
+                    Khám phá các khóa học tiếng Anh phù hợp
+                    với mục tiêu của bạn. Theo dõi lộ trình,
+                    lịch học và tiến trình học tập trên cùng
+                    một hệ thống.
+                </p>
+
+                <div class="hero-actions">
+                    @Html.ActionLink(
+                        "Khám phá khóa học",
+                        "Index",
+                        "Courses",
+                        null,
+                        new { @class = "btn btn-primary btn-lg" }
+                    )
+
+                    <a href="#mission" class="btn btn-outline-secondary btn-lg">
+                        Tìm hiểu thêm
+                    </a>
+                </div>
+            </div>
+
+            @* Hình minh họa bằng HTML/CSS *@
+            <div class="hero-art">
+                <div class="hero-art-circle"></div>
+
+                <div class="hero-art-card">
+                    <span class="hero-art-label">
+                        YOUR LEARNING JOURNEY
+                    </span>
+
+                    <span class="large-text">
+                        Learn.<br />
+                        Practice.<br />
+                        Succeed.
+                    </span>
+
+                    <p>
+                        Học tập có mục tiêu,
+                        tiến bộ từng ngày.
+                    </p>
+                </div>
+            </div>
+
+        </section>
+
+        @* 2. THỐNG KÊ TRUNG TÂM *@
+        <section class="stats-strip">
+
+            <div class="stat-item">
+                <strong>
+                    @Model.TotalStudentsCount.ToString("N0")
+                </strong>
+                <span>Học viên</span>
+            </div>
+
+            <div class="stat-item">
+                <strong>
+                    @Model.TotalCoursesCount.ToString("N0")
+                </strong>
+                <span>Khóa học</span>
+            </div>
+
+            <div class="stat-item">
+                <strong>
+                    @Model.TotalTeachersCount.ToString("N0")
+                </strong>
+                <span>Giáo viên</span>
+            </div>
+
+            <div class="stat-item">
+                <strong>
+                    @Model.TotalActiveClassesCount.ToString("N0")
+                </strong>
+                <span>Lớp đang hoạt động</span>
+            </div>
+
+        </section>
+
+        @* 3. GIỚI THIỆU TRUNG TÂM *@
+        <section id="mission" class="home-section">
+
+            <div class="mission-grid">
+
+                <div>
+                    <div class="section-heading">
+                        <span class="eyebrow">
+                            ABOUT ENGLISH CENTER
+                        </span>
+
+                        <h2>Sứ mệnh của chúng tôi</h2>
+
+                        <p>
+                            Tạo môi trường học tập thuận tiện,
+                            giúp học viên xây dựng nền tảng
+                            tiếng Anh và theo dõi quá trình
+                            phát triển của mình.
+                        </p>
+                    </div>
+
+                    <div class="mission-item">
+                        <span class="check-dot">✓</span>
+
+                        <div>
+                            <h3>Lộ trình học rõ ràng</h3>
+                            <p>
+                                Xác định mục tiêu và lựa chọn
+                                khóa học phù hợp với trình độ.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mission-item">
+                        <span class="check-dot">✓</span>
+
+                        <div>
+                            <h3>Quản lý học tập tập trung</h3>
+                            <p>
+                                Theo dõi lịch học, thông báo,
+                                bài tập và kết quả học tập.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mission-item">
+                        <span class="check-dot">✓</span>
+
+                        <div>
+                            <h3>Đồng hành cùng học viên</h3>
+                            <p>
+                                Giúp học viên và giáo viên
+                                dễ dàng theo dõi hoạt động
+                                học tập trong hệ thống.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                @* VIDEO GIỚI THIỆU TRUNG TÂM *@
+                <div class="video-placeholder video-player">
+
+                    <div class="video-frame">
+
+                        <video controls
+                               playsinline
+                               preload="metadata"
+                               aria-label="Video giới thiệu English Center">
+
+                            <source src="@Url.Content("~/Uploads/Videos/gioi-thieu.mp4")"
+                                    type="video/mp4" />
+
+                            Trình duyệt của bạn không hỗ trợ phát video.
+                        </video>
+
+                    </div>
+
+                    <h3>Khám phá English Center</h3>
+
+                    <p>
+                        Cùng tìm hiểu môi trường học tập, đội ngũ giảng viên
+                        và các khóa học tại trung tâm.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        @* 4. KHÓA HỌC NỔI BẬT *@
+        <section id="featured-courses" class="home-section">
+
+            <div class="section-heading">
+                <span class="eyebrow">
+                    OUR COURSES
+                </span>
+
+                <h2>Các khóa học nổi bật</h2>
+
+                <p>
+                    Lựa chọn khóa học phù hợp với mục tiêu
+                    và trình độ tiếng Anh của bạn.
+                </p>
+            </div>
+
+            @if (Model.FeaturedCourses != null && Model.FeaturedCourses.Any())
+            {
+                <div class="courses-grid">
+
+                    @foreach (var course in Model.FeaturedCourses)
+                    {
+                        <article class="course-card">
+
+                            @* KHU VỰC ẢNH BÌA KHÓA HỌC *@
+                            <div class="course-cover"
+                                 style="overflow: hidden; position: relative;">
+
+                                @if (!string.IsNullOrEmpty(course.ImageUrl))
+                                {
+                                    <img src="@Url.Content(course.ImageUrl)"
+                                         alt="@course.CourseName"
+                                         style="width: 100%; height: 100%; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <span>
+                                        @course.Level
+                                    </span>
+                                }
+
+                            </div>
+
+                            <div class="course-card-body">
+
+                                <span class="course-level">
+                                    @course.Level
+                                </span>
+
+                                <h3>
+                                    @course.CourseName
+                                </h3>
+
+                                <p class="course-description">
+                                    @(
+                                        string.IsNullOrWhiteSpace(course.Description)
+                                        ? "Chương trình học được thiết kế theo mục tiêu và trình độ của học viên."
+                                        : course.Description
+                                    )
+                                </p>
+
+                                <div class="course-meta">
+                                    <span>
+                                        Thời lượng:
+                                        @course.Duration giờ
+                                    </span>
+                                </div>
+
+                                <div class="course-price">
+                                    @course.TuitionFee.ToString("N0") VNĐ
+                                </div>
+
+                                @Html.ActionLink(
+                                    "Xem chi tiết →",
+                                    "Details",
+                                    "Courses",
+                                    new { id = course.Id },
+                                    new { @class = "course-link" }
+                                )
+
+                            </div>
+
+                        </article>
+                    }
+
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    Chưa có khóa học để hiển thị.
+                </div>
+            }
+
+            <div class="text-center mt-4">
+                @Html.ActionLink(
+                    "Xem tất cả khóa học",
+                    "Index",
+                    "Courses",
+                    null,
+                    new { @class = "btn btn-outline-primary" }
+                )
+            </div>
+
+        </section>
+
+        @* 5. LỢI ÍCH CỦA HỆ THỐNG *@
+        <section class="home-section">
+
+            <div class="section-heading">
+                <span class="eyebrow">
+                    LEARN SMARTER
+                </span>
+
+                <h2>Học tập thuận tiện hơn mỗi ngày</h2>
+            </div>
+
+            <div class="review-grid">
+
+                <div class="review-card">
+                    <span class="eyebrow">
+                        PERSONAL LEARNING
+                    </span>
+
+                    <h3>Theo dõi tiến trình học tập</h3>
+
+                    <p>
+                        Xem lớp học đang tham gia, lịch học
+                        sắp tới và kết quả học tập tại
+                        khu vực dành riêng cho học viên.
+                    </p>
+                </div>
+
+                <div class="review-card">
+                    <span class="eyebrow">
+                        CONNECTED LEARNING
+                    </span>
+
+                    <h3>Kết nối với giáo viên</h3>
+
+                    <p>
+                        Tiếp cận thông tin lớp học,
+                        tài liệu, bài tập và phản hồi
+                        thông qua hệ thống.
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+        @* 6. LỜI KÊU GỌI HÀNH ĐỘNG *@
+        <section class="cta-section">
+
+            <h2>Bắt đầu hành trình tiếng Anh của bạn</h2>
+
+            <p>
+                Khám phá khóa học và lựa chọn lộ trình
+                phù hợp với mục tiêu của mình.
+            </p>
+
+            @Html.ActionLink(
+                "Xem khóa học ngay",
+                "Index",
+                "Courses",
+                null,
+                new { @class = "btn btn-primary btn-lg mt-2" }
+            )
+
+        </section>
+    }
+
+</div>

@@ -1,0 +1,64 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Payments.PaymentCreateViewModel
+@using System
+@using System.Web.Mvc
+@{
+    ViewBag.Title = "Lập phiếu thu học phí";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var enrollmentOptions = ViewBag.EnrollmentId as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
+}
+<div class="admin-payment-create-page">
+    <div class="payment-create-header">
+        <div>
+            <div class="payment-create-eyebrow">QUẢN LÝ TÀI CHÍNH</div>
+            <h2>Lập phiếu thu học phí</h2>
+            <p>Trạng thái công nợ sẽ được hệ thống tự động tính dựa vào số tiền thu.</p>
+        </div>
+    </div>
+
+    <div class="payment-create-card">
+        @using (Html.BeginForm("Create", "Payments", FormMethod.Post, new { @class = "payment-create-form" }))
+        {
+            @Html.AntiForgeryToken()
+            <div class="payment-create-grid">
+                <div class="payment-create-group payment-create-full">
+                    @Html.LabelFor(m => m.EnrollmentId, "Học viên và Lớp học (Bao gồm Học phí) *", new { @class = "payment-create-label" })
+                    @Html.DropDownListFor(m => m.EnrollmentId, enrollmentOptions, "-- Chọn thông tin ghi danh --", new { @class = "payment-create-control" })
+                    @Html.ValidationMessageFor(m => m.EnrollmentId, "", new { @class = "payment-create-error" })
+                </div>
+
+                <div class="payment-create-group">
+                    @Html.LabelFor(m => m.AmountPaid, "Số tiền thu thực tế (VNĐ) *", new { @class = "payment-create-label" })
+                    @Html.TextBoxFor(m => m.AmountPaid, new { @class = "payment-create-control", type = "number", min = "0" })
+                    @Html.ValidationMessageFor(m => m.AmountPaid, "", new { @class = "payment-create-error" })
+                </div>
+
+                <div class="payment-create-group">
+                    @Html.LabelFor(m => m.PaymentMethod, "Phương thức *", new { @class = "payment-create-label" })
+                    <select id="PaymentMethod" name="PaymentMethod" class="payment-create-control">
+                        <option value="Cash">Tiền mặt</option>
+                        <option value="Bank Transfer">Chuyển khoản</option>
+                        <option value="Credit Card">Thẻ tín dụng</option>
+                    </select>
+                </div>
+
+                <div class="payment-create-group">
+                    @Html.LabelFor(m => m.PaymentDate, "Ngày thanh toán *", new { @class = "payment-create-label" })
+                    @Html.TextBoxFor(m => m.PaymentDate, "{0:yyyy-MM-ddTHH:mm}", new { @class = "payment-create-control", type = "datetime-local" })
+                </div>
+
+                <div class="payment-create-group">
+                    @Html.LabelFor(m => m.ReceiptNumber, "Mã biên lai", new { @class = "payment-create-label" })
+                    @Html.TextBoxFor(m => m.ReceiptNumber, new { @class = "payment-create-control", placeholder = "Để trống để tự tạo" })
+                </div>
+            </div>
+
+            <!-- Trường Trạng thái thanh toán bị ẩn đi để Backend tự xử lý -->
+            <input type="hidden" name="PaymentStatus" value="Pending" />
+
+            <div class="payment-create-actions">
+                <a href="@Url.Action("Index", "Payments")" class="payment-create-btn payment-create-cancel">Quay lại</a>
+                <button type="submit" class="payment-create-btn payment-create-submit">Lưu phiếu thu</button>
+            </div>
+        }
+    </div>
+</div>

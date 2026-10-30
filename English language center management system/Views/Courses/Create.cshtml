@@ -1,0 +1,723 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Courses.CourseCreateEditViewModel
+
+@using System.Collections.Generic
+@using System.Web.Mvc
+
+@{
+    ViewBag.Title = "Thêm khóa học";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .cc-page {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding-bottom: 18px;
+        color: #25324a;
+    }
+
+        .cc-page * {
+            box-sizing: border-box;
+        }
+
+    .cc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .cc-eyebrow {
+        margin-bottom: 6px;
+        color: #929db0;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+    }
+
+    .cc-header h1 {
+        margin: 0 0 5px;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .cc-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .cc-btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        min-height: 36px;
+        padding: 8px 12px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+
+    .cc-back, .cc-cancel {
+        border-color: #dce3ed;
+        background: #fff;
+        color: #526078;
+    }
+
+        .cc-back:hover, .cc-cancel:hover {
+            background: #f5f7fb;
+            color: #25324a;
+        }
+
+    .cc-submit {
+        border-color: #c92828;
+        background: #c92828;
+        color: #fff;
+    }
+
+        .cc-submit:hover {
+            border-color: #a91f1f;
+            background: #a91f1f;
+            color: #fff;
+        }
+
+    .cc-card {
+        max-width: 100%;
+        overflow: hidden;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(26,42,69,.035);
+    }
+
+    .cc-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 15px 20px;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+    .cc-card-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 22px;
+        font-weight: 800;
+    }
+
+    .cc-card-header h2 {
+        margin: 0 0 4px;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .cc-card-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 11px;
+    }
+
+    .cc-body {
+        padding: 19px 20px;
+    }
+
+    .cc-section {
+        margin-bottom: 22px;
+    }
+
+        .cc-section:last-child {
+            margin-bottom: 0;
+        }
+
+    .cc-section-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0 0 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #edf0f5;
+        color: #29364d;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .cc-number {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 25px;
+        height: 25px;
+        flex-shrink: 0;
+        border-radius: 7px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 11px;
+    }
+
+    .cc-grid {
+        display: grid;
+        grid-template-columns: repeat(2,minmax(0,1fr));
+        gap: 14px 16px;
+    }
+
+    .cc-field {
+        min-width: 0;
+    }
+
+    .cc-full {
+        grid-column: 1/-1;
+    }
+
+    .cc-label {
+        display: block;
+        margin-bottom: 6px;
+        color: #435169;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .cc-required {
+        margin-left: 3px;
+        color: #c92828;
+    }
+
+    .cc-control {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        min-height: 39px;
+        padding: 8px 11px;
+        border: 1px solid #d9e1ec;
+        border-radius: 8px;
+        background: #fff;
+        color: #25324a;
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+        transition: border-color .2s,box-shadow .2s;
+    }
+
+        .cc-control:focus {
+            border-color: #c92828;
+            box-shadow: 0 0 0 3px rgba(201,40,40,.08);
+        }
+
+        .cc-control::placeholder {
+            color: #9ba6b8;
+        }
+
+    textarea.cc-control {
+        min-height: 82px;
+        resize: vertical;
+        line-height: 1.7;
+    }
+
+    .cc-help {
+        display: block;
+        margin-top: 5px;
+        color: #8995aa;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    .cc-validation {
+        display: block;
+        margin-top: 5px;
+        color: #bd2626;
+        font-size: 11px;
+    }
+
+    .cc-validation-summary {
+        margin-bottom: 18px;
+        padding: 11px 13px;
+        border: 1px solid #ffdada;
+        border-radius: 8px;
+        background: #fff4f4;
+        color: #b42323;
+        font-size: 12px;
+    }
+
+        .cc-validation-summary:empty {
+            display: none;
+        }
+
+    .cc-duration-card {
+        padding: 15px;
+        border: 1px solid #e2e8f1;
+        border-radius: 10px;
+        background: #f8fafc;
+    }
+
+    .cc-duration-heading {
+        margin-bottom: 13px;
+        color: #245bb5;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .cc-duration-result {
+        margin-top: 15px;
+    }
+
+        .cc-duration-result .cc-control {
+            background: #fff;
+            color: #16804a;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+    .cc-image-preview {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        margin-top: 10px;
+        padding: 10px;
+        border: 1px dashed #dce3ed;
+        border-radius: 8px;
+        background: #fafbfd;
+    }
+
+    .cc-image-box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 54px;
+        height: 48px;
+        flex-shrink: 0;
+        overflow: hidden;
+        border-radius: 8px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 17px;
+        font-weight: 800;
+    }
+
+        .cc-image-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .cc-image-info {
+        min-width: 0;
+    }
+
+        .cc-image-info strong {
+            display: block;
+            color: #435169;
+            font-size: 11px;
+            overflow-wrap: anywhere;
+        }
+
+        .cc-image-info span {
+            display: block;
+            margin-top: 4px;
+            color: #8995aa;
+            font-size: 10px;
+            line-height: 1.5;
+        }
+
+    .cc-toggle {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 13px;
+        border: 1px solid #e5eaf2;
+        border-radius: 9px;
+        background: #fafbfd;
+    }
+
+        .cc-toggle input {
+            margin-top: 2px;
+            accent-color: #c92828;
+        }
+
+        .cc-toggle strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #344159;
+            font-size: 12px;
+        }
+
+        .cc-toggle span {
+            display: block;
+            color: #8995aa;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+
+    .cc-footer {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 14px 20px;
+        border-top: 1px solid #edf0f5;
+        background: #fbfcfe;
+    }
+
+    @@media(max-width:650px) {
+        .cc-header h1 {
+            font-size: 21px;
+        }
+
+        .cc-body, .cc-card-header {
+            padding: 14px;
+        }
+
+        .cc-grid {
+            grid-template-columns: minmax(0,1fr);
+        }
+
+        .cc-full {
+            grid-column: auto;
+        }
+
+        .cc-footer {
+            padding: 12px 14px;
+        }
+    }
+</style>
+
+<div class="cc-page">
+
+    <div class="cc-header">
+        <div>
+            <div class="cc-eyebrow">ENGLISH LANGUAGE CENTER / QUẢN LÝ KHÓA HỌC</div>
+            <h1>Thêm khóa học mới</h1>
+            <p>Thiết lập thông tin, học phí và chương trình đào tạo.</p>
+        </div>
+
+        <a href="@Url.Action("AdminIndex", "Courses")" class="cc-btn cc-back">
+            ← Danh sách khóa học
+        </a>
+    </div>
+
+    <section class="cc-card">
+
+        <div class="cc-card-header">
+            <div class="cc-card-icon">+</div>
+            <div>
+                <h2>Thông tin khóa học</h2>
+                <p>Nhập đầy đủ thông tin cần thiết trước khi lưu.</p>
+            </div>
+        </div>
+
+        @using (Html.BeginForm("Create", "Courses", FormMethod.Post,
+            new { enctype = "multipart/form-data" }))
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="cc-body">
+
+                @Html.ValidationSummary(true, "Vui lòng kiểm tra lại thông tin:",
+                    new { @class = "cc-validation-summary" })
+
+                <div class="cc-section">
+
+                    <h3 class="cc-section-title">
+                        <span class="cc-number">01</span>
+                        Thông tin cơ bản
+                    </h3>
+
+                    <div class="cc-grid">
+
+                        <div class="cc-field cc-full">
+                            @Html.LabelFor(m => m.CourseName, new { @class = "cc-label" })
+                            <span class="cc-required">*</span>
+
+                            @Html.TextBoxFor(m => m.CourseName, new
+                            {
+                                @class = "cc-control",
+                                placeholder = "Ví dụ: Tiếng Anh giao tiếp căn bản"
+                            })
+
+                            @Html.ValidationMessageFor(m => m.CourseName, "",
+                                new { @class = "cc-validation" })
+                        </div>
+
+                        <div class="cc-field">
+                            @Html.LabelFor(m => m.Level, new { @class = "cc-label" })
+                            <span class="cc-required">*</span>
+
+                            @Html.DropDownListFor(m => m.Level, new List<SelectListItem>
+                            {
+                                new SelectListItem { Text = "-- Chọn cấp độ --", Value = "" },
+                                new SelectListItem { Text = "Beginner (Cơ bản)", Value = "Beginner" },
+                                new SelectListItem { Text = "Elementary (Sơ cấp)", Value = "Elementary" },
+                                new SelectListItem { Text = "Intermediate (Trung cấp)", Value = "Intermediate" },
+                                new SelectListItem { Text = "Upper Intermediate (Trên trung cấp)", Value = "Upper Intermediate" },
+                                new SelectListItem { Text = "Advanced (Nâng cao)", Value = "Advanced" },
+                                new SelectListItem { Text = "IELTS", Value = "IELTS" },
+                                new SelectListItem { Text = "TOEIC", Value = "TOEIC" }
+                            }, new { @class = "cc-control" })
+
+                            @Html.ValidationMessageFor(m => m.Level, "",
+                                new { @class = "cc-validation" })
+                        </div>
+
+                        <div class="cc-field">
+                            @Html.LabelFor(m => m.TuitionFee, new { @class = "cc-label" })
+                            <span class="cc-required">*</span>
+
+                            @Html.TextBoxFor(m => m.TuitionFee, new
+                            {
+                                @class = "cc-control",
+                                type = "number",
+                                min = "0",
+                                step = "10000",
+                                placeholder = "Nhập học phí (VNĐ)"
+                            })
+
+                            @Html.ValidationMessageFor(m => m.TuitionFee, "",
+                                new { @class = "cc-validation" })
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="cc-section">
+
+                    <h3 class="cc-section-title">
+                        <span class="cc-number">02</span>
+                        Thời lượng học
+                    </h3>
+
+                    <div class="cc-duration-card">
+
+                        <div class="cc-duration-heading">
+                            Tính toán tổng số giờ học
+                        </div>
+
+                        <div class="cc-grid">
+
+                            <div class="cc-field">
+                                @Html.LabelFor(m => m.SessionsPerWeek,
+                                    new { @class = "cc-label" })
+
+                                @Html.TextBoxFor(m => m.SessionsPerWeek, new
+                                {
+                                    @class = "cc-control calc-input",
+                                    id = "calcSessions",
+                                    type = "number",
+                                    min = "1",
+                                    step = "1"
+                                })
+                            </div>
+
+                            <div class="cc-field">
+                                @Html.LabelFor(m => m.HoursPerSession,
+                                    new { @class = "cc-label" })
+
+                                @Html.TextBoxFor(m => m.HoursPerSession, new
+                                {
+                                    @class = "cc-control calc-input",
+                                    id = "calcHours",
+                                    type = "number",
+                                    min = "0.5",
+                                    step = "0.5"
+                                })
+                            </div>
+
+                            <div class="cc-field">
+                                @Html.LabelFor(m => m.TotalWeeks,
+                                    new { @class = "cc-label" })
+
+                                @Html.TextBoxFor(m => m.TotalWeeks, new
+                                {
+                                    @class = "cc-control calc-input",
+                                    id = "calcWeeks",
+                                    type = "number",
+                                    min = "1",
+                                    step = "1"
+                                })
+                            </div>
+
+                        </div>
+
+                        <div class="cc-duration-result">
+                            @Html.LabelFor(m => m.Duration, new { @class = "cc-label" })
+
+                            @Html.TextBoxFor(m => m.Duration, new
+                            {
+                                @class = "cc-control",
+                                id = "calcDuration",
+                                @readonly = "readonly"
+                            })
+
+                            <small class="cc-help">
+                                Tổng giờ = Số buổi/tuần × Số giờ/buổi × Số tuần.
+                            </small>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="cc-section">
+
+                    <h3 class="cc-section-title">
+                        <span class="cc-number">03</span>
+                        Nội dung khóa học
+                    </h3>
+
+                    <div class="cc-grid">
+
+                        <div class="cc-field cc-full">
+                            @Html.LabelFor(m => m.Description, new { @class = "cc-label" })
+
+                            @Html.TextAreaFor(m => m.Description, new
+                            {
+                                @class = "cc-control",
+                                rows = "3",
+                                placeholder = "Mô tả mục tiêu và nội dung khóa học..."
+                            })
+
+                            @Html.ValidationMessageFor(m => m.Description, "",
+                                new { @class = "cc-validation" })
+                        </div>
+
+                        <div class="cc-field cc-full">
+                            @Html.LabelFor(m => m.Syllabus, new { @class = "cc-label" })
+
+                            @Html.TextAreaFor(m => m.Syllabus, new
+                            {
+                                @class = "cc-control",
+                                rows = "4",
+                                placeholder = "Nhập giáo trình hoặc khung chương trình đào tạo..."
+                            })
+
+                            @Html.ValidationMessageFor(m => m.Syllabus, "",
+                                new { @class = "cc-validation" })
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="cc-section">
+
+                    <h3 class="cc-section-title">
+                        <span class="cc-number">04</span>
+                        Hình ảnh và trạng thái
+                    </h3>
+
+                    <div class="cc-field">
+                        @Html.LabelFor(m => m.ImageFile, new { @class = "cc-label" })
+
+                        <input type="file"
+                               id="ccImageFile"
+                               name="ImageFile"
+                               class="cc-control"
+                               accept="image/*" />
+
+                        @Html.ValidationMessageFor(m => m.ImageFile, "",
+                            new { @class = "cc-validation" })
+
+                        <div class="cc-image-preview">
+                            <div id="ccImagePreview" class="cc-image-box">EC</div>
+                            <div class="cc-image-info">
+                                <strong id="ccImageName">Chưa chọn ảnh khóa học</strong>
+                                <span id="ccImageHelp">Bạn có thể bỏ qua nếu chưa có ảnh.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cc-toggle" style="margin-top:14px;">
+                        @Html.CheckBoxFor(m => m.IsHidden, new { id = "ccIsHidden" })
+                        <div>
+                            <strong>Ẩn khóa học khỏi danh mục công khai</strong>
+                            <span>
+                                Bật tùy chọn này để lưu trạng thái ẩn theo trường IsHidden hiện có.
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="cc-footer">
+                <a href="@Url.Action("AdminIndex", "Courses")" class="cc-btn cc-cancel">
+                    Hủy bỏ
+                </a>
+
+                <button type="submit" class="cc-btn cc-submit">
+                    ✓ Lưu khóa học
+                </button>
+            </div>
+        }
+
+    </section>
+</div>
+
+@section scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+
+    <script>
+                $(function () {
+                    function numberValue(selector) {
+                        var raw = String($(selector).val() || "0").trim();
+                        raw = raw.replace(",", ".");
+                        var value = Number(raw);
+                        return isFinite(value) ? value : 0;
+                    }
+
+                    function calculateDuration() {
+                        var sessions = numberValue("#calcSessions");
+                        var hours = numberValue("#calcHours");
+                        var weeks = numberValue("#calcWeeks");
+
+                        var total = Math.ceil(sessions * hours * weeks);
+                        $("#calcDuration").val(total);
+                    }
+
+                    $(".calc-input").on("input change", calculateDuration);
+                    calculateDuration();
+
+                    $("#ccImageFile").on("change", function () {
+                        var file = this.files && this.files.length ? this.files[0] : null;
+                        var preview = $("#ccImagePreview");
+
+                        if (!file) {
+                            preview.text("EC");
+                            $("#ccImageName").text("Chưa chọn ảnh khóa học");
+                            $("#ccImageHelp").text("Bạn có thể bỏ qua nếu chưa có ảnh.");
+                            return;
+                        }
+
+                        $("#ccImageName").text(file.name);
+
+                        if (file.type && file.type.indexOf("image/") === 0) {
+                            var reader = new FileReader();
+
+                            reader.onload = function (e) {
+                                preview.empty();
+                                $("<img>", { src: e.target.result, alt: "Ảnh xem trước" })
+                                    .appendTo(preview);
+                            };
+
+                            reader.readAsDataURL(file);
+                            $("#ccImageHelp").text("Ảnh xem trước; nhấn Lưu khóa học để gửi biểu mẫu.");
+                        } else {
+                            preview.text("!");
+                            $("#ccImageHelp").text("Tệp được chọn không được nhận diện là ảnh.");
+                        }
+                    });
+                });
+    </script>
+}

@@ -1,0 +1,144 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Enrollments.EnrollmentCreateViewModel
+@using System
+@using System.Collections.Generic
+@using System.Web.Mvc
+@{
+    ViewBag.Title = "Tạo ghi danh mới";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+<div class="admin-enrollment-create-page">
+    <div class="enrollment-create-header">
+        <div>
+            <div class="enrollment-create-eyebrow">
+                QUẢN LÝ ĐÀO TẠO
+            </div>
+            <h2>Tạo ghi danh mới</h2>
+            <p>
+                Ghi danh học viên vào lớp học và tự động tạo công nợ.
+            </p>
+        </div>
+        <div class="enrollment-create-header-icon">
+            <i class="glyphicon glyphicon-plus"></i>
+        </div>
+    </div>
+    <div class="enrollment-create-card">
+        <div class="enrollment-create-card-heading">
+            <div class="enrollment-create-section-icon">
+                <i class="glyphicon glyphicon-list-alt"></i>
+            </div>
+            <div>
+                <h3>Thông tin ghi danh</h3>
+                <p>Vui lòng kiểm tra dữ liệu trước khi tạo ghi danh.</p>
+            </div>
+        </div>
+        @using (Html.BeginForm(
+            "Create",
+            "Enrollments",
+            FormMethod.Post,
+            new { @class = "enrollment-create-form" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.ValidationSummary(
+                false,
+                "",
+                new { @class = "enrollment-create-validation" }
+            )
+            <div class="enrollment-create-grid">
+                <div class="enrollment-create-group">
+                    @Html.LabelFor(
+                        m => m.StudentId,
+                        "Học viên *",
+                        new { @class = "enrollment-create-label" }
+                    )
+                    @Html.DropDownListFor(
+                        m => m.StudentId,
+                        (IEnumerable<SelectListItem>)ViewBag.StudentId,
+                        "-- Chọn học viên --",
+                        new { @class = "enrollment-create-control" }
+                    )
+                    @Html.ValidationMessageFor(
+                        m => m.StudentId,
+                        "",
+                        new { @class = "enrollment-create-error" }
+                    )
+                    <small>Danh sách hiển thị tên và tài khoản học viên.</small>
+                </div>
+                <div class="enrollment-create-group">
+                    @Html.LabelFor(
+                        m => m.ClassId,
+                        "Lớp học *",
+                        new { @class = "enrollment-create-label" }
+                    )
+                    @Html.DropDownListFor(
+                        m => m.ClassId,
+                        (IEnumerable<SelectListItem>)ViewBag.ClassId,
+                        "-- Chọn lớp học --",
+                        new { @class = "enrollment-create-control" }
+                    )
+                    @Html.ValidationMessageFor(
+                        m => m.ClassId,
+                        "",
+                        new { @class = "enrollment-create-error" }
+                    )
+                    <small>Danh sách hiển thị tên lớp, khóa học và trạng thái.</small>
+                </div>
+
+                <!-- TRƯỜNG TRẠNG THÁI ĐÃ ĐƯỢC KHÓA CỨNG THEO LOGIC MỚI -->
+                <div class="enrollment-create-group">
+                    <label class="enrollment-create-label">Trạng thái ghi danh *</label>
+                    <input type="text" class="enrollment-create-control" value="Chờ duyệt (Pending)" disabled="disabled" />
+                    @Html.HiddenFor(m => m.Status)
+                    <small>Mặc định là Chờ duyệt. Hệ thống sẽ tự lấy học phí khóa học để tạo công nợ.</small>
+                </div>
+
+                <div class="enrollment-create-group">
+                    @Html.LabelFor(
+                        m => m.EnrollmentDate,
+                        "Ngày ghi danh *",
+                        new { @class = "enrollment-create-label" }
+                    )
+                    @Html.TextBoxFor(
+                        m => m.EnrollmentDate,
+                        "{0:yyyy-MM-ddTHH:mm}",
+                        new
+                        {
+                            @class = "enrollment-create-control",
+                            type = "datetime-local",
+                            required = "required"
+                        }
+                    )
+                    @Html.ValidationMessageFor(
+                        m => m.EnrollmentDate,
+                        "",
+                        new { @class = "enrollment-create-error" }
+                    )
+                </div>
+            </div>
+
+            <div class="enrollment-create-notice">
+                <i class="glyphicon glyphicon-info-sign"></i>
+                <div>
+                    <strong>Lưu ý quy trình mới</strong>
+                    <p>
+                        Khi tạo ghi danh thành công, trạng thái sẽ là <strong>Chờ duyệt</strong> và hệ thống tự động sinh 1 phiếu nợ học phí. Bạn cần sang phần <strong>Quản lý học phí</strong> để thu tiền, sau đó mới có thể duyệt đơn này.
+                    </p>
+                </div>
+            </div>
+            <div class="enrollment-create-actions">
+                <a href="@Url.Action("Index", "Enrollments")"
+                   class="enrollment-create-btn enrollment-create-cancel">
+                    <i class="glyphicon glyphicon-arrow-left"></i>
+                    Quay lại
+                </a>
+                <button type="submit"
+                        class="enrollment-create-btn enrollment-create-submit">
+                    <i class="glyphicon glyphicon-floppy-disk"></i>
+                    Tạo ghi danh
+                </button>
+            </div>
+        }
+    </div>
+</div>
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

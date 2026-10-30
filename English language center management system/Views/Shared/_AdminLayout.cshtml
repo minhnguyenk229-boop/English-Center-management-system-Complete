@@ -1,0 +1,1284 @@
+﻿@{
+    string currentController =
+        ViewContext.RouteData.Values["controller"] as string ?? "";
+
+    string currentAction =
+        ViewContext.RouteData.Values["action"] as string ?? "";
+
+    string adminName = Session["FullName"] as string;
+
+    if (string.IsNullOrWhiteSpace(adminName))
+    {
+        adminName = Session["Username"] as string;
+    }
+
+    if (string.IsNullOrWhiteSpace(adminName))
+    {
+        adminName = "Admin";
+    }
+
+    string adminInitial = adminName.Substring(0, 1).ToUpperInvariant();
+
+    int adminNameLength = adminName.Length;
+
+    if (adminNameLength > 25)
+    {
+        adminName = adminName.Substring(0, 24) + "…";
+    }
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewBag.Title - Trung tâm Anh ngữ | Cổng quản trị</title>
+
+    @Styles.Render("~/Content/css")
+
+    @* Bộ icon cho giao diện quản trị *@
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <style>
+        /* =========================================
+           ADMIN ICON SYSTEM
+           ========================================= */
+
+        .admin-body {
+            background: #f4f6fa;
+            color: #253047;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        /* Logo */
+
+        .admin-brand {
+            text-decoration: none;
+        }
+
+        .admin-brand:hover,
+        .admin-brand:focus {
+            color: #263247;
+            text-decoration: none;
+        }
+
+        .admin-brand-mark {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+            overflow: hidden;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #e53935, #a61f24);
+            box-shadow: 0 5px 13px rgba(198, 40, 40, 0.18);
+            color: #ffffff;
+        }
+
+        .admin-brand-mark svg {
+            display: block;
+            width: 30px;
+            height: 30px;
+        }
+
+        /* Menu */
+
+        .admin-nav-link {
+            gap: 12px;
+            min-height: 45px;
+            border: 1px solid transparent;
+            transition:
+                background 0.18s ease,
+                color 0.18s ease,
+                border-color 0.18s ease;
+        }
+
+        .admin-nav-link > .bi {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            min-width: 22px;
+            font-size: 16px;
+            line-height: 1;
+            color: #8993a3;
+            transition: color 0.18s ease;
+        }
+
+        .admin-nav-link:hover {
+            border-color: #f4dddd;
+            background: #fff5f5;
+            color: #a61f24;
+            text-decoration: none;
+        }
+
+        .admin-nav-link:hover > .bi {
+            color: #c62828;
+        }
+
+        .admin-nav-link.is-active {
+            border-color: #f1d6d6;
+            background: linear-gradient(100deg, #fff0f0, #fff8f8);
+            color: #b42329;
+            font-weight: 800;
+            box-shadow: inset 3px 0 0 #c62828;
+        }
+
+        .admin-nav-link.is-active > .bi {
+            color: #c62828;
+        }
+
+        /* Các icon bên trong view */
+
+        .admin-main .bi {
+            display: inline-block;
+            line-height: 1;
+            vertical-align: -0.125em;
+        }
+
+        .admin-stat-icon .bi,
+        .admin-quick-icon .bi {
+            font-size: inherit;
+        }
+
+        .admin-welcome-icon .bi {
+            font-size: inherit;
+        }
+
+        /* Topbar */
+
+        .admin-topbar-right {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 11px;
+        }
+
+        .admin-topbar-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 10px;
+            border: 1px solid #d8eee0;
+            border-radius: 8px;
+            background: #f0faf3;
+            color: #18764e;
+            font-size: 10px;
+            font-weight: 850;
+            white-space: nowrap;
+        }
+
+        .admin-topbar-status .bi {
+            font-size: 13px;
+        }
+
+        .admin-topbar-date {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 11px;
+            border: 1px solid #e8ebf1;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #596579;
+            font-size: 12px;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+
+        .admin-topbar-date .bi {
+            color: #c62828;
+            font-size: 14px;
+        }
+
+        /* Avatar */
+
+        .admin-avatar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #fff0f0, #ffe1e1);
+            color: #c62828;
+            font-size: 14px;
+            font-weight: 900;
+            box-shadow: inset 0 0 0 1px #f3d7d7;
+        }
+
+        /* Đăng xuất */
+
+        .admin-logout-link {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .admin-logout-link .bi {
+            font-size: 15px;
+        }
+
+        /* Thông báo */
+
+        .admin-alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.7;
+        }
+
+        .admin-alert > .bi {
+            flex-shrink: 0;
+            margin-top: 2px;
+            font-size: 17px;
+        }
+
+        .admin-alert.error > .bi {
+            color: #c62828;
+        }
+
+        .admin-alert.success > .bi {
+            color: #16834f;
+        }
+
+        /* =========================================
+           PHÂN TRANG DÙNG CHUNG CHO ADMIN
+           ========================================= */
+
+        .ec-table-pagination,
+        .ec-table-pagination * {
+            box-sizing: border-box;
+        }
+
+        .ec-table-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin: 14px 0 20px;
+            padding: 15px 18px;
+            border: 1px solid #e5e7eb;
+            border-radius: 11px;
+            background: #ffffff;
+            box-shadow: 0 3px 12px rgba(32, 41, 56, 0.035);
+            color: #374151;
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 12.5px;
+        }
+
+        .ec-pagination-summary {
+            flex: 1 1 200px;
+            color: #6b7280;
+            line-height: 1.8;
+        }
+
+        .ec-pagination-summary strong {
+            color: #202938;
+            font-weight: 800;
+        }
+
+        .ec-pagination-tools {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .ec-pagination-label {
+            margin: 0;
+            color: #596273;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .ec-pagination-size {
+            min-width: 85px;
+            height: 36px;
+            padding: 5px 9px;
+            border: 1px solid #dfe3ea;
+            border-radius: 7px;
+            background: #ffffff;
+            color: #202938;
+            font-family: inherit;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .ec-pagination-size:focus {
+            border-color: #c62828;
+            box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.09);
+        }
+
+        .ec-pagination-buttons {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .ec-pagination-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 35px;
+            height: 35px;
+            margin: 0;
+            padding: 0 10px;
+            border: 1px solid #e0e5ec;
+            border-radius: 7px;
+            background: #ffffff;
+            color: #4b5563;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 750;
+            line-height: 1;
+            cursor: pointer;
+            transition:
+                background 0.18s ease,
+                color 0.18s ease,
+                border-color 0.18s ease;
+        }
+
+        .ec-pagination-button:hover:not(:disabled) {
+            border-color: #efbfc1;
+            background: #fff1f1;
+            color: #a61f24;
+        }
+
+        .ec-pagination-button.ec-page-active {
+            border-color: #c62828;
+            background: #c62828;
+            color: #ffffff;
+            box-shadow: 0 3px 8px rgba(198, 40, 40, 0.15);
+        }
+
+        .ec-pagination-button:disabled {
+            background: #f5f6f8;
+            color: #b5bbc5;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .ec-pagination-ellipsis {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 35px;
+            color: #9ca3af;
+        }
+
+        .ec-table-pagination button:focus-visible,
+        .ec-pagination-size:focus-visible {
+            outline: 2px solid #c62828;
+            outline-offset: 2px;
+        }
+
+        /* =========================================
+           RESPONSIVE
+           ========================================= */
+
+        @@media (max-width: 767px) {
+            .ec-table-pagination {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 12px;
+                padding: 13px;
+            }
+
+            .ec-pagination-summary,
+            .ec-pagination-tools,
+            .ec-pagination-buttons {
+                width: 100%;
+            }
+
+            .ec-pagination-buttons {
+                justify-content: flex-start;
+            }
+
+            .ec-pagination-button {
+                min-width: 32px;
+                height: 33px;
+                padding: 0 8px;
+            }
+
+            .admin-content {
+                padding: 16px;
+            }
+
+            .admin-topbar {
+                padding: 12px 15px;
+                gap: 12px;
+            }
+
+            .admin-topbar-status {
+                display: none;
+            }
+
+            .admin-topbar-date {
+                padding: 7px 9px;
+                font-size: 10px;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .admin-topbar-right {
+                gap: 6px;
+            }
+
+            .admin-topbar-date {
+                gap: 5px;
+            }
+
+            .admin-footer {
+                line-height: 1.7;
+            }
+        }
+        /* Chỉ thay hình biểu tượng, giữ kích thước vị trí logo */
+              .admin-brand-mark {
+              background: transparent !important;
+              box-shadow: none !important;
+              border-radius: 0 !important;
+           }
+
+           .admin-brand-mark .role-brand-logo {
+             display: block;
+             width: 100%;
+             height: 100%;
+             object-fit: contain;
+}
+    </style>
+</head>
+
+<body class="admin-body">
+
+    <div class="admin-shell">
+
+        @* =========================================
+           SIDEBAR
+           ========================================= *@
+
+        <aside class="admin-sidebar">
+
+            <a href="@Url.Action("AdminDashboard", "Home")"
+               class="admin-brand">
+
+                <span class="admin-brand-mark">
+                   <img src="@Url.Content("~/Uploads/Images/logo.png")"
+                    alt="Logo Trung tâm Anh ngữ"
+                   class="role-brand-logo" />
+                  </span>
+
+                   <span>
+                  
+                <small>CỔNG QUẢN TRỊ</small>
+            </span>
+
+            </a>
+
+            <div class="admin-sidebar-caption">
+                QUẢN LÝ HỆ THỐNG
+            </div>
+
+            <nav class="admin-navigation">
+
+                <a href="@Url.Action("AdminDashboard", "Home")"
+                   class="admin-nav-link @(currentController == "Home" && currentAction == "AdminDashboard" ? "is-active" : "")">
+
+                    <i class="bi bi-grid-1x2-fill" aria-hidden="true"></i>
+                    Dashboard
+
+                </a>
+
+                <a href="@Url.Action("Index", "Users")"
+                   class="admin-nav-link @(currentController == "Users" ? "is-active" : "")">
+
+                    <i class="bi bi-people-fill" aria-hidden="true"></i>
+                    Người dùng
+
+                </a>
+
+                <a href="@Url.Action("AdminIndex", "Courses")"
+                   class="admin-nav-link @(currentController == "Courses" ? "is-active" : "")">
+
+                    <i class="bi bi-book-half" aria-hidden="true"></i>
+                    Khóa học
+
+                </a>
+
+                <a href="@Url.Action("Index", "Classes")"
+                   class="admin-nav-link @(currentController == "Classes" ? "is-active" : "")">
+
+                    <i class="bi bi-building-fill" aria-hidden="true"></i>
+                    Lớp học
+
+                </a>
+
+                <a href="@Url.Action("Index", "Enrollments")"
+                   class="admin-nav-link @(currentController == "Enrollments" ? "is-active" : "")">
+
+                    <i class="bi bi-person-check-fill" aria-hidden="true"></i>
+                    Ghi danh
+
+                </a>
+
+                <a href="@Url.Action("Index", "Payments")"
+                   class="admin-nav-link @(currentController == "Payments" ? "is-active" : "")">
+
+                    <i class="bi bi-cash-stack" aria-hidden="true"></i>
+                    Học phí
+
+                </a>
+
+                <a href="@Url.Action("Index", "Reports")"
+                   class="admin-nav-link @(currentController == "Reports" ? "is-active" : "")">
+
+                    <i class="bi bi-bar-chart-line-fill" aria-hidden="true"></i>
+                    Báo cáo
+
+                </a>
+
+                <a href="@Url.Action("AdminTimetable", "ClassSessions")"
+                   class="admin-nav-link @(currentController == "ClassSessions" ? "is-active" : "")">
+
+                    <i class="bi bi-calendar3-week-fill" aria-hidden="true"></i>
+                    Thời khóa biểu
+
+                </a>
+
+                <a href="@Url.Action("Index", "CourseMaterials")"
+                   class="admin-nav-link @(currentController == "CourseMaterials" ? "is-active" : "")">
+
+                    <i class="bi bi-folder2-open" aria-hidden="true"></i>
+                    Tài liệu khóa học
+
+                </a>
+
+            </nav>
+
+            @* Tài khoản quản trị *@
+
+            <div class="admin-sidebar-bottom">
+
+                <div class="admin-sidebar-user">
+
+                    <span class="admin-avatar">
+                        @adminInitial
+                    </span>
+
+                    <div>
+                        <strong>@adminName</strong>
+                        <small>Quản trị viên</small>
+                    </div>
+
+                </div>
+
+                <a href="@Url.Action("Logout", "Auth")"
+                   class="admin-logout-link">
+
+                    <i class="bi bi-box-arrow-right"
+                       aria-hidden="true"></i>
+
+                    Đăng xuất
+
+                </a>
+
+            </div>
+
+        </aside>
+
+        @* =========================================
+           MAIN CONTENT
+           ========================================= *@
+
+        <div class="admin-main">
+
+            <header class="admin-topbar">
+
+                <div>
+                    <span>ENGLISH LANGUAGE CENTER</span>
+                    <strong>Hệ thống quản trị</strong>
+                </div>
+
+                <div class="admin-topbar-right">
+
+                    <span class="admin-topbar-status">
+                        <i class="bi bi-shield-check"
+                           aria-hidden="true"></i>
+                        ADMIN
+                    </span>
+
+                    <span class="admin-topbar-date">
+                        <i class="bi bi-calendar3"
+                           aria-hidden="true"></i>
+
+                        @DateTime.Now.ToString("dd/MM/yyyy")
+                    </span>
+
+                </div>
+
+            </header>
+
+            <main class="admin-content">
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="admin-alert error" role="alert">
+
+                        <i class="bi bi-exclamation-circle-fill"
+                           aria-hidden="true"></i>
+
+                        <span>@TempData["ErrorMessage"]</span>
+
+                    </div>
+                }
+
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="admin-alert success" role="status">
+
+                        <i class="bi bi-check-circle-fill"
+                           aria-hidden="true"></i>
+
+                        <span>@TempData["SuccessMessage"]</span>
+
+                    </div>
+                }
+
+                @RenderBody()
+
+            </main>
+
+            <footer class="admin-footer">
+                © @DateTime.Now.Year English Center
+                · Hệ thống quản lý trung tâm Anh ngữ
+            </footer>
+
+        </div>
+
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+
+    <script>
+        (function () {
+            "use strict";
+
+            /*
+             * 1. Chuyển Glyphicons cũ sang Bootstrap Icons.
+             * Giữ nguyên những class khác như text-danger,
+             * disabled hoặc các class điều khiển khác.
+             */
+
+            var legacyIconMap = {
+                "glyphicon-adjust": "bi-circle-half",
+                "glyphicon-alert": "bi-exclamation-triangle-fill",
+                "glyphicon-arrow-left": "bi-arrow-left",
+                "glyphicon-book": "bi-book-half",
+                "glyphicon-calendar": "bi-calendar3",
+                "glyphicon-check": "bi-check2-square",
+                "glyphicon-chevron-left": "bi-chevron-left",
+                "glyphicon-chevron-right": "bi-chevron-right",
+                "glyphicon-cloud-download": "bi-cloud-download",
+                "glyphicon-cloud-upload": "bi-cloud-upload",
+                "glyphicon-credit-card": "bi-credit-card-fill",
+                "glyphicon-dashboard": "bi-speedometer2",
+                "glyphicon-download-alt": "bi-download",
+                "glyphicon-edit": "bi-pencil-square",
+                "glyphicon-education": "bi-mortarboard-fill",
+                "glyphicon-exclamation-sign": "bi-exclamation-circle-fill",
+                "glyphicon-eye-open": "bi-eye-fill",
+                "glyphicon-file": "bi-file-earmark",
+                "glyphicon-filter": "bi-funnel",
+                "glyphicon-floppy-disk": "bi-floppy",
+                "glyphicon-folder-open": "bi-folder2-open",
+                "glyphicon-home": "bi-house-fill",
+                "glyphicon-inbox": "bi-inbox",
+                "glyphicon-info-sign": "bi-info-circle-fill",
+                "glyphicon-list": "bi-list-ul",
+                "glyphicon-list-alt": "bi-card-list",
+                "glyphicon-lock": "bi-lock-fill",
+                "glyphicon-log-out": "bi-box-arrow-right",
+                "glyphicon-map-marker": "bi-geo-alt-fill",
+                "glyphicon-ok": "bi-check-lg",
+                "glyphicon-ok-circle": "bi-check-circle",
+                "glyphicon-ok-sign": "bi-check-circle-fill",
+                "glyphicon-open": "bi-box-arrow-up-right",
+                "glyphicon-open-file": "bi-file-earmark-arrow-up",
+                "glyphicon-plus": "bi-plus-lg",
+                "glyphicon-plus-sign": "bi-plus-circle",
+                "glyphicon-print": "bi-printer-fill",
+                "glyphicon-refresh": "bi-arrow-clockwise",
+                "glyphicon-remove": "bi-x-lg",
+                "glyphicon-remove-circle": "bi-x-circle",
+                "glyphicon-remove-sign": "bi-x-octagon",
+                "glyphicon-search": "bi-search",
+                "glyphicon-stats": "bi-bar-chart-line-fill",
+                "glyphicon-tasks": "bi-list-check",
+                "glyphicon-time": "bi-clock-fill",
+                "glyphicon-trash": "bi-trash3-fill",
+                "glyphicon-upload": "bi-upload",
+                "glyphicon-usd": "bi-currency-dollar",
+                "glyphicon-user": "bi-person-fill",
+                "glyphicon-warning-sign": "bi-exclamation-triangle-fill"
+            };
+
+            function replaceLegacyGlyphicons() {
+                var icons = document.querySelectorAll(".glyphicon");
+
+                for (var i = 0; i < icons.length; i++) {
+                    var iconElement = icons[i];
+                    var classes = Array.prototype.slice.call(
+                        iconElement.classList
+                    );
+
+                    var glyphClass = null;
+
+                    for (var j = 0; j < classes.length; j++) {
+                        if (classes[j].indexOf("glyphicon-") === 0) {
+                            glyphClass = classes[j];
+                            break;
+                        }
+                    }
+
+                    if (!glyphClass) {
+                        continue;
+                    }
+
+                    var newIconClass =
+                        legacyIconMap[glyphClass] ||
+                        "bi-question-circle";
+
+                    var retainedClasses = classes.filter(function (name) {
+                        return name !== "glyphicon" &&
+                            name.indexOf("glyphicon-") !== 0;
+                    });
+
+                    var newClasses = [
+                        "bi",
+                        newIconClass
+                    ].concat(retainedClasses);
+
+                    iconElement.className = newClasses.join(" ");
+
+                    iconElement.setAttribute("aria-hidden", "true");
+                }
+            }
+
+            /*
+             * 2. Đổi những ký tự thay thế trong thẻ icon
+             * của Dashboard thành Bootstrap Icons.
+             *
+             * Chỉ xử lý ba nhóm icon đã biết, tránh thay
+             * các ký tự ở nội dung bảng hoặc trạng thái.
+             */
+
+            var symbolIconMap = {
+                "▦": "bi-grid-1x2-fill",
+                "♙": "bi-person-fill",
+                "♟": "bi-person-fill",
+                "▤": "bi-book-half",
+                "▣": "bi-collection-fill",
+                "✓": "bi-check-circle-fill",
+                "₫": "bi-cash-coin",
+                "▥": "bi-bar-chart-line-fill",
+                "📅": "bi-calendar3",
+                "📚": "bi-journal-bookmark-fill",
+                "↑": "bi-cloud-upload-fill",
+                "⌕": "bi-search",
+                "✎": "bi-pencil-square",
+                "!": "bi-exclamation-triangle-fill",
+                "+": "bi-plus-lg",
+                "＋": "bi-plus-lg",
+                "🎓": "bi-mortarboard-fill",
+                "🔑": "bi-key-fill",
+                "↗": "bi-box-arrow-up-right",
+                "📄": "bi-file-earmark-text-fill",
+                "💳": "bi-credit-card-fill",
+                "👤": "bi-person-fill",
+                "✉": "bi-envelope-fill",
+                "?": "bi-question-circle-fill"
+            };
+
+            function replaceDashboardSymbols() {
+                var selector =
+                    ".admin-welcome-icon, " +
+                    ".admin-stat-icon, " +
+                    ".admin-quick-icon";
+
+                var containers = document.querySelectorAll(selector);
+
+                for (var i = 0; i < containers.length; i++) {
+                    var container = containers[i];
+
+                    /*
+                     * Nếu icon đã được thay hoặc có phần tử con,
+                     * không xử lý lại.
+                     */
+                    if (container.children.length > 0) {
+                        continue;
+                    }
+
+                    var symbol = (container.textContent || "").trim();
+                    var newIcon = symbolIconMap[symbol];
+
+                    if (!newIcon) {
+                        continue;
+                    }
+
+                    var icon = document.createElement("i");
+
+                    icon.className = "bi " + newIcon;
+                    icon.setAttribute("aria-hidden", "true");
+
+                    container.textContent = "";
+                    container.appendChild(icon);
+                }
+            }
+
+            /*
+             * Thực hiện đổi icon sau khi HTML của view
+             * đã được render vào trang.
+             */
+            replaceLegacyGlyphicons();
+            replaceDashboardSymbols();
+
+            /*
+             * 3. Phân trang dùng chung cho các bảng admin.
+             */
+
+            var tableConfigs = [
+                {
+                    selector: ".admin-users-table",
+                    wrapperSelector: ".admin-users-table-wrap",
+                    emptySelector: ".admin-users-empty",
+                    label: "người dùng",
+                    id: "users"
+                },
+                {
+                    selector: ".admin-courses-table",
+                    wrapperSelector: ".admin-courses-table-wrap",
+                    emptySelector: ".admin-courses-empty",
+                    label: "khóa học",
+                    id: "courses"
+                },
+                {
+                    selector: ".admin-classes-table",
+                    wrapperSelector: ".admin-classes-table-wrap",
+                    emptySelector: ".admin-classes-empty",
+                    label: "lớp học",
+                    id: "classes"
+                },
+                {
+                    selector: ".admin-enrollments-table",
+                    wrapperSelector: ".admin-enrollments-table-wrap",
+                    emptySelector: ".admin-enrollments-empty",
+                    label: "lượt ghi danh",
+                    id: "enrollments"
+                }
+            ];
+
+            function createElement(tagName, className, text) {
+                var element = document.createElement(tagName);
+
+                if (className) {
+                    element.className = className;
+                }
+
+                if (text !== undefined && text !== null) {
+                    element.textContent = text;
+                }
+
+                return element;
+            }
+
+            function findAncestorByClass(element, className) {
+                while (element && element !== document) {
+                    if (
+                        element.classList &&
+                        element.classList.contains(className)
+                    ) {
+                        return element;
+                    }
+
+                    element = element.parentElement;
+                }
+
+                return null;
+            }
+
+            function createButton(
+                text,
+                title,
+                disabled,
+                active,
+                onClick
+            ) {
+                var button = createElement(
+                    "button",
+                    "ec-pagination-button" +
+                        (active ? " ec-page-active" : ""),
+                    text
+                );
+
+                button.type = "button";
+                button.title = title;
+                button.setAttribute("aria-label", title);
+                button.disabled = !!disabled;
+
+                if (active) {
+                    button.setAttribute("aria-current", "page");
+                }
+
+                if (typeof onClick === "function") {
+                    button.addEventListener("click", onClick);
+                }
+
+                return button;
+            }
+
+            function initializePagination(config) {
+                var table = document.querySelector(config.selector);
+
+                if (!table || !table.tBodies || !table.tBodies.length) {
+                    return;
+                }
+
+                var tbody = table.tBodies[0];
+
+                var allRows = Array.prototype.slice.call(tbody.rows);
+
+                /*
+                 * Không tính hàng thông báo dữ liệu trống.
+                 * Hỗ trợ trường hợp class được đặt ngay trên
+                 * hàng <tr> hoặc ở phần tử con bên trong.
+                 */
+                var dataRows = allRows.filter(function (row) {
+                    return !row.matches(config.emptySelector) &&
+                        !row.querySelector(config.emptySelector);
+                });
+
+                if (dataRows.length === 0) {
+                    return;
+                }
+
+                var wrapper = findAncestorByClass(
+                    table,
+                    config.wrapperSelector.substring(1)
+                );
+
+                if (!wrapper || !wrapper.parentElement) {
+                    return;
+                }
+
+                /*
+                 * Không tạo trùng thanh phân trang.
+                 */
+                var nextElement = wrapper.nextElementSibling;
+
+                if (
+                    nextElement &&
+                    nextElement.classList.contains("ec-table-pagination")
+                ) {
+                    return;
+                }
+
+                var currentPage = 1;
+                var pageSize = 10;
+
+                var pagination = createElement(
+                    "div",
+                    "ec-table-pagination"
+                );
+
+                pagination.setAttribute("role", "navigation");
+
+                pagination.setAttribute(
+                    "aria-label",
+                    "Phân trang " + config.label
+                );
+
+                var summary = createElement(
+                    "div",
+                    "ec-pagination-summary"
+                );
+
+                summary.setAttribute("aria-live", "polite");
+
+                var tools = createElement(
+                    "div",
+                    "ec-pagination-tools"
+                );
+
+                var sizeLabel = createElement(
+                    "label",
+                    "ec-pagination-label",
+                    "Số dòng/trang"
+                );
+
+                var sizeSelect = createElement(
+                    "select",
+                    "ec-pagination-size"
+                );
+
+                sizeSelect.id = "ec-page-size-" + config.id;
+
+                sizeSelect.setAttribute(
+                    "aria-label",
+                    "Chọn số dòng mỗi trang"
+                );
+
+                sizeLabel.htmlFor = sizeSelect.id;
+
+                var pageSizeOptions = [
+                    { value: "5", text: "5 dòng" },
+                    { value: "10", text: "10 dòng" },
+                    { value: "20", text: "20 dòng" },
+                    { value: "50", text: "50 dòng" },
+                    { value: "all", text: "Tất cả" }
+                ];
+
+                pageSizeOptions.forEach(function (item) {
+                    var option = createElement(
+                        "option",
+                        "",
+                        item.text
+                    );
+
+                    option.value = item.value;
+                    sizeSelect.appendChild(option);
+                });
+
+                sizeSelect.value = "10";
+
+                tools.appendChild(sizeLabel);
+                tools.appendChild(sizeSelect);
+
+                var buttons = createElement(
+                    "div",
+                    "ec-pagination-buttons"
+                );
+
+                pagination.appendChild(summary);
+                pagination.appendChild(tools);
+                pagination.appendChild(buttons);
+
+                wrapper.insertAdjacentElement(
+                    "afterend",
+                    pagination
+                );
+
+                function appendEllipsis() {
+                    buttons.appendChild(
+                        createElement(
+                            "span",
+                            "ec-pagination-ellipsis",
+                            "…"
+                        )
+                    );
+                }
+
+                function appendPageNumber(pageNumber) {
+                    var active = pageNumber === currentPage;
+
+                    buttons.appendChild(
+                        createButton(
+                            String(pageNumber),
+                            "Đến trang " + pageNumber,
+                            false,
+                            active,
+                            function () {
+                                currentPage = pageNumber;
+                                render();
+                            }
+                        )
+                    );
+                }
+
+                function renderButtons(totalPages) {
+                    while (buttons.firstChild) {
+                        buttons.removeChild(buttons.firstChild);
+                    }
+
+                    buttons.appendChild(
+                        createButton(
+                            "«",
+                            "Trang đầu",
+                            currentPage === 1,
+                            false,
+                            function () {
+                                currentPage = 1;
+                                render();
+                            }
+                        )
+                    );
+
+                    buttons.appendChild(
+                        createButton(
+                            "‹",
+                            "Trang trước",
+                            currentPage === 1,
+                            false,
+                            function () {
+                                if (currentPage > 1) {
+                                    currentPage--;
+                                    render();
+                                }
+                            }
+                        )
+                    );
+
+                    if (totalPages <= 7) {
+                        for (
+                            var page = 1;
+                            page <= totalPages;
+                            page++
+                        ) {
+                            appendPageNumber(page);
+                        }
+                    } else if (currentPage <= 4) {
+                        for (var first = 1; first <= 5; first++) {
+                            appendPageNumber(first);
+                        }
+
+                        appendEllipsis();
+                        appendPageNumber(totalPages);
+                    } else if (currentPage >= totalPages - 3) {
+                        appendPageNumber(1);
+                        appendEllipsis();
+
+                        for (
+                            var last = totalPages - 4;
+                            last <= totalPages;
+                            last++
+                        ) {
+                            appendPageNumber(last);
+                        }
+                    } else {
+                        appendPageNumber(1);
+                        appendEllipsis();
+
+                        appendPageNumber(currentPage - 1);
+                        appendPageNumber(currentPage);
+                        appendPageNumber(currentPage + 1);
+
+                        appendEllipsis();
+                        appendPageNumber(totalPages);
+                    }
+
+                    buttons.appendChild(
+                        createButton(
+                            "›",
+                            "Trang tiếp",
+                            currentPage === totalPages,
+                            false,
+                            function () {
+                                if (currentPage < totalPages) {
+                                    currentPage++;
+                                    render();
+                                }
+                            }
+                        )
+                    );
+
+                    buttons.appendChild(
+                        createButton(
+                            "»",
+                            "Trang cuối",
+                            currentPage === totalPages,
+                            false,
+                            function () {
+                                currentPage = totalPages;
+                                render();
+                            }
+                        )
+                    );
+                }
+
+                function render() {
+                    var totalRecords = dataRows.length;
+
+                    if (sizeSelect.value === "all") {
+                        pageSize = Math.max(totalRecords, 1);
+                    } else {
+                        pageSize = parseInt(sizeSelect.value, 10);
+
+                        if (!pageSize || pageSize < 1) {
+                            pageSize = 10;
+                        }
+                    }
+
+                    var totalPages = Math.max(
+                        1,
+                        Math.ceil(totalRecords / pageSize)
+                    );
+
+                    if (currentPage > totalPages) {
+                        currentPage = totalPages;
+                    }
+
+                    var startIndex =
+                        (currentPage - 1) * pageSize;
+
+                    var endIndex = Math.min(
+                        startIndex + pageSize,
+                        totalRecords
+                    );
+
+                    dataRows.forEach(function (row, index) {
+                        row.style.display =
+                            index >= startIndex && index < endIndex
+                                ? ""
+                                : "none";
+                    });
+
+                    summary.textContent =
+                        "Đang hiển thị " +
+                        (startIndex + 1) +
+                        "–" +
+                        endIndex +
+                        " / " +
+                        totalRecords +
+                        " " +
+                        config.label;
+
+                    renderButtons(totalPages);
+                }
+
+                sizeSelect.addEventListener("change", function () {
+                    currentPage = 1;
+                    render();
+                });
+
+                render();
+            }
+
+            function initializeAllTables() {
+                tableConfigs.forEach(function (config) {
+                    initializePagination(config);
+                });
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener(
+                    "DOMContentLoaded",
+                    initializeAllTables
+                );
+            } else {
+                initializeAllTables();
+            }
+
+        })();
+    </script>
+
+    @RenderSection("Scripts", required: false)
+
+</body>
+</html>

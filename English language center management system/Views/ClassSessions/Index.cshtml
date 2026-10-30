@@ -1,0 +1,957 @@
+﻿
+@model IEnumerable<English_language_center_management_system.Models.ClassSession>
+
+@using System
+@using System.Collections.Generic
+@using System.Linq
+
+@{
+    ViewBag.Title = "Quản lý buổi học";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var sessionItems = Model == null
+        ? new List<English_language_center_management_system.Models.ClassSession>()
+        : Model.Where(s => s != null).ToList();
+
+    int totalCount = sessionItems.Count;
+}
+
+<style>
+    .cs-list-page {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 0 20px;
+        color: #25324a;
+    }
+
+        .cs-list-page * {
+            box-sizing: border-box;
+        }
+
+    .cs-list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .cs-eyebrow {
+        margin-bottom: 6px;
+        color: #929db0;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+    }
+
+    .cs-list-header h1 {
+        margin: 0 0 5px;
+        color: #25324a;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .cs-list-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .cs-header-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .cs-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 36px;
+        padding: 8px 12px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+
+    .cs-btn-primary {
+        border-color: #c92828;
+        background: #c92828;
+        color: #fff;
+    }
+
+        .cs-btn-primary:hover {
+            border-color: #a91f1f;
+            background: #a91f1f;
+            color: #fff;
+        }
+
+    .cs-btn-secondary {
+        border-color: #dce3ed;
+        background: #fff;
+        color: #526078;
+    }
+
+        .cs-btn-secondary:hover {
+            background: #f5f7fb;
+            color: #25324a;
+        }
+
+    .cs-alert {
+        margin-bottom: 15px;
+        padding: 11px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .cs-alert-success {
+        border: 1px solid #b9ebce;
+        background: #ecfaf2;
+        color: #137646;
+    }
+
+    .cs-alert-error {
+        border: 1px solid #ffdada;
+        background: #fff4f4;
+        color: #a92323;
+    }
+
+    .cs-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 13px;
+        margin-bottom: 17px;
+    }
+
+    .cs-summary-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        padding: 15px 17px;
+        border: 1px solid #e3e9f1;
+        border-radius: 11px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(26,42,69,.03);
+    }
+
+    .cs-summary-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+        border-radius: 11px;
+        background: #eef4ff;
+        color: #2865bf;
+        font-size: 17px;
+        font-weight: 800;
+    }
+
+    .cs-summary-card:nth-child(2) .cs-summary-icon {
+        background: #fff0f0;
+        color: #c92828;
+    }
+
+    .cs-summary-card:nth-child(3) .cs-summary-icon {
+        background: #e9f8ef;
+        color: #198754;
+    }
+
+    .cs-summary-text {
+        min-width: 0;
+    }
+
+        .cs-summary-text span {
+            display: block;
+            margin-bottom: 4px;
+            color: #8995aa;
+            font-size: 11px;
+        }
+
+        .cs-summary-text strong {
+            color: #25324a;
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+    .cs-list-card {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(26,42,69,.035);
+    }
+
+    .cs-list-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 15px 18px;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+        .cs-list-card-header h2 {
+            margin: 0 0 4px;
+            color: #29364d;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .cs-list-card-header p {
+            margin: 0;
+            color: #8995aa;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+    .cs-count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 10px;
+        border-radius: 20px;
+        background: #f0f3f8;
+        color: #526078;
+        font-size: 11px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .cs-search-bar {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 13px 18px;
+        border-bottom: 1px solid #edf0f5;
+        background: #fcfdff;
+    }
+
+    .cs-search-box {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+    }
+
+        .cs-search-box .glyphicon {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            color: #8995aa;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+    .cs-search-input {
+        width: 100%;
+        min-height: 37px;
+        padding: 8px 12px 8px 34px;
+        border: 1px solid #dce3ed;
+        border-radius: 8px;
+        background: #fff;
+        color: #25324a;
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+    }
+
+        .cs-search-input:focus {
+            border-color: #c92828;
+            box-shadow: 0 0 0 3px rgba(201,40,40,.07);
+        }
+
+        .cs-search-input::placeholder {
+            color: #9ba6b8;
+        }
+
+    .cs-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .cs-table {
+        width: 100%;
+        min-width: 920px;
+        margin: 0;
+        border-collapse: collapse;
+    }
+
+        .cs-table thead th {
+            padding: 12px 11px;
+            border-bottom: 1px solid #e4eaf2;
+            background: #f6f8fb;
+            color: #728098;
+            font-size: 10px;
+            font-weight: 800;
+            text-align: left;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .cs-table tbody td {
+            padding: 12px 11px;
+            border-bottom: 1px solid #edf0f5;
+            color: #526078;
+            font-size: 11px;
+            line-height: 1.6;
+            vertical-align: middle;
+        }
+
+        .cs-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .cs-table tbody tr:hover {
+            background: #fafbfd;
+        }
+
+    .cs-id {
+        color: #8995aa;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .cs-primary-text {
+        display: block;
+        color: #29364d;
+        font-size: 12px;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+
+    .cs-secondary-text {
+        display: block;
+        margin-top: 4px;
+        color: #8995aa;
+        font-size: 10px;
+        overflow-wrap: anywhere;
+    }
+
+    .cs-date {
+        color: #344159;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .cs-time-badge {
+        display: inline-block;
+        padding: 6px 8px;
+        border-radius: 7px;
+        background: #eef4ff;
+        color: #245bb5;
+        font-size: 10px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .cs-room-badge {
+        display: inline-block;
+        padding: 5px 8px;
+        border-radius: 7px;
+        background: #f1f4f9;
+        color: #526078;
+        font-size: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .cs-action-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .cs-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 29px;
+        padding: 5px 8px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        text-decoration: none !important;
+        white-space: nowrap;
+    }
+
+    .cs-action-details {
+        border-color: #d8e6fb;
+        background: #edf4ff;
+        color: #245bb5;
+    }
+
+    .cs-action-edit {
+        border-color: #f3e3b9;
+        background: #fff7e6;
+        color: #91640d;
+    }
+
+    .cs-action-delete {
+        border-color: #ffdada;
+        background: #fff0f0;
+        color: #b42323;
+    }
+
+    .cs-action:hover {
+        filter: brightness(.97);
+    }
+
+    .cs-empty-cell {
+        padding: 35px 15px !important;
+        text-align: center;
+    }
+
+        .cs-empty-cell strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #526078;
+            font-size: 13px;
+        }
+
+        .cs-empty-cell span {
+            color: #8995aa;
+            font-size: 11px;
+        }
+
+    .cs-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 13px 18px;
+        border-top: 1px solid #edf0f5;
+        background: #fff;
+    }
+
+        .cs-pagination[hidden] {
+            display: none !important;
+        }
+
+    .cs-pagination-info {
+        color: #78859b;
+        font-size: 11px;
+        line-height: 1.7;
+    }
+
+    .cs-pagination-controls {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .cs-page-size {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-right: 5px;
+        color: #738097;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+        .cs-page-size select {
+            height: 32px;
+            padding: 5px 7px;
+            border: 1px solid #dce3ed;
+            border-radius: 7px;
+            background: #fff;
+            color: #344159;
+            font-size: 11px;
+        }
+
+    .cs-page-numbers {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .cs-page-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        min-height: 32px;
+        padding: 5px 9px;
+        border: 1px solid #dce3ed;
+        border-radius: 7px;
+        background: #fff;
+        color: #526078;
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+        .cs-page-btn:hover:not(:disabled):not(.active) {
+            border-color: #c92828;
+            background: #fff5f5;
+            color: #c92828;
+        }
+
+        .cs-page-btn.active {
+            border-color: #c92828;
+            background: #c92828;
+            color: #fff;
+        }
+
+        .cs-page-btn:disabled {
+            color: #b4bdca;
+            background: #f5f7fa;
+            cursor: not-allowed;
+        }
+
+    @@media(max-width: 850px) {
+        .cs-summary-grid {
+            grid-template-columns: 1fr;
+            gap: 9px;
+        }
+    }
+
+    @@media(max-width: 600px) {
+        .cs-list-header h1 {
+            font-size: 21px;
+        }
+
+        .cs-search-bar {
+            padding: 11px;
+        }
+
+        .cs-list-card-header {
+            padding: 13px;
+        }
+
+        .cs-pagination {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 12px;
+        }
+
+        .cs-pagination-controls {
+            justify-content: flex-start;
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="cs-list-page">
+
+    <div class="cs-list-header">
+        <div>
+            <div class="cs-eyebrow">ENGLISH LANGUAGE CENTER / QUẢN LÝ LỊCH HỌC</div>
+            <h1>Quản lý buổi học</h1>
+            <p>Quản lý từng buổi học theo lớp, ngày, thời gian và phòng học.</p>
+        </div>
+
+        <div class="cs-header-actions">
+            <a href="@Url.Action("AdminTimetable", "ClassSessions")"
+               class="cs-btn cs-btn-secondary">
+                <i class="glyphicon glyphicon-calendar"></i>
+                Thời khóa biểu
+            </a>
+
+            <a href="@Url.Action("Create", "ClassSessions")"
+               class="cs-btn cs-btn-primary">
+                <i class="glyphicon glyphicon-plus"></i>
+                Thêm buổi học lẻ
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="cs-alert cs-alert-success">
+            <i class="glyphicon glyphicon-ok-circle"></i>
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="cs-alert cs-alert-error">
+            <i class="glyphicon glyphicon-exclamation-sign"></i>
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="cs-summary-grid">
+
+        <div class="cs-summary-card">
+            <div class="cs-summary-icon">
+                <i class="glyphicon glyphicon-calendar"></i>
+            </div>
+            <div class="cs-summary-text">
+                <span>Tổng số buổi học</span>
+                <strong>@totalCount</strong>
+            </div>
+        </div>
+
+        <div class="cs-summary-card">
+            <div class="cs-summary-icon">
+                <i class="glyphicon glyphicon-time"></i>
+            </div>
+            <div class="cs-summary-text">
+                <span>Số buổi có thời gian cụ thể</span>
+                <strong>@sessionItems.Count(s => s.EndTime > s.StartTime)</strong>
+            </div>
+        </div>
+
+        <div class="cs-summary-card">
+            <div class="cs-summary-icon">
+                <i class="glyphicon glyphicon-home"></i>
+            </div>
+            <div class="cs-summary-text">
+                <span>Buổi chưa xếp phòng</span>
+                <strong>@sessionItems.Count(s => !s.RoomId.HasValue)</strong>
+            </div>
+        </div>
+
+    </div>
+
+    <section class="cs-list-card">
+
+        <div class="cs-list-card-header">
+            <div>
+                <h2>Danh sách buổi học</h2>
+                <p>Tìm kiếm và chuyển trang ngay trên danh sách hiện tại.</p>
+            </div>
+
+            <span class="cs-count-badge">@totalCount buổi học</span>
+        </div>
+
+        <div class="cs-search-bar">
+            <div class="cs-search-box">
+                <i class="glyphicon glyphicon-search"></i>
+                <input type="search"
+                       id="csSearch"
+                       class="cs-search-input"
+                       placeholder="Tìm theo lớp, khóa học, ngày, giờ hoặc phòng..." />
+            </div>
+
+            <button type="button"
+                    id="csResetSearch"
+                    class="cs-btn cs-btn-secondary">
+                Xóa tìm kiếm
+            </button>
+        </div>
+
+        <div class="cs-table-wrap">
+            <table class="cs-table">
+
+                <thead>
+                    <tr>
+                        <th>Mã buổi</th>
+                        <th>Lớp học</th>
+                        <th>Khóa học</th>
+                        <th>Ngày học</th>
+                        <th>Khung giờ</th>
+                        <th>Phòng học</th>
+                        <th>Thời lượng</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody id="csTableBody">
+
+                    @foreach (var item in sessionItems)
+                    {
+                        string className = item.Class != null
+                            ? item.Class.ClassName
+                            : "Lớp #" + item.ClassId;
+
+                        string courseName = item.Class != null && item.Class.Course != null
+                            ? item.Class.Course.CourseName
+                            : "Chưa xác định khóa học";
+
+                        string roomName = item.Room != null
+                            ? item.Room.RoomName
+                            : "Chưa xếp phòng";
+
+                        double durationMinutes = Math.Max(
+                            0,
+                            (item.EndTime - item.StartTime).TotalMinutes);
+
+                        <tr data-session-row="true">
+
+                            <td>
+                                <span class="cs-id">#@item.Id</span>
+                            </td>
+
+                            <td>
+                                <span class="cs-primary-text">@className</span>
+                                <span class="cs-secondary-text">Mã lớp #@item.ClassId</span>
+                            </td>
+
+                            <td>
+                                <span class="cs-primary-text">@courseName</span>
+                            </td>
+
+                            <td>
+                                <span class="cs-date">
+                                    @item.SessionDate.ToString("dd/MM/yyyy")
+                                </span>
+                                <span class="cs-secondary-text">
+                                    @item.SessionDate.ToString("dddd")
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="cs-time-badge">
+                                    @item.StartTime.ToString(@"hh\:mm")
+                                    – @item.EndTime.ToString(@"hh\:mm")
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="cs-room-badge">@roomName</span>
+                            </td>
+
+                            <td>
+                                <span class="cs-primary-text">
+                                    @((durationMinutes / 60.0).ToString("0.##")) giờ
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="cs-action-list">
+
+                                    <a href="@Url.Action("Details", "ClassSessions", new { id = item.Id })"
+                                       class="cs-action cs-action-details">
+                                        Xem
+                                    </a>
+
+                                    <a href="@Url.Action("Edit", "ClassSessions", new { id = item.Id })"
+                                       class="cs-action cs-action-edit">
+                                        Sửa
+                                    </a>
+
+                                    <a href="@Url.Action("Delete", "ClassSessions", new { id = item.Id })"
+                                       class="cs-action cs-action-delete">
+                                        Xóa
+                                    </a>
+
+                                </div>
+                            </td>
+
+                        </tr>
+                    }
+
+                    <tr id="csNoResults" style="display:none;">
+                        <td colspan="8" class="cs-empty-cell">
+                            <strong>Không tìm thấy buổi học phù hợp</strong>
+                            <span>Hãy thay đổi từ khóa hoặc xóa tìm kiếm.</span>
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+        </div>
+
+        <div class="cs-pagination"
+             id="csPagination"
+             aria-label="Phân trang buổi học"
+             hidden>
+
+            <div class="cs-pagination-info"
+                 id="csPaginationInfo"
+                 aria-live="polite">
+            </div>
+
+            <div class="cs-pagination-controls">
+
+                <label class="cs-page-size" for="csPageSize">
+                    Hiển thị
+                    <select id="csPageSize">
+                        <option value="5" selected="selected">5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                    dòng
+                </label>
+
+                <button type="button" class="cs-page-btn" id="csPrevPage">
+                    ‹ Trước
+                </button>
+
+                <div class="cs-page-numbers" id="csPageNumbers"></div>
+
+                <button type="button" class="cs-page-btn" id="csNextPage">
+                    Tiếp ›
+                </button>
+
+            </div>
+        </div>
+
+    </section>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    function initClassSessionPagination() {
+        var root = document.querySelector(".cs-list-page");
+        if (!root) return;
+
+        var tbody = document.getElementById("csTableBody");
+        var pagination = document.getElementById("csPagination");
+        var info = document.getElementById("csPaginationInfo");
+        var pageSizeSelect = document.getElementById("csPageSize");
+        var searchInput = document.getElementById("csSearch");
+        var resetButton = document.getElementById("csResetSearch");
+        var prevButton = document.getElementById("csPrevPage");
+        var nextButton = document.getElementById("csNextPage");
+        var pageNumbers = document.getElementById("csPageNumbers");
+        var noResultsRow = document.getElementById("csNoResults");
+
+        if (!tbody || !pagination || !info || !pageSizeSelect ||
+            !searchInput || !resetButton || !prevButton ||
+            !nextButton || !pageNumbers || !noResultsRow) {
+            return;
+        }
+
+        var rows = Array.prototype.slice.call(
+            tbody.querySelectorAll("tr[data-session-row='true']")
+        );
+
+        var currentPage = 1;
+
+        function getPageSize() {
+            var size = parseInt(pageSizeSelect.value, 10);
+            return isFinite(size) && size > 0 ? size : 5;
+        }
+
+        function getFilteredRows() {
+            var query = searchInput.value.trim().toLowerCase();
+
+            return rows.filter(function (row) {
+                return row.textContent.toLowerCase().indexOf(query) !== -1;
+            });
+        }
+
+        function createPageButton(page) {
+            var button = document.createElement("button");
+            button.type = "button";
+            button.className = "cs-page-btn";
+            button.textContent = page;
+            button.setAttribute("aria-label", "Trang " + page);
+
+            if (page === currentPage) {
+                button.classList.add("active");
+                button.setAttribute("aria-current", "page");
+            }
+
+            button.addEventListener("click", function () {
+                currentPage = page;
+                renderPage();
+            });
+
+            return button;
+        }
+
+        function renderPage() {
+            var filteredRows = getFilteredRows();
+            var pageSize = getPageSize();
+            var totalRows = filteredRows.length;
+            var totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            rows.forEach(function (row) {
+                row.style.display = "none";
+            });
+
+            if (totalRows === 0) {
+                noResultsRow.style.display = "";
+                pagination.hidden = true;
+                info.textContent = "Không có buổi học phù hợp.";
+                return;
+            }
+
+            noResultsRow.style.display = "none";
+
+            var startIndex = (currentPage - 1) * pageSize;
+            var endIndex = Math.min(startIndex + pageSize, totalRows);
+
+            filteredRows.forEach(function (row, index) {
+                row.style.display =
+                    index >= startIndex && index < endIndex ? "" : "none";
+            });
+
+            info.textContent =
+                "Hiển thị " + (startIndex + 1) + "–" + endIndex +
+                " trong " + totalRows + " buổi học";
+
+            prevButton.disabled = currentPage === 1;
+            nextButton.disabled = currentPage === totalPages;
+            pageNumbers.innerHTML = "";
+
+            var firstPage = Math.max(1, currentPage - 2);
+            var lastPage = Math.min(totalPages, firstPage + 4);
+            firstPage = Math.max(1, lastPage - 4);
+
+            for (var page = firstPage; page <= lastPage; page++) {
+                pageNumbers.appendChild(createPageButton(page));
+            }
+
+            pagination.hidden = false;
+        }
+
+        prevButton.addEventListener("click", function () {
+            if (currentPage > 1) {
+                currentPage--;
+                renderPage();
+            }
+        });
+
+        nextButton.addEventListener("click", function () {
+            currentPage++;
+            renderPage();
+        });
+
+        pageSizeSelect.addEventListener("change", function () {
+            currentPage = 1;
+            renderPage();
+        });
+
+        searchInput.addEventListener("input", function () {
+            currentPage = 1;
+            renderPage();
+        });
+
+        resetButton.addEventListener("click", function () {
+            searchInput.value = "";
+            currentPage = 1;
+            renderPage();
+            searchInput.focus();
+        });
+
+        renderPage();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initClassSessionPagination);
+    } else {
+        initClassSessionPagination();
+    }
+})();
+</script>

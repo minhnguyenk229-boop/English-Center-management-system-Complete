@@ -1,0 +1,497 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Users.UserConfirmDeleteViewModel
+
+@{
+    ViewBag.Title = "Xóa người dùng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    string fullName = string.IsNullOrWhiteSpace(Model.FullName)
+        ? "Chưa cập nhật họ tên"
+        : Model.FullName;
+
+    string username = string.IsNullOrWhiteSpace(Model.Username)
+        ? "Chưa có tên đăng nhập"
+        : Model.Username;
+
+    string roleName = string.IsNullOrWhiteSpace(Model.RoleName)
+        ? "Chưa phân quyền"
+        : Model.RoleName;
+
+    string initial = string.IsNullOrWhiteSpace(fullName)
+        ? "U"
+        : fullName.Trim().Substring(0, 1).ToUpper();
+}
+
+<style>
+    .ux-page {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 0 0 16px;
+        color: #25324a;
+    }
+
+        .ux-page * {
+            box-sizing: border-box;
+        }
+
+    .ux-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .ux-eyebrow {
+        margin-bottom: 6px;
+        color: #929db0;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+    }
+
+    .ux-header h1 {
+        margin: 0 0 5px;
+        color: #25324a;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .ux-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .ux-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 36px;
+        padding: 8px 12px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+
+    .ux-back,
+    .ux-cancel {
+        border-color: #dce3ed;
+        background: #fff;
+        color: #526078;
+    }
+
+        .ux-back:hover,
+        .ux-cancel:hover {
+            background: #f5f7fb;
+            color: #25324a;
+        }
+
+    .ux-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 275px;
+        align-items: start;
+        gap: 16px;
+    }
+
+    .ux-card,
+    .ux-warning {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(26,42,69,.035);
+    }
+
+    .ux-card-header {
+        padding: 15px 19px;
+        border-bottom: 1px solid #edf0f5;
+        color: #29364d;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .ux-card-body {
+        padding: 17px 19px;
+    }
+
+    .ux-identity {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 16px;
+        margin-bottom: 4px;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+    .ux-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        flex-shrink: 0;
+        border-radius: 13px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 21px;
+        font-weight: 800;
+    }
+
+    .ux-identity h2 {
+        margin: 0 0 4px;
+        color: #25324a;
+        font-size: 16px;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+
+    .ux-identity p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 11px;
+        overflow-wrap: anywhere;
+    }
+
+    .ux-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 11px 0;
+        border-bottom: 1px solid #f0f2f6;
+    }
+
+        .ux-row:last-child {
+            border-bottom: none;
+        }
+
+    .ux-label {
+        flex-shrink: 0;
+        color: #8995aa;
+        font-size: 11px;
+    }
+
+    .ux-value {
+        color: #29364d;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: right;
+        overflow-wrap: anywhere;
+    }
+
+    .ux-role {
+        display: inline-block;
+        padding: 5px 8px;
+        border-radius: 7px;
+        background: #eef2f8;
+        color: #526078;
+        font-size: 10px;
+        font-weight: 800;
+    }
+
+    .ux-warning {
+        border-top: 4px solid #c92828;
+    }
+
+    .ux-warning-body {
+        padding: 18px;
+    }
+
+    .ux-warning-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 43px;
+        height: 43px;
+        margin-bottom: 13px;
+        border-radius: 12px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 23px;
+        font-weight: 900;
+    }
+
+    .ux-warning h3 {
+        margin: 0 0 9px;
+        color: #25324a;
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+    .ux-warning p {
+        margin: 0 0 13px;
+        color: #738097;
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    .ux-alert {
+        margin-bottom: 14px;
+        padding: 11px;
+        border: 1px solid #ffdada;
+        border-radius: 8px;
+        background: #fff4f4;
+        color: #a92323;
+        font-size: 10px;
+        line-height: 1.8;
+    }
+
+    .ux-validation {
+        margin-bottom: 12px;
+        color: #b42323;
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    .ux-field {
+        margin-bottom: 14px;
+    }
+
+    .ux-password-label {
+        display: block;
+        margin-bottom: 6px;
+        color: #435169;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .ux-password {
+        display: block;
+        width: 100%;
+        min-height: 39px;
+        padding: 8px 11px;
+        border: 1px solid #d9e1ec;
+        border-radius: 8px;
+        background: #fff;
+        color: #25324a;
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .ux-password:focus {
+            border-color: #c92828;
+            box-shadow: 0 0 0 3px rgba(201,40,40,.08);
+        }
+
+        .ux-password::placeholder {
+            color: #9ba6b8;
+        }
+
+    .ux-field-validation {
+        display: block;
+        margin-top: 5px;
+        color: #bd2626;
+        font-size: 11px;
+    }
+
+    .ux-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .ux-confirm,
+    .ux-cancel {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 38px;
+        padding: 9px 12px;
+        box-sizing: border-box;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 800;
+        text-align: center;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+
+    .ux-confirm {
+        border: 1px solid #c92828;
+        background: #c92828;
+        color: #fff;
+    }
+
+        .ux-confirm:hover {
+            border-color: #a91f1f;
+            background: #a91f1f;
+            color: #fff;
+        }
+
+    .ux-security {
+        margin-top: 13px;
+        padding-top: 12px;
+        border-top: 1px solid #edf0f5;
+        color: #8995aa;
+        font-size: 10px;
+        line-height: 1.8;
+    }
+
+    @@media (max-width: 900px) {
+        .ux-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .ux-header h1 {
+            font-size: 21px;
+        }
+
+        .ux-card-body,
+        .ux-warning-body {
+            padding: 14px;
+        }
+
+        .ux-row {
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .ux-value {
+            text-align: left;
+        }
+    }
+</style>
+
+<div class="ux-page">
+
+    <div class="ux-header">
+        <div>
+            <div class="ux-eyebrow">ENGLISH LANGUAGE CENTER / QUẢN LÝ NGƯỜI DÙNG</div>
+            <h1>Xóa người dùng</h1>
+            <p>Kiểm tra tài khoản và xác nhận trước khi thực hiện thao tác.</p>
+        </div>
+
+        <a href="@Url.Action("Index", "Users")" class="ux-btn ux-back">
+            ← Quay lại danh sách
+        </a>
+    </div>
+
+    <div class="ux-layout">
+
+        <section class="ux-card">
+
+            <div class="ux-card-header">Thông tin tài khoản</div>
+
+            <div class="ux-card-body">
+
+                <div class="ux-identity">
+                    <div class="ux-avatar">@initial</div>
+
+                    <div>
+                        <h2>@fullName</h2>
+                        <p>@@@username</p>
+                    </div>
+                </div>
+
+                <div class="ux-row">
+                    <span class="ux-label">Mã người dùng</span>
+                    <span class="ux-value">#@Model.UserId</span>
+                </div>
+
+                <div class="ux-row">
+                    <span class="ux-label">Họ và tên</span>
+                    <span class="ux-value">@fullName</span>
+                </div>
+
+                <div class="ux-row">
+                    <span class="ux-label">Tên đăng nhập</span>
+                    <span class="ux-value">@username</span>
+                </div>
+
+                <div class="ux-row">
+                    <span class="ux-label">Vai trò</span>
+                    <span class="ux-value">
+                        <span class="ux-role">@roleName</span>
+                    </span>
+                </div>
+
+            </div>
+        </section>
+
+        <aside class="ux-warning">
+
+            <div class="ux-warning-body">
+
+                <div class="ux-warning-icon">!</div>
+
+                <h3>Xác nhận xóa tài khoản</h3>
+
+                <p>
+                    Bạn đang chuẩn bị xóa tài khoản
+                    <strong>@username</strong>. Hãy kiểm tra kỹ thông tin trước khi tiếp tục.
+                </p>
+
+                <div class="ux-alert">
+                    <strong>Cảnh báo:</strong>
+                    Việc xóa tài khoản có thể ảnh hưởng đến hồ sơ liên quan
+                    và không thể hoàn tác bằng nút quay lại.
+                </div>
+
+                @using (Html.BeginForm("DeleteConfirmed", "Users", FormMethod.Post,
+                    new { @class = "ux-delete-form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(m => m.UserId)
+
+                    <div class="ux-validation">
+                        @Html.ValidationSummary(false)
+                    </div>
+
+                    <div class="ux-field">
+                        @Html.LabelFor(m => m.AdminPassword,
+                            new { @class = "ux-password-label" })
+
+                        @Html.PasswordFor(m => m.AdminPassword, new
+                        {
+                            @class = "ux-password",
+                            placeholder = "Nhập mật khẩu Admin để xác nhận...",
+                            autocomplete = "current-password"
+                        })
+
+                        @Html.ValidationMessageFor(m => m.AdminPassword, "",
+                            new { @class = "ux-field-validation" })
+                    </div>
+
+                    <div class="ux-actions">
+
+                        <button type="submit"
+                                class="ux-confirm"
+                                onclick="return confirm('Bạn có chắc chắn muốn xóa tài khoản này không?');">
+                            Xác nhận xóa
+                        </button>
+
+                        <a href="@Url.Action("Index", "Users")"
+                           class="ux-cancel">
+                            Hủy bỏ
+                        </a>
+
+                    </div>
+                }
+
+                <div class="ux-security">
+                    Hệ thống yêu cầu mật khẩu của quản trị viên đang đăng nhập
+                    để xác nhận thao tác xóa.
+                </div>
+
+            </div>
+
+        </aside>
+
+    </div>
+</div>

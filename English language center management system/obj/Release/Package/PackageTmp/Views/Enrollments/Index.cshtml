@@ -1,0 +1,578 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Enrollments.EnrollmentIndexViewModel
+
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using English_language_center_management_system.Models.ViewModels.Enrollments
+@using System.Web.Mvc
+
+@{
+    ViewBag.Title = "Quản lý ghi danh";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var items = Model != null && Model.Enrollments != null
+        ? Model.Enrollments
+        : new List<EnrollmentIndexItemViewModel>();
+
+    int totalCount = items.Count;
+
+    int pendingCount = items.Count(x =>
+        x.Enrollment != null && x.Enrollment.Status == "Pending");
+
+    int approvedCount = items.Count(x =>
+        x.Enrollment != null &&
+        (x.Enrollment.Status == "Approved" ||
+         x.Enrollment.Status == "Active" ||
+         x.Enrollment.Status == "Studying"));
+
+    int rejectedCount = items.Count(x =>
+        x.Enrollment != null &&
+        (x.Enrollment.Status == "Rejected" ||
+         x.Enrollment.Status == "Cancelled" ||
+         x.Enrollment.Status == "Withdrawn"));
+
+    decimal totalPaid = items.Sum(x => x.AmountPaid);
+
+    Func<string, string> statusLabel = status =>
+    {
+        switch (status)
+        {
+            case "Pending": return "Chờ duyệt";
+            case "Approved": return "Đã duyệt";
+            case "Active": return "Đang học";
+            case "Confirmed": return "Đã xác nhận";
+            case "Studying": return "Đang học";
+            case "Completed": return "Hoàn thành";
+            case "Rejected": return "Đã từ chối";
+            case "Cancelled": return "Đã hủy";
+            case "Withdrawn": return "Đã rút";
+            default:
+                return String.IsNullOrWhiteSpace(status)
+                    ? "Chưa xác định"
+                    : status;
+        }
+    };
+
+    Func<string, string> statusClass = status =>
+    {
+        switch (status)
+        {
+            case "Pending": return "enrollment-status-pending";
+            case "Approved":
+            case "Confirmed": return "enrollment-status-approved";
+            case "Active":
+            case "Studying": return "enrollment-status-active";
+            case "Completed": return "enrollment-status-completed";
+            case "Rejected":
+            case "Cancelled":
+            case "Withdrawn": return "enrollment-status-rejected";
+            default: return "enrollment-status-default";
+        }
+    };
+
+    Func<string, string> paymentLabel = status =>
+    {
+        switch (status)
+        {
+            case "Paid":
+            case "Completed": return "Đã thanh toán";
+            case "Partial": return "Thanh toán một phần";
+            case "Pending":
+            case "Unpaid": return "Chưa thanh toán";
+            default:
+                return String.IsNullOrWhiteSpace(status)
+                    ? "Chưa xác định"
+                    : status;
+        }
+    };
+
+    Func<string, string> paymentClass = status =>
+    {
+        switch (status)
+        {
+            case "Paid":
+            case "Completed": return "payment-status-paid";
+            case "Partial": return "payment-status-partial";
+            case "Pending":
+            case "Unpaid": return "payment-status-unpaid";
+            default: return "payment-status-default";
+        }
+    };
+}
+
+<div class="admin-enrollments-page">
+
+    <!-- Header -->
+    <div class="admin-enrollments-header">
+        <div>
+            <div class="admin-enrollments-eyebrow">
+                QUẢN LÝ ĐÀO TẠO
+            </div>
+
+            <h2>Quản lý ghi danh</h2>
+
+            <p>
+                Theo dõi đăng ký học viên, duyệt hồ sơ và quản lý học phí.
+            </p>
+        </div>
+
+        <a href="@Url.Action("Create", "Enrollments")"
+           class="admin-enrollments-create-btn">
+            <i class="glyphicon glyphicon-plus"></i>
+            Ghi danh mới
+        </a>
+    </div>
+
+    <!-- Thông báo -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="admin-enrollments-alert alert-success">
+            <i class="glyphicon glyphicon-ok-circle"></i>
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="admin-enrollments-alert alert-error">
+            <i class="glyphicon glyphicon-exclamation-sign"></i>
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Thống kê -->
+    <div class="admin-enrollments-stats">
+
+        <div class="admin-enrollments-stat">
+            <div class="admin-enrollments-stat-icon stat-total">
+                <i class="glyphicon glyphicon-list-alt"></i>
+            </div>
+
+            <div>
+                <div class="admin-enrollments-stat-label">
+                    Tổng ghi danh
+                </div>
+                <div class="admin-enrollments-stat-value">
+                    @totalCount
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-enrollments-stat">
+            <div class="admin-enrollments-stat-icon stat-pending">
+                <i class="glyphicon glyphicon-time"></i>
+            </div>
+
+            <div>
+                <div class="admin-enrollments-stat-label">
+                    Chờ duyệt
+                </div>
+                <div class="admin-enrollments-stat-value">
+                    @pendingCount
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-enrollments-stat">
+            <div class="admin-enrollments-stat-icon stat-approved">
+                <i class="glyphicon glyphicon-ok-circle"></i>
+            </div>
+
+            <div>
+                <div class="admin-enrollments-stat-label">
+                    Đã duyệt / Đang học
+                </div>
+                <div class="admin-enrollments-stat-value">
+                    @approvedCount
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-enrollments-stat">
+            <div class="admin-enrollments-stat-icon stat-rejected">
+                <i class="glyphicon glyphicon-remove-circle"></i>
+            </div>
+
+            <div>
+                <div class="admin-enrollments-stat-label">
+                    Từ chối / Đã hủy
+                </div>
+                <div class="admin-enrollments-stat-value">
+                    @rejectedCount
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Tổng tiền -->
+    <div class="admin-enrollments-revenue">
+        <div class="admin-enrollments-revenue-icon">
+            <i class="glyphicon glyphicon-usd"></i>
+        </div>
+
+        <div>
+            <div class="admin-enrollments-revenue-label">
+                Tổng tiền đã thanh toán trong kết quả hiện tại
+            </div>
+
+            <div class="admin-enrollments-revenue-value">
+                @totalPaid.ToString("N0") VNĐ
+            </div>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="admin-enrollments-filter-card">
+
+        <div class="admin-enrollments-filter-heading">
+            <div class="admin-enrollments-filter-icon">
+                <i class="glyphicon glyphicon-filter"></i>
+            </div>
+
+            <div>
+                <h3>Tìm kiếm và lọc</h3>
+                <p>Tìm theo học viên, tài khoản, email hoặc tên lớp.</p>
+            </div>
+        </div>
+
+        @using (Html.BeginForm(
+            "Index",
+            "Enrollments",
+            FormMethod.Get,
+            new { @class = "admin-enrollments-filter-form" }))
+        {
+            <div class="admin-enrollments-filter-field filter-search">
+                <label for="searchTerm">Từ khóa</label>
+
+                <input type="text"
+                       id="searchTerm"
+                       name="searchTerm"
+                       value="@Model.SearchTerm"
+                       class="admin-enrollments-control"
+                       placeholder="Tên học viên, username, email..." />
+            </div>
+
+            <div class="admin-enrollments-filter-field">
+                <label for="classId">Lớp học</label>
+
+                <select id="classId"
+                        name="classId"
+                        class="admin-enrollments-control">
+
+                    <option value="">Tất cả lớp học</option>
+
+                    @if (Model.Classes != null)
+                    {
+                        foreach (var cls in Model.Classes)
+                        {
+                            <option value="@cls.Id"
+                                    @(Model.SelectedClassId == cls.Id ? "selected=\"selected\"" : "")>
+                                @cls.ClassName
+                            </option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="admin-enrollments-filter-field">
+                <label for="status">Trạng thái</label>
+
+                @Html.DropDownList(
+    "status",
+    new List<SelectListItem>
+    {
+        new SelectListItem
+        {
+            Value = "",
+            Text = "Tất cả trạng thái",
+            Selected = String.IsNullOrEmpty(Model.SelectedStatus)
+        },
+        new SelectListItem
+        {
+            Value = "Pending",
+            Text = "Chờ duyệt",
+            Selected = Model.SelectedStatus == "Pending"
+        },
+        new SelectListItem
+        {
+            Value = "Approved",
+            Text = "Đã duyệt",
+            Selected = Model.SelectedStatus == "Approved"
+        },
+        new SelectListItem
+        {
+            Value = "Active",
+            Text = "Đang học",
+            Selected = Model.SelectedStatus == "Active"
+        },
+        new SelectListItem
+        {
+            Value = "Rejected",
+            Text = "Đã từ chối",
+            Selected = Model.SelectedStatus == "Rejected"
+        },
+        new SelectListItem
+        {
+            Value = "Cancelled",
+            Text = "Đã hủy",
+            Selected = Model.SelectedStatus == "Cancelled"
+        },
+        new SelectListItem
+        {
+            Value = "Confirmed",
+            Text = "Đã xác nhận",
+            Selected = Model.SelectedStatus == "Confirmed"
+        },
+        new SelectListItem
+        {
+            Value = "Studying",
+            Text = "Đang học",
+            Selected = Model.SelectedStatus == "Studying"
+        },
+        new SelectListItem
+        {
+            Value = "Completed",
+            Text = "Hoàn thành",
+            Selected = Model.SelectedStatus == "Completed"
+        },
+        new SelectListItem
+        {
+            Value = "Withdrawn",
+            Text = "Đã rút",
+            Selected = Model.SelectedStatus == "Withdrawn"
+        }
+    },
+    new { id = "status", @class = "admin-enrollments-control" }
+)
+            </div>
+
+            <div class="admin-enrollments-filter-actions">
+                <button type="submit" class="enrollment-filter-submit">
+                    <i class="glyphicon glyphicon-search"></i>
+                    Tìm kiếm
+                </button>
+
+                <a href="@Url.Action("Index", "Enrollments")"
+                   class="enrollment-filter-reset">
+                    Đặt lại
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- Danh sách -->
+    <div class="admin-enrollments-table-card">
+
+        <div class="admin-enrollments-table-heading">
+            <div>
+                <h3>Danh sách ghi danh</h3>
+                <p>
+                    Hiển thị @totalCount lượt ghi danh theo điều kiện lọc.
+                </p>
+            </div>
+        </div>
+
+        <div class="admin-enrollments-table-wrap">
+            <table class="admin-enrollments-table">
+
+                <thead>
+                    <tr>
+                        <th>Mã</th>
+                        <th>Học viên</th>
+                        <th>Lớp học / Khóa học</th>
+                        <th>Ngày ghi danh</th>
+                        <th>Trạng thái</th>
+                        <th>Thanh toán</th>
+                        <th class="enrollment-actions-heading">Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (items.Any())
+                    {
+                        foreach (var item in items)
+                        {
+                            if (item.Enrollment == null)
+                            {
+                                continue;
+                            }
+
+                            var enrollment = item.Enrollment;
+
+                            <tr>
+                                <td>
+                                    <span class="admin-enrollments-id">
+                                        #@enrollment.Id
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="admin-enrollments-person">
+                                        <div class="admin-enrollments-avatar">
+                                            @(!String.IsNullOrWhiteSpace(enrollment.Student != null
+                                                ? enrollment.Student.FullName
+                                                : null)
+                                                ? enrollment.Student.FullName.Substring(0, 1).ToUpper()
+                                                : "H")
+                                        </div>
+
+                                        <div class="admin-enrollments-person-info">
+                                            <strong>
+                                                @(enrollment.Student != null
+                                                    ? enrollment.Student.FullName
+                                                    : "Chưa có thông tin")
+                                            </strong>
+
+                                            <span>
+                                                @(enrollment.Student != null
+                                                    ? enrollment.Student.Username
+                                                    : "—")
+                                            </span>
+
+                                            <small>
+                                                @(enrollment.Student != null
+                                                    ? enrollment.Student.Email
+                                                    : "")
+                                            </small>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="admin-enrollments-class-info">
+                                        <strong>
+                                            @(enrollment.Class != null
+                                                ? enrollment.Class.ClassName
+                                                : "Chưa có thông tin")
+                                        </strong>
+
+                                        <span>
+                                            @(enrollment.Class != null &&
+                                              enrollment.Class.Course != null
+                                                ? enrollment.Class.Course.CourseName
+                                                : "Chưa xác định khóa học")
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="admin-enrollments-date">
+                                        @enrollment.EnrollmentDate.ToString("dd/MM/yyyy")
+                                    </div>
+
+                                    <small class="admin-enrollments-time">
+                                        @enrollment.EnrollmentDate.ToString("HH:mm")
+                                    </small>
+                                </td>
+
+                                <td>
+                                    <span class="admin-enrollments-status @statusClass(enrollment.Status)">
+                                        @statusLabel(enrollment.Status)
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="admin-enrollments-amount">
+                                        @item.AmountPaid.ToString("N0") VNĐ
+                                    </div>
+
+                                    <span class="admin-enrollments-payment @paymentClass(item.PaymentStatus)">
+                                        @paymentLabel(item.PaymentStatus)
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="admin-enrollments-actions">
+
+                                        @if (enrollment.Status == "Pending")
+                                        {
+                                            using (Html.BeginForm(
+                                                "Approve",
+                                                "Enrollments",
+                                                new { id = enrollment.Id },
+                                                FormMethod.Post,
+                                                new { @class = "enrollment-inline-form" }))
+                                            {
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit"
+                                                        class="enrollment-action-btn action-approve"
+                                                        title="Duyệt ghi danh">
+                                                    <i class="glyphicon glyphicon-ok"></i>
+                                                    Duyệt
+                                                </button>
+                                            }
+
+                                            using (Html.BeginForm(
+                                                "Reject",
+                                                "Enrollments",
+                                                new { id = enrollment.Id },
+                                                FormMethod.Post,
+                                                new { @class = "enrollment-inline-form" }))
+                                            {
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit"
+                                                        class="enrollment-action-btn action-reject"
+                                                        title="Từ chối ghi danh"
+                                                        onclick="return confirm('Bạn có chắc chắn muốn từ chối ghi danh này không?');">
+                                                    <i class="glyphicon glyphicon-remove"></i>
+                                                    Từ chối
+                                                </button>
+                                            }
+                                        }
+
+                                        <a href="@Url.Action("Details", "Enrollments", new { id = enrollment.Id })"
+                                           class="enrollment-action-btn action-details"
+                                           title="Xem chi tiết">
+                                            <i class="glyphicon glyphicon-eye-open"></i>
+                                            Chi tiết
+                                        </a>
+
+                                        <a href="@Url.Action("Edit", "Enrollments", new { id = enrollment.Id })"
+                                           class="enrollment-action-btn action-edit"
+                                           title="Sửa ghi danh">
+                                            <i class="glyphicon glyphicon-edit"></i>
+                                            Sửa
+                                        </a>
+
+                                        <a href="@Url.Action("Delete", "Enrollments", new { id = enrollment.Id })"
+                                           class="enrollment-action-btn action-delete"
+                                           title="Xóa ghi danh">
+                                            <i class="glyphicon glyphicon-trash"></i>
+                                            Xóa
+                                        </a>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7">
+                                <div class="admin-enrollments-empty">
+                                    <i class="glyphicon glyphicon-inbox"></i>
+
+                                    <strong>Không tìm thấy lượt ghi danh</strong>
+
+                                    <p>
+                                        Thử thay đổi từ khóa hoặc bộ lọc để xem kết quả khác.
+                                    </p>
+
+                                    <a href="@Url.Action("Index", "Enrollments")">
+                                        Xóa bộ lọc
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>

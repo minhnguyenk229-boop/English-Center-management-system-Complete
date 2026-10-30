@@ -1,0 +1,1966 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Attendances.TeacherAttendanceViewModel
+@using System
+@using System.Linq
+@using System.Collections.Generic
+@using English_language_center_management_system.Models
+@using English_language_center_management_system.Models.ViewModels.Attendances
+
+@{
+    ViewBag.Title = "Điểm danh lớp học";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+
+    var availableSessions = Model != null && Model.AvailableSessions != null
+? Model.AvailableSessions
+: new List<ClassSession>();
+
+    var students = Model != null && Model.Students != null
+        ? Model.Students
+        : new List<TeacherAttendanceRowViewModel>();
+
+    var selectedSession = Model != null ? Model.SelectedSession : null;
+
+    string teacherName =
+        Session["FullName"] as string ??
+        Session["Username"] as string ??
+        "Giáo viên";
+
+    string teacherInitial = string.IsNullOrWhiteSpace(teacherName)
+        ? "G"
+        : teacherName.Substring(0, 1).ToUpper();
+
+    int totalStudents = students.Count;
+    int presentCount = students.Count(s => s.Status == "Present");
+    int lateCount = students.Count(s => s.Status == "Late");
+    int absentCount = students.Count(s => s.Status == "Absent");
+    int excusedCount = students.Count(s => s.Status == "Excused");
+
+    int completedCount = students.Count(s =>
+        s.Status == "Present" ||
+        s.Status == "Late" ||
+        s.Status == "Absent" ||
+        s.Status == "Excused");
+
+    string selectedClassName =
+        selectedSession != null &&
+        selectedSession.Class != null &&
+        !string.IsNullOrWhiteSpace(selectedSession.Class.ClassName)
+            ? selectedSession.Class.ClassName
+            : "Lớp học";
+
+    string selectedCourseName =
+        selectedSession != null &&
+        selectedSession.Class != null &&
+        selectedSession.Class.Course != null &&
+        !string.IsNullOrWhiteSpace(selectedSession.Class.Course.CourseName)
+            ? selectedSession.Class.Course.CourseName
+            : "Chưa cập nhật khóa học";
+
+    string selectedCourseLevel =
+        selectedSession != null &&
+        selectedSession.Class != null &&
+        selectedSession.Class.Course != null &&
+        !string.IsNullOrWhiteSpace(selectedSession.Class.Course.Level)
+            ? selectedSession.Class.Course.Level
+            : "";
+
+    string selectedTimeRange = selectedSession != null
+        ? selectedSession.StartTime.ToString(@"hh\:mm") +
+          " – " +
+          selectedSession.EndTime.ToString(@"hh\:mm")
+        : "";
+
+    string selectedRoomName =
+        selectedSession != null &&
+        selectedSession.Room != null &&
+        !string.IsNullOrWhiteSpace(selectedSession.Room.RoomName)
+            ? selectedSession.Room.RoomName
+            : "Chưa cập nhật phòng";
+
+    bool hasSelectedSession = selectedSession != null;
+}
+
+<style>
+    /* ==========================================
+       TEACHER ATTENDANCE - ELC PORTAL
+       ========================================== */
+
+    .teacher-portal .ta-page {
+        min-width: 0;
+        color: #202938;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .ta-page *,
+    .ta-page *::before,
+    .ta-page *::after {
+        box-sizing: border-box;
+    }
+
+    .ta-page a,
+    .ta-page button,
+    .ta-page input,
+    .ta-page select {
+        transition: background .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    /* Đường dẫn */
+
+    .ta-breadcrumb {
+        margin-bottom: 18px;
+        color: #9199a8;
+        font-size: 12px;
+    }
+
+        .ta-breadcrumb a {
+            color: #b42329;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+            .ta-breadcrumb a:hover {
+                color: #8e1b20;
+                text-decoration: underline;
+            }
+
+        .ta-breadcrumb span {
+            margin: 0 8px;
+            color: #c4c9d2;
+        }
+
+    /* Tiêu đề */
+
+    .ta-page-heading {
+        display: flex;
+        align-items: center;
+        gap: 17px;
+        margin-bottom: 20px;
+        padding: 23px 25px;
+        border: 1px solid #e8ebf1;
+        border-radius: 15px;
+        background: radial-gradient( circle at 100% 0, rgba(198, 40, 40, .06), transparent 34% ), #fff;
+        box-shadow: 0 4px 18px rgba(28, 39, 60, .035);
+    }
+
+    .ta-page-heading-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 58px;
+        height: 58px;
+        flex: 0 0 58px;
+        border: 5px solid #fff2f2;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #fbe3e3, #f4caca);
+        color: #aa252a;
+        font-size: 22px;
+    }
+
+    .ta-page-heading-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ta-eyebrow {
+        display: block;
+        margin-bottom: 6px;
+        color: #c62828;
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: 1.2px;
+    }
+
+    .ta-page-heading h1 {
+        margin: 0 0 7px;
+        color: #202938;
+        font-size: clamp(21px, 2vw, 27px);
+        font-weight: 850;
+        line-height: 1.4;
+    }
+
+    .ta-page-heading p {
+        margin: 0;
+        color: #737d8e;
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .ta-date-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        flex: 0 0 auto;
+        padding: 9px 12px;
+        border: 1px solid #f0d0d0;
+        border-radius: 9px;
+        background: #fff6f6;
+        color: #a9252b;
+        font-size: 11px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    /* Thông báo */
+
+    .ta-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 16px;
+        padding: 13px 15px;
+        border: 1px solid;
+        border-radius: 10px;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+        .ta-alert .glyphicon {
+            margin-top: 2px;
+        }
+
+    .ta-alert-success {
+        border-color: #bfe4ce;
+        background: #f0fbf4;
+        color: #176b3a;
+    }
+
+    .ta-alert-error {
+        border-color: #f1c5c5;
+        background: #fff4f4;
+        color: #a61f24;
+    }
+
+    /* Chọn buổi học */
+
+    .ta-session-picker {
+        margin-bottom: 18px;
+        padding: 19px 21px;
+        border: 1px solid #e7eaf0;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 4px 16px rgba(28, 39, 60, .025);
+    }
+
+        .ta-session-picker form {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: end;
+            gap: 16px;
+        }
+
+    .ta-field {
+        min-width: 0;
+    }
+
+        .ta-field label {
+            display: block;
+            margin-bottom: 7px;
+            color: #344054;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+            .ta-field label .glyphicon {
+                margin-right: 5px;
+                color: #c62828;
+            }
+
+    .ta-select,
+    .ta-search-input,
+    .ta-note-input {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        border: 1px solid #dfe3ea;
+        border-radius: 8px;
+        background: #fff;
+        color: #344054;
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+    }
+
+    .ta-select {
+        height: 43px;
+        padding: 8px 11px;
+    }
+
+        .ta-select:focus,
+        .ta-search-input:focus,
+        .ta-note-input:focus {
+            border-color: #c62828;
+            box-shadow: 0 0 0 3px rgba(198, 40, 40, .09);
+        }
+
+    .ta-picker-help {
+        margin: 6px 0 0;
+        color: #929aaa;
+        font-size: 10.5px;
+        line-height: 1.7;
+    }
+
+    .ta-picker-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 43px;
+        padding: 10px 15px;
+        border: 1px solid #c62828;
+        border-radius: 8px;
+        background: #c62828;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 800;
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+        .ta-picker-button:hover,
+        .ta-picker-button:focus {
+            border-color: #a61f24;
+            background: #a61f24;
+            color: #fff;
+            text-decoration: none;
+        }
+
+    /* Thông tin buổi học */
+
+    .ta-session-summary {
+        margin-bottom: 18px;
+        padding: 19px 21px;
+        border: 1px solid #e8ebf1;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 4px 16px rgba(28, 39, 60, .025);
+    }
+
+    .ta-summary-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .ta-summary-kicker {
+        display: block;
+        margin-bottom: 5px;
+        color: #c62828;
+        font-size: 9.5px;
+        font-weight: 850;
+        letter-spacing: 1px;
+    }
+
+    .ta-summary-top h2 {
+        margin: 0 0 5px;
+        color: #202938;
+        font-size: 18px;
+        font-weight: 850;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .ta-summary-course {
+        margin: 0;
+        color: #7b8495;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .ta-session-id {
+        flex: 0 0 auto;
+        padding: 7px 10px;
+        border-radius: 7px;
+        background: #f2f4f8;
+        color: #667085;
+        font-size: 10px;
+        font-weight: 850;
+    }
+
+    .ta-summary-details {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .ta-summary-detail {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        min-width: 0;
+        padding: 11px 12px;
+        border: 1px solid #edf0f4;
+        border-radius: 9px;
+        background: #fafbfc;
+    }
+
+    .ta-summary-detail-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 31px;
+        height: 31px;
+        flex: 0 0 31px;
+        border-radius: 8px;
+        background: #fff0f0;
+        color: #c62828;
+        font-size: 13px;
+    }
+
+    .ta-summary-detail span {
+        display: block;
+        margin-bottom: 3px;
+        color: #929aaa;
+        font-size: 9.5px;
+        font-weight: 750;
+        line-height: 1.5;
+    }
+
+    .ta-summary-detail strong {
+        display: block;
+        color: #344054;
+        font-size: 11.5px;
+        font-weight: 800;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    /* Thống kê điểm danh */
+
+    .ta-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .ta-stat-card {
+        min-width: 0;
+        padding: 15px 16px;
+        border: 1px solid #e7eaf0;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 15px rgba(28, 39, 60, .025);
+    }
+
+    .ta-stat-label {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 11px;
+        color: #7b8495;
+        font-size: 9.5px;
+        font-weight: 850;
+        letter-spacing: .25px;
+        line-height: 1.5;
+    }
+
+        .ta-stat-label .glyphicon {
+            font-size: 13px;
+        }
+
+    .ta-stat-number {
+        display: block;
+        color: #202938;
+        font-size: 24px;
+        font-weight: 850;
+        line-height: 1.2;
+    }
+
+    .ta-stat-card.stat-present .ta-stat-label .glyphicon,
+    .ta-stat-card.stat-present .ta-stat-number {
+        color: #198754;
+    }
+
+    .ta-stat-card.stat-late .ta-stat-label .glyphicon,
+    .ta-stat-card.stat-late .ta-stat-number {
+        color: #b96c0c;
+    }
+
+    .ta-stat-card.stat-absent .ta-stat-label .glyphicon,
+    .ta-stat-card.stat-absent .ta-stat-number {
+        color: #c62828;
+    }
+
+    .ta-stat-card.stat-excused .ta-stat-label .glyphicon,
+    .ta-stat-card.stat-excused .ta-stat-number {
+        color: #4569b2;
+    }
+
+    /* Danh sách học viên */
+
+    .ta-roster-panel {
+        min-width: 0;
+        padding: 21px;
+        border: 1px solid #e7eaf0;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 4px 16px rgba(28, 39, 60, .025);
+    }
+
+    .ta-roster-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 13px;
+        margin-bottom: 16px;
+    }
+
+        .ta-roster-heading h2 {
+            margin: 0 0 5px;
+            color: #202938;
+            font-size: 17px;
+            font-weight: 850;
+            line-height: 1.5;
+        }
+
+            .ta-roster-heading h2 .glyphicon {
+                margin-right: 6px;
+                color: #c62828;
+            }
+
+        .ta-roster-heading p {
+            margin: 0;
+            color: #929aaa;
+            font-size: 11.5px;
+            line-height: 1.8;
+        }
+
+    .ta-completion-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 11px;
+        border: 1px solid #e3e8f0;
+        border-radius: 20px;
+        background: #f8fafc;
+        color: #596273;
+        font-size: 10.5px;
+        font-weight: 850;
+        white-space: nowrap;
+    }
+
+        .ta-completion-pill strong {
+            color: #b42329;
+        }
+
+    .ta-progress-track {
+        width: 100%;
+        height: 6px;
+        margin-bottom: 17px;
+        overflow: hidden;
+        border-radius: 10px;
+        background: #edf0f4;
+    }
+
+    .ta-progress-bar {
+        width: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #c62828, #e75d5d);
+        transition: width .2s ease;
+    }
+
+    .ta-roster-tools {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 13px;
+    }
+
+    .ta-search-wrap {
+        position: relative;
+        flex: 1 1 260px;
+        min-width: 0;
+        max-width: 390px;
+    }
+
+        .ta-search-wrap .glyphicon-search {
+            position: absolute;
+            top: 13px;
+            left: 12px;
+            color: #929aaa;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+    .ta-search-input {
+        height: 39px;
+        padding: 8px 12px 8px 34px;
+    }
+
+    .ta-search-result {
+        color: #929aaa;
+        font-size: 10.5px;
+        line-height: 1.7;
+    }
+
+    .ta-status-help {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-bottom: 13px;
+    }
+
+    .ta-status-help-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 8px;
+        border-radius: 6px;
+        background: #f8fafc;
+        color: #667085;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .ta-status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #98a2b3;
+    }
+
+        .ta-status-dot.dot-present {
+            background: #198754;
+        }
+
+        .ta-status-dot.dot-absent {
+            background: #c62828;
+        }
+
+        .ta-status-dot.dot-late {
+            background: #d98b1d;
+        }
+
+        .ta-status-dot.dot-excused {
+            background: #4f70b6;
+        }
+
+    /* Bảng điểm danh */
+
+    .ta-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid #e8ebf1;
+        border-radius: 10px;
+        scrollbar-width: thin;
+        scrollbar-color: #c4cbd6 #edf0f4;
+    }
+
+    .ta-student-table {
+        width: 100%;
+        min-width: 1060px;
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+    }
+
+        .ta-student-table thead th {
+            padding: 12px;
+            border-bottom: 1px solid #e7eaf0;
+            background: #f8fafc;
+            color: #596273;
+            font-size: 10px;
+            font-weight: 850;
+            letter-spacing: .35px;
+            text-align: left;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .ta-student-table tbody td {
+            padding: 13px 12px;
+            border-bottom: 1px solid #edf0f4;
+            color: #475467;
+            font-size: 11.5px;
+            vertical-align: top;
+        }
+
+        .ta-student-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .ta-student-table tbody tr:hover td {
+            background: #fffdfd;
+        }
+
+        .ta-student-table tbody tr.ta-row-complete td:first-child {
+            box-shadow: inset 3px 0 0 #d8eee0;
+        }
+
+    .ta-student-identity {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        min-width: 170px;
+    }
+
+    .ta-student-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        border-radius: 10px;
+        background: #fbe7e7;
+        color: #b42329;
+        font-size: 12px;
+        font-weight: 850;
+    }
+
+    .ta-student-name {
+        display: block;
+        margin: 1px 0 4px;
+        color: #273247;
+        font-size: 11.5px;
+        font-weight: 850;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .ta-student-username {
+        display: block;
+        color: #929aaa;
+        font-size: 10px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .ta-student-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 27px;
+        height: 27px;
+        padding: 0 6px;
+        border-radius: 7px;
+        background: #f2f4f8;
+        color: #667085;
+        font-size: 10.5px;
+        font-weight: 850;
+    }
+
+    .ta-status-options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(90px, 1fr));
+        gap: 6px;
+        min-width: 220px;
+    }
+
+    .ta-status-option {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        margin: 0;
+        padding: 7px 8px;
+        border: 1px solid #e5e9f0;
+        border-radius: 7px;
+        background: #fff;
+        color: #667085;
+        font-size: 10px;
+        font-weight: 750;
+        line-height: 1.5;
+        cursor: pointer;
+        white-space: normal;
+    }
+
+        .ta-status-option:hover {
+            border-color: #d4dbe5;
+            background: #f9fafc;
+        }
+
+        .ta-status-option input[type="radio"] {
+            flex: 0 0 auto;
+            margin: 0;
+            accent-color: #c62828;
+            cursor: pointer;
+        }
+
+        .ta-status-option.option-present:has(input:checked) {
+            border-color: #b8e0c7;
+            background: #effaf3;
+            color: #176b3a;
+        }
+
+        .ta-status-option.option-absent:has(input:checked) {
+            border-color: #f0c4c4;
+            background: #fff1f1;
+            color: #a61f24;
+        }
+
+        .ta-status-option.option-late:has(input:checked) {
+            border-color: #f1d5a8;
+            background: #fff8eb;
+            color: #9a5a08;
+        }
+
+        .ta-status-option.option-excused:has(input:checked) {
+            border-color: #cbd8f3;
+            background: #f1f5ff;
+            color: #3e5d9e;
+        }
+
+    .ta-note-input {
+        min-width: 205px;
+        min-height: 38px;
+        padding: 9px 10px;
+        line-height: 1.5;
+    }
+
+    .ta-note-help {
+        margin-top: 5px;
+        color: #9aa3b2;
+        font-size: 9.5px;
+        line-height: 1.5;
+    }
+
+    .ta-row-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 7px;
+        border-radius: 6px;
+        background: #f1f3f6;
+        color: #667085;
+        font-size: 9.5px;
+        font-weight: 850;
+        line-height: 1.5;
+        white-space: nowrap;
+    }
+
+        .ta-row-state.is-complete {
+            background: #e9f8ef;
+            color: #198754;
+        }
+
+    .ta-no-results,
+    .ta-empty-state {
+        padding: 36px 20px;
+        text-align: center;
+    }
+
+        .ta-no-results strong,
+        .ta-empty-state strong {
+            display: block;
+            margin: 0 0 6px;
+            color: #344054;
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .ta-no-results p,
+        .ta-empty-state p {
+            margin: 0;
+            color: #929aaa;
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+    .ta-empty-state-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 52px;
+        height: 52px;
+        margin: 0 auto 13px;
+        border-radius: 15px;
+        background: #fff0f0;
+        color: #c62828;
+        font-size: 22px;
+    }
+
+    /* Nút lưu */
+
+    .ta-submit-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 13px;
+        margin-top: 17px;
+        padding-top: 16px;
+        border-top: 1px solid #edf0f4;
+    }
+
+    .ta-submit-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        max-width: 620px;
+        color: #929aaa;
+        font-size: 10.5px;
+        line-height: 1.8;
+    }
+
+        .ta-submit-note .glyphicon {
+            margin-top: 3px;
+            color: #c62828;
+        }
+
+    .ta-submit-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 43px;
+        padding: 11px 18px;
+        border: 1px solid #c62828;
+        border-radius: 8px;
+        background: #c62828;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 850;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(198, 40, 40, .12);
+    }
+
+        .ta-submit-button:hover,
+        .ta-submit-button:focus {
+            border-color: #a61f24;
+            background: #a61f24;
+            color: #fff;
+            box-shadow: 0 5px 14px rgba(198, 40, 40, .18);
+        }
+
+    .ta-note-banner {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin-top: 14px;
+        padding: 12px 14px;
+        border: 1px solid #e7eaf0;
+        border-radius: 9px;
+        background: #f9fafc;
+        color: #778194;
+        font-size: 10.5px;
+        line-height: 1.8;
+    }
+
+        .ta-note-banner .glyphicon {
+            margin-top: 3px;
+            color: #c62828;
+        }
+
+    /* Responsive */
+
+    @@media (max-width: 1200px) {
+        .ta-stat-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .ta-session-picker form {
+            grid-template-columns: minmax(0, 1fr) auto;
+        }
+
+        .ta-picker-button {
+            justify-self: start;
+        }
+    }
+
+    @@media (max-width: 767px) {
+        .ta-page-heading {
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 17px;
+            border-radius: 12px;
+        }
+
+        .ta-page-heading-icon {
+            width: 46px;
+            height: 46px;
+            flex-basis: 46px;
+            border-width: 3px;
+            border-radius: 12px;
+            font-size: 18px;
+        }
+
+        .ta-date-chip {
+            margin-left: 58px;
+        }
+
+        .ta-session-picker,
+        .ta-session-summary,
+        .ta-roster-panel {
+            padding: 14px 12px;
+        }
+
+            .ta-session-picker form {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+        .ta-picker-button {
+            justify-self: stretch;
+        }
+
+        .ta-summary-top {
+            flex-direction: column;
+        }
+
+        .ta-summary-details {
+            grid-template-columns: 1fr;
+        }
+
+        .ta-stat-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 9px;
+        }
+
+        .ta-stat-card {
+            padding: 12px;
+        }
+
+        .ta-stat-number {
+            font-size: 21px;
+        }
+
+        .ta-stat-label {
+            font-size: 9px;
+        }
+
+        .ta-roster-heading {
+            align-items: flex-start;
+        }
+
+        .ta-search-wrap {
+            max-width: none;
+            flex-basis: 100%;
+        }
+
+        .ta-submit-bar {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .ta-submit-button {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="teacher-portal" id="teacher-attendance-page">
+
+    @* SIDEBAR GIÁO VIÊN *@
+    <aside class="teacher-sidebar">
+
+        <a class="teacher-brand"
+           href="@Url.Action("TeacherDashboard", "Home")">
+
+            <span class="teacher-brand-mark">EC</span>
+
+            <span class="teacher-brand-text">
+                ELC PORTAL
+                <small>TEACHER SPACE</small>
+            </span>
+
+        </a>
+
+        <div class="teacher-sidebar-caption">
+            KHÔNG GIAN GIẢNG DẠY
+        </div>
+
+        <nav class="teacher-side-nav" aria-label="Điều hướng giáo viên">
+
+            <a href="@Url.Action("TeacherDashboard", "Home")#teacher-dashboard"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">⌂</span>
+                Dashboard
+            </a>
+
+            <a href="@Url.Action("TeacherTeachingSchedule", "ClassSessions")#teacher-weekly-schedule"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">▦</span>
+                Lịch dạy + Lớp phụ trách
+            </a>
+
+            <a href="@Url.Action("TeacherAttendance", "Attendances")"
+               class="teacher-nav-link is-active">
+                <span class="teacher-nav-icon">✓</span>
+                Điểm danh
+            </a>
+
+            <a href="@Url.Action("TeacherGrading", "AssessmentScores")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">A+</span>
+                Nhập điểm
+            </a>
+
+            <a href="@Url.Action("TeacherClassResources", "CourseMaterials")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">▤</span>
+                Tài liệu &amp; BTVN
+            </a>
+
+            <a href="@Url.Action("TeacherSubmissions", "Assignments")"
+               class="teacher-nav-link">
+                <span class="teacher-nav-icon">⇩</span>
+                Chấm bài tập
+            </a>
+
+        </nav>
+
+        <div class="teacher-sidebar-bottom">
+
+            <div class="teacher-support-card">
+                <span class="teacher-support-icon">?</span>
+                <strong>Cần hỗ trợ?</strong>
+                <p>
+                    Liên hệ trung tâm để được hỗ trợ về lịch dạy hoặc điểm danh.
+                </p>
+
+                @Html.ActionLink(
+                    "Liên hệ trung tâm →",
+                    "Contact",
+                    "Home",
+                    null,
+                    new { @class = "teacher-support-link" }
+                )
+            </div>
+
+            @Html.ActionLink(
+                "↪ Đăng xuất",
+                "Logout",
+                "Auth",
+                null,
+                new { @class = "teacher-logout-link" }
+            )
+
+        </div>
+    </aside>
+
+    @* KHU VỰC CHÍNH *@
+    <div class="teacher-main">
+
+        <header class="teacher-topbar">
+
+            <div class="teacher-topbar-title">
+                <span>CỔNG GIÁO VIÊN</span>
+                <strong>Điểm danh học viên</strong>
+            </div>
+
+            <div class="teacher-topbar-user">
+                <span class="teacher-avatar-small">@teacherInitial</span>
+
+                <span class="teacher-topbar-user-info">
+                    <strong>@teacherName</strong>
+                    <small>Giáo viên</small>
+                </span>
+            </div>
+
+        </header>
+
+        <main class="teacher-content">
+
+            <div class="ta-page">
+
+                <div class="ta-breadcrumb">
+                    @Html.ActionLink("Trang chủ", "TeacherDashboard", "Home")
+                    <span>/</span>
+                    Cổng giáo viên
+                    <span>/</span>
+                    Điểm danh
+                </div>
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="ta-alert ta-alert-error" role="alert">
+                        <i class="glyphicon glyphicon-exclamation-sign"></i>
+                        <div>@TempData["ErrorMessage"]</div>
+                    </div>
+                }
+
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="ta-alert ta-alert-success" role="status">
+                        <i class="glyphicon glyphicon-ok-circle"></i>
+                        <div>@TempData["SuccessMessage"]</div>
+                    </div>
+                }
+
+                @* TIÊU ĐỀ *@
+                <section class="ta-page-heading">
+
+                    <div class="ta-page-heading-icon">
+                        <i class="glyphicon glyphicon-check"></i>
+                    </div>
+
+                    <div class="ta-page-heading-content">
+                        <span class="ta-eyebrow">ATTENDANCE MANAGEMENT</span>
+                        <h1>Điểm danh học viên</h1>
+                        <p>
+                            Chọn buổi học, cập nhật trạng thái cho từng học viên
+                            và lưu lại danh sách điểm danh.
+                        </p>
+                    </div>
+
+                    <span class="ta-date-chip">
+                        <i class="glyphicon glyphicon-calendar"></i>
+                        @DateTime.Today.ToString("dd/MM/yyyy")
+                    </span>
+
+                </section>
+
+                @* CHỌN BUỔI HỌC *@
+                <section class="ta-session-picker">
+
+                    @using (Html.BeginForm(
+                        "TeacherAttendance",
+                        "Attendances",
+                        FormMethod.Get,
+                        new { id = "ta-session-form" }))
+                    {
+                        <div class="ta-field">
+
+                            <label for="ta-session-select">
+                                <i class="glyphicon glyphicon-calendar"></i>
+                                Chọn buổi học cần điểm danh
+                            </label>
+
+                            <select id="ta-session-select"
+                                    name="sessionId"
+                                    class="ta-select"
+                                    onchange="this.form.submit()">
+
+                                <option value="">-- Chọn buổi học --</option>
+
+                                @foreach (var session in availableSessions)
+                                {
+                                    string optionClassName =
+                                        session.Class != null &&
+                                        !string.IsNullOrWhiteSpace(session.Class.ClassName)
+                                            ? session.Class.ClassName
+                                            : "Lớp #" + session.ClassId;
+
+                                    string optionCourseName =
+                                        session.Class != null &&
+                                        session.Class.Course != null &&
+                                        !string.IsNullOrWhiteSpace(session.Class.Course.CourseName)
+                                            ? session.Class.Course.CourseName
+                                            : "Khóa học";
+
+                                    string optionText =
+                                        session.SessionDate.ToString("dd/MM/yyyy") + " · " +
+                                        session.StartTime.ToString(@"hh\:mm") + "–" +
+                                        session.EndTime.ToString(@"hh\:mm") + " · " +
+                                        optionClassName + " · " + optionCourseName;
+
+                                    <option value="@session.Id"
+                                            @(Model != null && Model.SelectedSessionId == session.Id ? "selected=\"selected\"" : "")>
+                                        @optionText
+                                    </option>
+                                }
+
+                            </select>
+
+                            <p class="ta-picker-help">
+                                Danh sách chỉ gồm những buổi học thuộc các lớp bạn đang phụ trách.
+                            </p>
+
+                        </div>
+
+                        <button type="submit" class="ta-picker-button">
+                            <i class="glyphicon glyphicon-search"></i>
+                            Xem buổi học
+                        </button>
+                    }
+
+                </section>
+
+                @if (!availableSessions.Any())
+                {
+                    <section class="ta-roster-panel">
+
+                        <div class="ta-empty-state">
+                            <div class="ta-empty-state-icon">
+                                <i class="glyphicon glyphicon-calendar"></i>
+                            </div>
+
+                            <strong>Chưa có buổi học được phân công</strong>
+
+                            <p>
+                                Hiện chưa tìm thấy buổi học nào thuộc các lớp bạn phụ trách.
+                            </p>
+                        </div>
+
+                    </section>
+                }
+                else if (!hasSelectedSession)
+                {
+                    <section class="ta-roster-panel">
+
+                        <div class="ta-empty-state">
+                            <div class="ta-empty-state-icon">
+                                <i class="glyphicon glyphicon-hand-up"></i>
+                            </div>
+
+                            <strong>Chọn một buổi học để bắt đầu</strong>
+
+                            <p>
+                                Chọn buổi học ở phía trên để xem danh sách học viên
+                                và thực hiện điểm danh.
+                            </p>
+                        </div>
+
+                    </section>
+                }
+                else
+                {
+                    @* THÔNG TIN BUỔI HỌC *@
+                    <section class="ta-session-summary">
+
+                        <div class="ta-summary-top">
+                            <div>
+
+                                <span class="ta-summary-kicker">
+                                    BUỔI HỌC ĐANG ĐIỂM DANH
+                                </span>
+
+                                <h2>@selectedClassName</h2>
+
+                                <p class="ta-summary-course">
+                                    @selectedCourseName
+
+                                    @if (!string.IsNullOrWhiteSpace(selectedCourseLevel))
+                                    {
+                                        <span> · Trình độ @selectedCourseLevel</span>
+                                    }
+                                </p>
+
+                            </div>
+
+                            <span class="ta-session-id">
+                                MÃ BUỔI #@selectedSession.Id
+                            </span>
+
+                        </div>
+
+                        <div class="ta-summary-details">
+
+                            <div class="ta-summary-detail">
+                                <span class="ta-summary-detail-icon">
+                                    <i class="glyphicon glyphicon-calendar"></i>
+                                </span>
+                                <div>
+                                    <span>Ngày học</span>
+                                    <strong>
+                                        @selectedSession.SessionDate.ToString("dd/MM/yyyy")
+                                    </strong>
+                                </div>
+                            </div>
+
+                            <div class="ta-summary-detail">
+                                <span class="ta-summary-detail-icon">
+                                    <i class="glyphicon glyphicon-time"></i>
+                                </span>
+                                <div>
+                                    <span>Giờ học</span>
+                                    <strong>@selectedTimeRange</strong>
+                                </div>
+                            </div>
+
+                            <div class="ta-summary-detail">
+                                <span class="ta-summary-detail-icon">
+                                    <i class="glyphicon glyphicon-home"></i>
+                                </span>
+                                <div>
+                                    <span>Phòng học</span>
+                                    <strong>@selectedRoomName</strong>
+                                </div>
+                            </div>
+
+                        </div>
+                    </section>
+
+                    @* THỐNG KÊ *@
+                    <section class="ta-stat-grid" aria-label="Thống kê điểm danh">
+
+                        <article class="ta-stat-card">
+                            <span class="ta-stat-label">
+                                <i class="glyphicon glyphicon-user"></i>
+                                TỔNG HỌC VIÊN
+                            </span>
+                            <strong class="ta-stat-number" id="ta-stat-total">
+                                @totalStudents
+                            </strong>
+                        </article>
+
+                        <article class="ta-stat-card stat-present">
+                            <span class="ta-stat-label">
+                                <i class="glyphicon glyphicon-ok-circle"></i>
+                                CÓ MẶT
+                            </span>
+                            <strong class="ta-stat-number" id="ta-stat-present">
+                                @presentCount
+                            </strong>
+                        </article>
+
+                        <article class="ta-stat-card stat-late">
+                            <span class="ta-stat-label">
+                                <i class="glyphicon glyphicon-time"></i>
+                                ĐI TRỄ
+                            </span>
+                            <strong class="ta-stat-number" id="ta-stat-late">
+                                @lateCount
+                            </strong>
+                        </article>
+
+                        <article class="ta-stat-card stat-absent">
+                            <span class="ta-stat-label">
+                                <i class="glyphicon glyphicon-remove-circle"></i>
+                                VẮNG KHÔNG PHÉP
+                            </span>
+                            <strong class="ta-stat-number" id="ta-stat-absent">
+                                @absentCount
+                            </strong>
+                        </article>
+
+                        <article class="ta-stat-card stat-excused">
+                            <span class="ta-stat-label">
+                                <i class="glyphicon glyphicon-info-sign"></i>
+                                VẮNG CÓ PHÉP
+                            </span>
+                            <strong class="ta-stat-number" id="ta-stat-excused">
+                                @excusedCount
+                            </strong>
+                        </article>
+
+                    </section>
+
+                    @* FORM LƯU ĐIỂM DANH
+                        Dùng thẻ form HTML để tránh lỗi Razor
+                        khi form nằm bên trong khối else.
+                    *@
+
+                    <form action="@Url.Action("SaveTeacherAttendance", "Attendances")"
+                          method="post"
+                          id="ta-attendance-form">
+
+                        @Html.AntiForgeryToken()
+                        @Html.HiddenFor(m => m.SelectedSessionId)
+
+                        <section class="ta-roster-panel">
+
+                            <div class="ta-roster-heading">
+                                <div>
+                                    <h2>
+                                        <i class="glyphicon glyphicon-list-alt"></i>
+                                        Danh sách học viên
+                                    </h2>
+
+                                    <p>
+                                        Chọn một trạng thái cho mỗi học viên.
+                                        Lý do bắt buộc khi chọn “Trễ” hoặc “Có phép”.
+                                    </p>
+                                </div>
+
+                                <span class="ta-completion-pill">
+                                    Đã chọn trạng thái
+                                    <strong id="ta-completed-count">
+                                        @completedCount/@totalStudents
+                                    </strong>
+                                </span>
+                            </div>
+
+                            <div class="ta-progress-track" aria-label="Tiến độ điểm danh">
+                                <div class="ta-progress-bar"
+                                     id="ta-progress-bar"
+                                     style="width:@(totalStudents == 0 ? 0 : Math.Round((double)completedCount * 100 / totalStudents))%;">
+                                </div>
+                            </div>
+
+                            @if (students.Any())
+                            {
+                                <div class="ta-roster-tools">
+
+                                    <div class="ta-search-wrap">
+                                        <i class="glyphicon glyphicon-search"></i>
+
+                                        <input type="search"
+                                               id="ta-student-search"
+                                               class="ta-search-input"
+                                               placeholder="Tìm theo tên hoặc tài khoản học viên..."
+                                               autocomplete="off" />
+                                    </div>
+
+                                    <span class="ta-search-result" id="ta-search-result">
+                                        Hiển thị @totalStudents học viên
+                                    </span>
+
+                                </div>
+
+                                <div class="ta-status-help">
+                                    <span class="ta-status-help-item">
+                                        <span class="ta-status-dot dot-present"></span>
+                                        Có mặt
+                                    </span>
+
+                                    <span class="ta-status-help-item">
+                                        <span class="ta-status-dot dot-late"></span>
+                                        Trễ
+                                    </span>
+
+                                    <span class="ta-status-help-item">
+                                        <span class="ta-status-dot dot-absent"></span>
+                                        Vắng không phép
+                                    </span>
+
+                                    <span class="ta-status-help-item">
+                                        <span class="ta-status-dot dot-excused"></span>
+                                        Vắng có phép
+                                    </span>
+                                </div>
+
+                                <div class="ta-table-wrap">
+
+                                    <table class="ta-student-table">
+
+                                        <thead>
+                                            <tr>
+                                                <th style="width:55px;">STT</th>
+                                                <th style="width:230px;">HỌC VIÊN</th>
+                                                <th style="width:300px;">TRẠNG THÁI ĐIỂM DANH</th>
+                                                <th style="width:245px;">GHI CHÚ / LÝ DO</th>
+                                                <th style="width:125px;">TÌNH TRẠNG</th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody id="ta-student-table-body">
+
+                                            @for (int i = 0; i < students.Count; i++)
+                                            {
+                                                string studentName =
+                                                    string.IsNullOrWhiteSpace(students[i].FullName)
+                                                        ? "Học viên"
+                                                        : students[i].FullName;
+
+                                                string studentInitial =
+                                                    studentName.Substring(0, 1).ToUpper();
+
+                                                string username =
+                                                    string.IsNullOrWhiteSpace(students[i].Username)
+                                                        ? "Chưa có tài khoản"
+                                                        : students[i].Username;
+
+                                                bool rowComplete =
+                                                    !string.IsNullOrWhiteSpace(students[i].Status);
+
+                                                <tr class="ta-student-row @(rowComplete ? "ta-row-complete" : "")"
+                                                    data-student-row
+                                                    data-student-name="@studentName"
+                                                    data-student-username="@username">
+
+                                                    <td>
+                                                        <span class="ta-student-number">
+                                                            @(i + 1)
+                                                        </span>
+                                                    </td>
+
+                                                    <td>
+                                                        <div class="ta-student-identity">
+
+                                                            <span class="ta-student-avatar">
+                                                                @studentInitial
+                                                            </span>
+
+                                                            <span>
+                                                                <strong class="ta-student-name">
+                                                                    @studentName
+                                                                </strong>
+
+                                                                <span class="ta-student-username">
+                                                                    @username
+                                                                </span>
+                                                            </span>
+
+                                                        </div>
+
+                                                        @Html.HiddenFor(m => m.Students[i].StudentId)
+                                                    </td>
+
+                                                    <td>
+                                                        <div class="ta-status-options">
+
+                                                            <label class="ta-status-option option-present">
+                                                                @Html.RadioButtonFor(
+                                                                    m => m.Students[i].Status,
+                                                                    "Present",
+                                                                    new { @class = "ta-status-radio" })
+                                                                <span>Có mặt</span>
+                                                            </label>
+
+                                                            <label class="ta-status-option option-absent">
+                                                                @Html.RadioButtonFor(
+                                                                    m => m.Students[i].Status,
+                                                                    "Absent",
+                                                                    new { @class = "ta-status-radio" })
+                                                                <span>Vắng không phép</span>
+                                                            </label>
+
+                                                            <label class="ta-status-option option-late">
+                                                                @Html.RadioButtonFor(
+                                                                    m => m.Students[i].Status,
+                                                                    "Late",
+                                                                    new { @class = "ta-status-radio" })
+                                                                <span>Đi trễ</span>
+                                                            </label>
+
+                                                            <label class="ta-status-option option-excused">
+                                                                @Html.RadioButtonFor(
+                                                                    m => m.Students[i].Status,
+                                                                    "Excused",
+                                                                    new { @class = "ta-status-radio" })
+                                                                <span>Vắng có phép</span>
+                                                            </label>
+
+                                                        </div>
+                                                    </td>
+
+                                                    <td>
+                                                        @Html.TextBoxFor(
+                                                            m => m.Students[i].Notes,
+                                                            new
+                                                            {
+                                                                @class = "ta-note-input",
+                                                                maxlength = "255",
+                                                                placeholder = "Nhập lý do nếu trễ / có phép..."
+                                                            })
+
+                                                        <div class="ta-note-help">
+                                                            Tối đa 255 ký tự
+                                                        </div>
+                                                    </td>
+
+                                                    <td>
+                                                        <span class="ta-row-state @(rowComplete ? "is-complete" : "")"
+                                                              data-row-state>
+
+                                                            <i class="glyphicon @(rowComplete ? "glyphicon-ok-circle" : "glyphicon-time")"></i>
+
+                                                            <span>
+                                                                @(rowComplete ? "Đã chọn" : "Chưa chọn")
+                                                            </span>
+
+                                                        </span>
+                                                    </td>
+
+                                                </tr>
+                                            }
+
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                                <div class="ta-no-results" id="ta-no-results" style="display:none;">
+                                    <strong>Không tìm thấy học viên</strong>
+                                    <p>Hãy thử nhập tên hoặc tài khoản khác.</p>
+                                </div>
+
+                                <div class="ta-submit-bar">
+
+                                    <div class="ta-submit-note">
+                                        <i class="glyphicon glyphicon-info-sign"></i>
+                                        <span>
+                                            Kiểm tra trạng thái của tất cả học viên trước khi lưu.
+                                            Những học viên chọn “Đi trễ” hoặc “Vắng có phép”
+                                            cần nhập lý do.
+                                        </span>
+                                    </div>
+
+                                    <button type="submit" class="ta-submit-button">
+                                        <i class="glyphicon glyphicon-floppy-disk"></i>
+                                        Lưu điểm danh
+                                    </button>
+
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="ta-empty-state">
+                                    <div class="ta-empty-state-icon">
+                                        <i class="glyphicon glyphicon-user"></i>
+                                    </div>
+
+                                    <strong>Lớp học chưa có học viên</strong>
+
+                                    <p>
+                                        Không tìm thấy học viên đủ điều kiện ghi danh cho buổi học này.
+                                    </p>
+                                </div>
+                            }
+
+                        </section>
+
+                    </form>
+
+                    <div class="ta-note-banner">
+                        <i class="glyphicon glyphicon-shield"></i>
+                        <span>
+                            Sau khi lưu, hệ thống sẽ quay lại đúng buổi học này để bạn kiểm tra
+                            trạng thái đã ghi nhận. Hãy nhập lý do cho các trường hợp đi trễ
+                            hoặc vắng có phép trước khi gửi.
+                        </span>
+                    </div>
+
+                }
+
+            </div>
+
+        </main>
+
+    </div>
+
+</div>
+
+@section scripts {
+    <script>
+                (function () {
+                    "use strict";
+
+                    var searchInput = document.getElementById("ta-student-search");
+
+                    var rows = Array.prototype.slice.call(
+                        document.querySelectorAll("[data-student-row]")
+                    );
+
+                    var noResults = document.getElementById("ta-no-results");
+                    var searchResult = document.getElementById("ta-search-result");
+                    var completedCountElement = document.getElementById("ta-completed-count");
+                    var progressBar = document.getElementById("ta-progress-bar");
+
+                    function updateAttendanceSummary() {
+                        var present = 0;
+                        var late = 0;
+                        var absent = 0;
+                        var excused = 0;
+                        var completed = 0;
+
+                        rows.forEach(function (row) {
+                            var selected = row.querySelector(
+                                "input[type='radio']:checked"
+                            );
+
+                            var status = selected ? selected.value : "";
+                            var state = row.querySelector("[data-row-state]");
+                            var stateText = state
+                                ? state.querySelector("span")
+                                : null;
+
+                            var rowIsComplete =
+                                status === "Present" ||
+                                status === "Absent" ||
+                                status === "Late" ||
+                                status === "Excused";
+
+                            if (status === "Present") present++;
+                            if (status === "Late") late++;
+                            if (status === "Absent") absent++;
+                            if (status === "Excused") excused++;
+                            if (rowIsComplete) completed++;
+
+                            row.classList.toggle(
+                                "ta-row-complete",
+                                rowIsComplete
+                            );
+
+                            if (state) {
+                                state.classList.toggle(
+                                    "is-complete",
+                                    rowIsComplete
+                                );
+
+                                var icon = state.querySelector(".glyphicon");
+
+                                if (icon) {
+                                    icon.className = "glyphicon " +
+                                        (rowIsComplete
+                                            ? "glyphicon-ok-circle"
+                                            : "glyphicon-time");
+                                }
+                            }
+
+                            if (stateText) {
+                                stateText.textContent = rowIsComplete
+                                    ? "Đã chọn"
+                                    : "Chưa chọn";
+                            }
+                        });
+
+                        var counters = {
+                            "ta-stat-present": present,
+                            "ta-stat-late": late,
+                            "ta-stat-absent": absent,
+                            "ta-stat-excused": excused
+                        };
+
+                        Object.keys(counters).forEach(function (id) {
+                            var element = document.getElementById(id);
+
+                            if (element) {
+                                element.textContent = counters[id];
+                            }
+                        });
+
+                        if (completedCountElement) {
+                            completedCountElement.textContent =
+                                completed + "/" + rows.length;
+                        }
+
+                        if (progressBar) {
+                            var percent = rows.length
+                                ? Math.round(completed * 100 / rows.length)
+                                : 0;
+
+                            progressBar.style.width = percent + "%";
+                        }
+                    }
+
+                    function filterStudents() {
+                        var term = searchInput
+                            ? searchInput.value.trim().toLocaleLowerCase()
+                            : "";
+
+                        var visible = 0;
+
+                        rows.forEach(function (row) {
+                            var name = (
+                                row.getAttribute("data-student-name") || ""
+                            ).toLocaleLowerCase();
+
+                            var username = (
+                                row.getAttribute("data-student-username") || ""
+                            ).toLocaleLowerCase();
+
+                            var matched =
+                                !term ||
+                                name.indexOf(term) >= 0 ||
+                                username.indexOf(term) >= 0;
+
+                            row.style.display = matched ? "" : "none";
+
+                            if (matched) {
+                                visible++;
+                            }
+                        });
+
+                        if (searchResult) {
+                            searchResult.textContent =
+                                "Hiển thị " + visible + "/" +
+                                rows.length + " học viên";
+                        }
+
+                        if (noResults) {
+                            noResults.style.display =
+                                rows.length > 0 && visible === 0
+                                    ? "block"
+                                    : "none";
+                        }
+                    }
+
+                    document.querySelectorAll(".ta-status-radio").forEach(
+                        function (radio) {
+                            radio.addEventListener(
+                                "change",
+                                updateAttendanceSummary
+                            );
+                        }
+                    );
+
+                    if (searchInput) {
+                        searchInput.addEventListener("input", filterStudents);
+                    }
+
+                    var attendanceForm =
+                        document.getElementById("ta-attendance-form");
+
+                    if (attendanceForm) {
+                        attendanceForm.addEventListener("submit", function (event) {
+
+                            var rowsMissingStatus = rows.filter(function (row) {
+                                return !row.querySelector(
+                                    "input[type='radio']:checked"
+                                );
+                            });
+
+                            var rowsMissingReason = rows.filter(function (row) {
+                                var selected = row.querySelector(
+                                    "input[type='radio']:checked"
+                                );
+
+                                if (
+                                    !selected ||
+                                    (selected.value !== "Late" &&
+                                     selected.value !== "Excused")
+                                ) {
+                                    return false;
+                                }
+
+                                var notes = row.querySelector(
+                                    "input[name$='.Notes']"
+                                );
+
+                                return !notes || !notes.value.trim();
+                            });
+
+                            if (rowsMissingStatus.length > 0) {
+                                event.preventDefault();
+
+                                alert(
+                                    "Vui lòng chọn trạng thái điểm danh cho tất cả học viên còn thiếu."
+                                );
+
+                                if (searchInput) {
+                                    searchInput.value = "";
+                                    filterStudents();
+                                }
+
+                                rowsMissingStatus[0].scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "center"
+                                });
+
+                                return;
+                            }
+
+                            if (rowsMissingReason.length > 0) {
+                                event.preventDefault();
+
+                                alert(
+                                    "Vui lòng nhập lý do cho học viên đi trễ hoặc vắng có phép."
+                                );
+
+                                if (searchInput) {
+                                    searchInput.value = "";
+                                    filterStudents();
+                                }
+
+                                var noteInput = rowsMissingReason[0].querySelector(
+                                    "input[name$='.Notes']"
+                                );
+
+                                if (noteInput) {
+                                    noteInput.focus();
+
+                                    noteInput.scrollIntoView({
+                                        behavior: "smooth",
+                                        block: "center"
+                                    });
+                                }
+                            }
+                        });
+                    }
+
+                    updateAttendanceSummary();
+                    filterStudents();
+                })();
+    </script>
+}

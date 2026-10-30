@@ -1,0 +1,115 @@
+﻿@model English_language_center_management_system.Models.Enrollment
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using English_language_center_management_system.Models
+@{
+    ViewBag.Title = "Chi tiết ghi danh";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var payments = ViewBag.Payments as IEnumerable<Payment> ?? Enumerable.Empty<Payment>();
+    var paymentRows = payments.OrderByDescending(p => p.PaymentDate).ToList();
+    decimal totalRecorded = paymentRows.Sum(p => p.AmountPaid);
+    string enrollmentStatus = Model.Status ?? "";
+    string statusText = "Chưa xác định";
+    string statusClass = "enrollment-detail-status-default";
+    switch (enrollmentStatus)
+    {
+        case "Pending": statusText = "Chờ duyệt"; statusClass = "enrollment-detail-status-pending"; break;
+        case "Approved":
+        case "Confirmed": statusText = "Đã xác nhận"; statusClass = "enrollment-detail-status-approved"; break;
+        case "Active":
+        case "Studying": statusText = "Đang học"; statusClass = "enrollment-detail-status-active"; break;
+        case "Completed": statusText = "Hoàn thành"; statusClass = "enrollment-detail-status-completed"; break;
+        default: statusText = "Đã từ chối / hủy"; statusClass = "enrollment-detail-status-cancelled"; break;
+    }
+}
+<div class="admin-enrollment-detail-page">
+    <div class="admin-enrollment-detail-header">
+        <div>
+            <div class="enrollment-detail-eyebrow">QUẢN LÝ ĐÀO TẠO</div>
+            <h2>Chi tiết ghi danh</h2>
+            <p>Thông tin đăng ký học, lớp học và lịch sử thanh toán.</p>
+        </div>
+        <a href="@Url.Action("Index", "Enrollments")" class="enrollment-detail-back">
+            <i class="glyphicon glyphicon-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    <!-- Thông báo logic mới -->
+    @if (enrollmentStatus == "Pending")
+    {
+        <div class="enrollment-detail-alert enrollment-detail-alert-error" style="background-color: #fff3cd; color: #856404; border-color: #ffeeba;">
+            <i class="glyphicon glyphicon-warning-sign"></i>
+            <strong>Yêu cầu đóng học phí:</strong> Đơn ghi danh này đang ở trạng thái <b>Chờ duyệt</b>. Vui lòng kiểm tra lịch sử thanh toán bên dưới. Hệ thống chỉ cho phép duyệt nếu học viên đã đóng tiền (một phần hoặc đầy đủ).
+        </div>
+    }
+
+    <div class="enrollment-detail-hero">
+        <div class="enrollment-detail-hero-icon"><i class="glyphicon glyphicon-list-alt"></i></div>
+        <div class="enrollment-detail-hero-main">
+            <span class="enrollment-detail-code">MÃ GHI DANH #@Model.Id</span>
+            <h3>@(Model.Student?.FullName ?? "Chưa có thông tin học viên")</h3>
+            <div class="enrollment-detail-hero-meta">
+                <span><i class="glyphicon glyphicon-education"></i> @(Model.Class?.ClassName ?? "Chưa xác định")</span>
+            </div>
+        </div>
+        <div class="enrollment-detail-hero-status">
+            <span class="enrollment-detail-status @statusClass">@statusText</span>
+        </div>
+    </div>
+
+    <!-- Tóm tắt thanh toán -->
+    <div class="enrollment-detail-payment-summary">
+        <div class="enrollment-detail-payment-icon"><i class="glyphicon glyphicon-credit-card"></i></div>
+        <div class="enrollment-detail-payment-text">
+            <span>Tổng tiền đã thu cho đơn này</span>
+            <strong>@totalRecorded.ToString("N0") VNĐ</strong>
+            <small>Học phí quy định của khóa học là: <b>@(Model.Class?.Course?.TuitionFee.ToString("N0") ?? "0") VNĐ</b></small>
+        </div>
+    </div>
+
+    <div class="enrollment-detail-card enrollment-detail-payments">
+        <div class="enrollment-detail-card-heading">
+            <div>
+                <h3>Lịch sử thanh toán</h3>
+                <p>Các giao dịch được ghi nhận cho lượt ghi danh này.</p>
+            </div>
+        </div>
+        @if (paymentRows.Any())
+        {
+            <div class="enrollment-detail-table-wrap">
+                <table class="enrollment-detail-table">
+                    <thead>
+                        <tr>
+                            <th>Mã biên lai</th>
+                            <th>Ngày thanh toán</th>
+                            <th>Phương thức</th>
+                            <th>Số tiền</th>
+                            <th>Trạng thái phiếu thu</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var payment in paymentRows)
+                        {
+                            <tr>
+                                <td><strong>@(String.IsNullOrWhiteSpace(payment.ReceiptNumber) ? "—" : payment.ReceiptNumber)</strong></td>
+                                <td>@(payment.PaymentDate.HasValue ? payment.PaymentDate.Value.ToString("dd/MM/yyyy HH:mm") : "Chưa cập nhật")</td>
+                                <td>@payment.PaymentMethod</td>
+                                <td><strong style="color: #28a745;">@payment.AmountPaid.ToString("N0") VNĐ</strong></td>
+                                <td>@payment.PaymentStatus</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="enrollment-detail-empty enrollment-detail-empty-large">
+                <i class="glyphicon glyphicon-credit-card"></i>
+                <strong>Đơn này hiện đang nợ 100% học phí</strong>
+                <span>Chưa có giao dịch thu tiền nào được ghi nhận. Vui lòng sang Quản lý học phí để lập phiếu thu.</span>
+            </div>
+        }
+    </div>
+</div>

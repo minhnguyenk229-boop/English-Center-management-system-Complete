@@ -1,0 +1,2329 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Home.HomeViewModel
+
+@{
+    ViewBag.Title = "Trang chủ";
+}
+
+<style>
+    /* ================================================
+       TRANG CHỦ - PHONG CÁCH TRUNG TÂM ANH NGỮ
+       ================================================ */
+
+    body:has(.center-home) {
+        background: #ffffff;
+    }
+
+        body:has(.center-home) .body-content {
+            width: 100%;
+            max-width: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            min-height: 0;
+        }
+
+        body:has(.center-home) footer {
+            margin-top: 0;
+        }
+
+    .center-home {
+        --red: #b51f2a;
+        --dark: #17212f;
+        --text: #273343;
+        --muted: #687382;
+        --border: #e3e5e8;
+        --light: #f6f7f8;
+        color: var(--text);
+        background: #fff;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+        .center-home *,
+        .center-home *::before,
+        .center-home *::after {
+            box-sizing: border-box;
+        }
+
+        .center-home a {
+            text-decoration: none;
+        }
+
+        .center-home .ch-container {
+            width: min(1280px, calc(100% - 64px));
+            margin: 0 auto;
+        }
+
+        .center-home .ch-label {
+            display: inline-block;
+            color: var(--red);
+            font-size: 12px;
+            font-weight: 750;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .center-home .ch-heading {
+            margin: 12px 0 0;
+            color: var(--dark);
+            font-size: clamp(28px, 3vw, 39px);
+            font-weight: 750;
+            line-height: 1.28;
+            letter-spacing: -.7px;
+        }
+
+        .center-home .ch-paragraph {
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.85;
+        }
+
+        .center-home .ch-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--red);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+            .center-home .ch-link:hover {
+                color: #891720;
+            }
+
+        /* ================= BANNER ================= */
+
+        .center-home .ch-hero {
+            position: relative;
+            display: flex;
+            align-items: center;
+            min-height: 470px;
+            background: #152334;
+            overflow: hidden;
+        }
+
+        .center-home .ch-hero-image {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 42%;
+        }
+
+        .center-home .ch-hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient( 90deg, rgba(13, 24, 38, .94) 0%, rgba(13, 24, 38, .82) 35%, rgba(13, 24, 38, .15) 100% );
+        }
+
+        .center-home .ch-hero-content {
+            position: relative;
+            z-index: 1;
+            padding: 70px 0;
+        }
+
+        .center-home .ch-hero-copy {
+            max-width: 630px;
+        }
+
+        .center-home .ch-hero .ch-label {
+            color: #f0c1c4;
+        }
+
+        .center-home .ch-hero h1 {
+            margin: 19px 0 20px;
+            color: #fff;
+            font-size: clamp(38px, 4.3vw, 57px);
+            font-weight: 750;
+            line-height: 1.16;
+            letter-spacing: -1px;
+        }
+
+        .center-home .ch-hero p {
+            max-width: 520px;
+            margin: 0 0 27px;
+            color: #e3e8ef;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .center-home .ch-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 14px 24px;
+            color: #fff;
+            background: var(--red);
+            font-size: 14px;
+            font-weight: 700;
+            transition: background .2s;
+        }
+
+            .center-home .ch-button:hover {
+                background: #931922;
+                color: #fff;
+            }
+
+        /* ================= THỐNG KÊ ================= */
+
+        .center-home .ch-stats {
+            border-bottom: 1px solid var(--border);
+            background: #fff;
+        }
+
+        .center-home .ch-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            padding: 24px 0;
+        }
+
+        .center-home .ch-stat {
+            text-align: center;
+            padding: 6px 16px;
+            border-right: 1px solid var(--border);
+        }
+
+            .center-home .ch-stat:last-child {
+                border-right: none;
+            }
+
+            .center-home .ch-stat strong {
+                display: block;
+                color: var(--red);
+                font-size: 29px;
+                font-weight: 800;
+                line-height: 1.2;
+            }
+
+            .center-home .ch-stat span {
+                display: block;
+                margin-top: 5px;
+                color: var(--muted);
+                font-size: 13px;
+            }
+
+        /* ================= GIỚI THIỆU ================= */
+
+        .center-home .ch-about {
+            padding: 68px 0;
+        }
+
+        .center-home .ch-about-grid {
+            display: grid;
+            grid-template-columns: 1.04fr .96fr;
+            align-items: center;
+            gap: 58px;
+        }
+
+        .center-home .ch-about-image {
+            display: block;
+            width: 100%;
+            height: 410px;
+            object-fit: cover;
+        }
+
+        .center-home .ch-about-copy .ch-heading {
+            margin-bottom: 23px;
+        }
+
+        .center-home .ch-about-copy .ch-paragraph {
+            margin: 0 0 17px;
+        }
+
+        .center-home .ch-about-points {
+            margin-top: 25px;
+            border-top: 1px solid var(--border);
+        }
+
+        .center-home .ch-about-point {
+            display: grid;
+            grid-template-columns: 28px 1fr;
+            gap: 12px;
+            align-items: start;
+            padding: 13px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+            .center-home .ch-about-point > span {
+                color: var(--red);
+                font-size: 17px;
+                font-weight: 800;
+            }
+
+            .center-home .ch-about-point strong {
+                display: block;
+                margin-bottom: 3px;
+                color: var(--dark);
+                font-size: 14px;
+            }
+
+            .center-home .ch-about-point p {
+                margin: 0;
+                color: var(--muted);
+                font-size: 13px;
+                line-height: 1.7;
+            }
+
+        /* ================= KHÓA HỌC ================= */
+
+        .center-home .ch-courses {
+            padding: 65px 0 72px;
+            background: var(--light);
+        }
+
+        .center-home .ch-section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 25px;
+            margin-bottom: 28px;
+        }
+
+            .center-home .ch-section-head .ch-heading {
+                margin-bottom: 0;
+            }
+
+        .center-home .ch-course-list {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        .center-home .ch-course-item {
+            display: grid;
+            grid-template-columns: 38px minmax(0, 1fr);
+            gap: 12px;
+            min-width: 0;
+            padding: 24px 20px;
+            background: #fff;
+            border: 1px solid var(--border);
+            transition: border-color .2s, transform .2s;
+        }
+
+            .center-home .ch-course-item:hover {
+                border-color: #c9a4a7;
+                transform: translateY(-2px);
+            }
+
+        .center-home .ch-course-number {
+            color: #c4c9cf;
+            font-size: 29px;
+            line-height: 1;
+            font-weight: 800;
+        }
+
+        .center-home .ch-course-level {
+            display: inline-block;
+            margin-bottom: 8px;
+            color: var(--red);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+        }
+
+        .center-home .ch-course-item h3 {
+            margin: 0 0 9px;
+            color: var(--dark);
+            font-size: 20px;
+            font-weight: 750;
+            line-height: 1.4;
+        }
+
+        .center-home .ch-course-desc {
+            display: -webkit-box;
+            overflow: hidden;
+            margin: 0 0 18px;
+            min-height: 45px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.75;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+
+        .center-home .ch-course-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 22px;
+            padding: 14px 0;
+            border-top: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+            .center-home .ch-course-info span {
+                color: var(--muted);
+            }
+
+            .center-home .ch-course-info strong {
+                color: var(--dark);
+                font-weight: 750;
+            }
+
+        .center-home .ch-course-action {
+            margin-top: 8px;
+        }
+
+        /* ================= VIDEO ================= */
+
+        .center-home .ch-video-section {
+            padding: 65px 0;
+            background: #fff;
+        }
+
+        .center-home .ch-video-grid {
+            display: grid;
+            grid-template-columns: .85fr 1.15fr;
+            align-items: center;
+            gap: 58px;
+        }
+
+        .center-home .ch-video-copy .ch-heading {
+            margin-bottom: 18px;
+        }
+
+        .center-home .ch-video-copy .ch-paragraph {
+            margin: 0;
+            max-width: 440px;
+        }
+
+        .center-home .ch-video-box {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #111;
+        }
+
+            .center-home .ch-video-box video {
+                display: block;
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            }
+
+        /* ================= TIN TỨC ================= */
+
+        .center-home .ch-news {
+            padding: 65px 0 75px;
+            border-top: 1px solid var(--border);
+        }
+
+        .center-home .ch-news-intro {
+            max-width: 820px;
+            margin-bottom: 28px;
+        }
+
+            .center-home .ch-news-intro .ch-paragraph {
+                margin: 13px 0 0;
+            }
+
+        .center-home .ch-news-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 25px;
+        }
+
+        .center-home .ch-news-card {
+            min-width: 0;
+        }
+
+            .center-home .ch-news-card img {
+                display: block;
+                width: 100%;
+                height: 205px;
+                object-fit: cover;
+                margin-bottom: 16px;
+            }
+
+        .center-home .ch-news-source {
+            display: block;
+            margin-bottom: 9px;
+            color: var(--red);
+            font-size: 11px;
+            font-weight: 750;
+            letter-spacing: .3px;
+        }
+
+        .center-home .ch-news-card h3 {
+            margin: 0 0 11px;
+            color: var(--dark);
+            font-size: 18px;
+            line-height: 1.45;
+            font-weight: 750;
+        }
+
+        .center-home .ch-news-card p {
+            margin: 0 0 14px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+    /* ================= RESPONSIVE ================= */
+
+    @@media (max-width: 991px) {
+        .center-home .ch-about-grid,
+        .center-home .ch-video-grid {
+            grid-template-columns: 1fr;
+            gap: 28px;
+        }
+
+        .center-home .ch-about-image {
+            height: 350px;
+        }
+
+        .center-home .ch-news-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 650px) {
+        .center-home .ch-container {
+            width: calc(100% - 36px);
+        }
+
+        .center-home .ch-hero {
+            min-height: 420px;
+        }
+
+        .center-home .ch-hero-content {
+            padding: 52px 0;
+        }
+
+        .center-home .ch-hero h1 {
+            font-size: 35px;
+        }
+
+        .center-home .ch-hero p {
+            font-size: 14px;
+        }
+
+        .center-home .ch-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .center-home .ch-stat:nth-child(2) {
+            border-right: none;
+        }
+
+        .center-home .ch-stat:nth-child(-n+2) {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .center-home .ch-about,
+        .center-home .ch-courses,
+        .center-home .ch-video-section,
+        .center-home .ch-news {
+            padding: 45px 0;
+        }
+
+        .center-home .ch-about-image {
+            height: 260px;
+        }
+
+        .center-home .ch-course-list,
+        .center-home .ch-news-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .center-home .ch-section-head {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .center-home .ch-course-item {
+            grid-template-columns: 42px minmax(0, 1fr);
+            padding: 21px 17px;
+            gap: 10px;
+        }
+
+        .center-home .ch-course-number {
+            font-size: 23px;
+        }
+
+        .center-home .ch-news-card img {
+            height: 210px;
+        }
+    }
+    /* Tablet: 2 khóa học trên một hàng */
+    @@media (min-width: 651px) and (max-width: 991px) {
+        .center-home .ch-course-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    /* Điện thoại: 1 khóa học trên một hàng */
+    @@media (max-width: 650px) {
+        .center-home .ch-course-list {
+            grid-template-columns: 1fr;
+        }
+    }
+    /* ===== PHƯƠNG PHÁP HỌC 4 KỸ NĂNG ===== */
+
+    .center-home .ch-skills-section {
+        background: #ffffff;
+        padding: 76px 0;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .center-home .ch-skills-layout {
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        gap: 85px;
+        align-items: center;
+    }
+
+    .center-home .ch-skills-label {
+        color: #bd1625;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 1.8px;
+        text-transform: uppercase;
+        margin-bottom: 17px;
+    }
+
+    .center-home .ch-skills-title {
+        color: #182230;
+        font-size: clamp(30px, 3vw, 43px);
+        font-weight: 800;
+        line-height: 1.25;
+        margin: 0 0 20px;
+    }
+
+    .center-home .ch-skills-intro {
+        color: #657185;
+        font-size: 16px;
+        line-height: 1.85;
+        margin-bottom: 27px;
+    }
+
+    .center-home .ch-skills-photo {
+        width: 100%;
+        height: 285px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .center-home .ch-skill-item {
+        display: grid;
+        grid-template-columns: 52px minmax(0, 1fr);
+        gap: 15px;
+        padding: 21px 0;
+        border-bottom: 1px solid #e1e5eb;
+    }
+
+        .center-home .ch-skill-item:first-child {
+            border-top: 1px solid #e1e5eb;
+        }
+
+    .center-home .ch-skill-number {
+        color: #bd1625;
+        font-size: 21px;
+        font-weight: 800;
+    }
+
+    .center-home .ch-skill-name {
+        color: #172033;
+        font-size: 19px;
+        font-weight: 750;
+        margin: 0 0 7px;
+    }
+
+    .center-home .ch-skill-description {
+        color: #657185;
+        font-size: 15px;
+        line-height: 1.7;
+        margin: 0;
+    }
+
+    @@media (max-width: 991px) {
+        .center-home .ch-skills-layout {
+            grid-template-columns: 1fr;
+            gap: 35px;
+        }
+
+        .center-home .ch-skills-section {
+            padding: 52px 0;
+        }
+    }
+
+    @@media (max-width: 650px) {
+        .center-home .ch-skills-title {
+            font-size: 30px;
+        }
+
+        .center-home .ch-skills-photo {
+            height: 230px;
+        }
+
+        .center-home .ch-skill-item {
+            grid-template-columns: 40px minmax(0, 1fr);
+        }
+    }
+
+    /* ===== TỐI ƯU BỐ CỤC: GIẢM KHOẢNG TRẮNG ===== */
+    .center-home .ch-about {
+        padding: 46px 0;
+    }
+
+    .center-home .ch-about-grid {
+        gap: 36px;
+    }
+
+    .center-home .ch-about-image {
+        height: 340px;
+    }
+
+    .center-home .ch-about-copy .ch-heading {
+        margin-bottom: 14px;
+    }
+
+    .center-home .ch-about-copy .ch-paragraph {
+        margin-bottom: 10px;
+        line-height: 1.65;
+    }
+
+    .center-home .ch-about-points {
+        margin-top: 16px;
+    }
+
+    .center-home .ch-about-point {
+        padding: 9px 0;
+    }
+
+    .center-home .ch-courses {
+        padding: 46px 0 50px;
+    }
+
+    .center-home .ch-section-head {
+        margin-bottom: 22px;
+    }
+
+    .center-home .ch-course-item {
+        padding: 20px 18px;
+    }
+
+    .center-home .ch-skills-section {
+        padding: 48px 0;
+    }
+
+    .center-home .ch-skills-layout {
+        gap: 42px;
+    }
+
+    .center-home .ch-skills-title {
+        font-size: clamp(28px, 2.8vw, 38px);
+        margin-bottom: 12px;
+    }
+
+    .center-home .ch-skills-intro {
+        margin-bottom: 18px;
+        line-height: 1.65;
+    }
+
+    .center-home .ch-skills-photo {
+        height: 230px;
+    }
+
+    .center-home .ch-skill-item {
+        padding: 14px 0;
+    }
+
+    .center-home .ch-skill-description {
+        line-height: 1.6;
+    }
+
+    .center-home .ch-video-section {
+        padding: 48px 0;
+    }
+
+    .center-home .ch-video-grid {
+        gap: 38px;
+    }
+
+    .center-home .ch-news {
+        padding: 48px 0 54px;
+    }
+
+    .center-home .ch-news-intro {
+        margin-bottom: 22px;
+    }
+
+    .center-home .ch-news-grid {
+        gap: 20px;
+    }
+
+    .center-home .ch-news-card img {
+        height: 185px;
+    }
+
+    @@media (max-width: 991px) {
+        .center-home .ch-about-grid, .center-home .ch-video-grid,
+        .center-home .ch-skills-layout {
+            gap: 24px;
+        }
+
+        .center-home .ch-about-image {
+            height: 300px;
+        }
+    }
+
+    @@media (max-width: 650px) {
+        .center-home .ch-about, .center-home .ch-courses,
+        .center-home .ch-skills-section, .center-home .ch-video-section,
+        .center-home .ch-news {
+            padding: 34px 0;
+        }
+
+        .center-home .ch-about-image {
+            height: 230px;
+        }
+
+        .center-home .ch-skills-photo {
+            height: 200px;
+        }
+
+        .center-home .ch-news-card img {
+            height: 200px;
+        }
+
+        .center-home .ch-course-list {
+            gap: 14px;
+        }
+    }
+
+    /* ===== LỘ TRÌNH HỌC TIẾNG ANH ===== */
+
+    .center-home .ch-roadmap {
+        padding: 48px 0 52px;
+        background: #f6f7f8;
+        border-top: 1px solid #e3e5e8;
+        border-bottom: 1px solid #e3e5e8;
+    }
+
+    .center-home .ch-roadmap-header {
+        margin-bottom: 24px;
+    }
+
+        .center-home .ch-roadmap-header .ch-paragraph {
+            max-width: 760px;
+            margin: 12px 0 0;
+        }
+
+    .center-home .ch-roadmap-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .center-home .ch-roadmap-step {
+        position: relative;
+        background: #ffffff;
+        border: 1px solid #e3e5e8;
+        padding: 25px 25px 27px;
+        min-width: 0;
+    }
+
+    .center-home .ch-roadmap-number {
+        display: block;
+        margin-bottom: 18px;
+        color: #b51f2a;
+        font-size: 30px;
+        line-height: 1;
+        font-weight: 800;
+    }
+
+    .center-home .ch-roadmap-step h3 {
+        margin: 0 0 11px;
+        color: #17212f;
+        font-size: 19px;
+        font-weight: 750;
+        line-height: 1.4;
+    }
+
+    .center-home .ch-roadmap-step p {
+        margin: 0;
+        color: #687382;
+        font-size: 14px;
+        line-height: 1.75;
+    }
+
+    .center-home .ch-roadmap-action {
+        margin-top: 22px;
+    }
+
+    /* ===== THU GỌN PHẦN 4 KỸ NĂNG VÀ VIDEO ===== */
+
+    .center-home .ch-skills-section {
+        padding: 38px 0;
+    }
+
+    .center-home .ch-skills-layout {
+        align-items: center;
+        gap: 36px;
+    }
+
+    .center-home .ch-skills-photo {
+        height: 210px;
+    }
+
+    .center-home .ch-skill-item {
+        padding: 11px 0;
+    }
+
+    .center-home .ch-skill-name {
+        margin-bottom: 4px;
+        font-size: 18px;
+    }
+
+    .center-home .ch-skill-description {
+        font-size: 14px;
+        line-height: 1.55;
+    }
+
+    .center-home .ch-video-section {
+        padding: 38px 0;
+    }
+
+    .center-home .ch-video-grid {
+        gap: 32px;
+    }
+
+    /* ===== RESPONSIVE ===== */
+
+    @@media (max-width: 991px) {
+        .center-home .ch-roadmap-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .center-home .ch-skills-layout {
+            gap: 24px;
+        }
+    }
+
+    @@media (max-width: 650px) {
+        .center-home .ch-roadmap {
+            padding: 34px 0;
+        }
+
+        .center-home .ch-roadmap-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .center-home .ch-roadmap-step {
+            padding: 22px;
+        }
+
+        .center-home .ch-skills-section,
+        .center-home .ch-video-section {
+            padding: 32px 0;
+        }
+
+        .center-home .ch-skills-photo {
+            height: 200px;
+        }
+    }
+
+
+    /* ======================================================
+   TỐI ƯU TRANG CHỦ - PHƯƠNG ÁN 3
+   Áp dụng đúng class .center-home và .ch-*
+   Chỉ thay đổi giao diện, không ảnh hưởng nghiệp vụ
+   ====================================================== */
+
+    /* KHUNG NỘI DUNG */
+    .center-home .ch-container {
+        width: min(1380px, calc(100% - 64px));
+    }
+
+    /* TIÊU ĐỀ VÀ VĂN BẢN */
+    .center-home .ch-heading {
+        font-size: clamp(27px, 2.6vw, 37px);
+        line-height: 1.25;
+        margin-top: 9px;
+    }
+
+    .center-home .ch-paragraph {
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .center-home .ch-label {
+        font-size: 12px;
+    }
+
+    /* BANNER */
+    .center-home .ch-hero {
+        min-height: 430px;
+    }
+
+    .center-home .ch-hero-content {
+        padding: 54px 0;
+    }
+
+    .center-home .ch-hero h1 {
+        max-width: 690px;
+        margin: 16px 0;
+        font-size: clamp(37px, 3.6vw, 52px);
+    }
+
+    .center-home .ch-hero p {
+        max-width: 550px;
+        margin-bottom: 22px;
+        line-height: 1.7;
+    }
+
+    /* THỐNG KÊ */
+    .center-home .ch-stats-grid {
+        padding: 18px 0;
+    }
+
+    .center-home .ch-stat {
+        padding: 5px 12px;
+    }
+
+        .center-home .ch-stat strong {
+            font-size: 27px;
+        }
+
+    /* GIỚI THIỆU */
+    .center-home .ch-about {
+        padding: 42px 0;
+    }
+
+    .center-home .ch-about-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 36px;
+    }
+
+    .center-home .ch-about-image {
+        height: 345px;
+    }
+
+    .center-home .ch-about-copy .ch-heading {
+        margin-bottom: 12px;
+    }
+
+    .center-home .ch-about-copy .ch-paragraph {
+        margin-bottom: 10px;
+    }
+
+    .center-home .ch-about-points {
+        margin-top: 15px;
+    }
+
+    .center-home .ch-about-point {
+        padding: 9px 0;
+    }
+
+    /* KHÓA HỌC */
+    .center-home .ch-courses {
+        padding: 43px 0 48px;
+    }
+
+    .center-home .ch-section-head {
+        margin-bottom: 20px;
+    }
+
+    .center-home .ch-course-list {
+        gap: 16px;
+    }
+
+    .center-home .ch-course-item {
+        padding: 20px 18px;
+        gap: 10px;
+        transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+
+        .center-home .ch-course-item:hover {
+            transform: translateY(-3px);
+            border-color: #d6b2b5;
+            box-shadow: 0 8px 22px rgba(23, 33, 47, .07);
+        }
+
+        .center-home .ch-course-item h3 {
+            font-size: 19px;
+        }
+
+    .center-home .ch-course-desc {
+        margin-bottom: 12px;
+        min-height: 42px;
+    }
+
+    .center-home .ch-course-info {
+        gap: 8px 16px;
+        padding: 12px 0;
+    }
+
+    /* PHƯƠNG PHÁP HỌC 4 KỸ NĂNG */
+    .center-home .ch-skills-section {
+        padding: 43px 0;
+    }
+
+    .center-home .ch-skills-layout {
+        grid-template-columns: 1fr 1fr;
+        gap: 36px;
+        align-items: center;
+    }
+
+    .center-home .ch-skills-title {
+        font-size: clamp(28px, 2.6vw, 37px);
+        margin-bottom: 12px;
+    }
+
+    .center-home .ch-skills-intro {
+        margin-bottom: 15px;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .center-home .ch-skills-photo {
+        height: 230px;
+    }
+
+    .center-home .ch-skill-item {
+        padding: 12px 0;
+        gap: 12px;
+    }
+
+    .center-home .ch-skill-name {
+        font-size: 17px;
+        margin-bottom: 4px;
+    }
+
+    .center-home .ch-skill-description {
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    /* LỘ TRÌNH HỌC */
+    .center-home .ch-roadmap {
+        padding: 43px 0 46px;
+    }
+
+    .center-home .ch-roadmap-header {
+        margin-bottom: 20px;
+    }
+
+    .center-home .ch-roadmap-grid {
+        gap: 16px;
+    }
+
+    .center-home .ch-roadmap-step {
+        padding: 22px;
+    }
+
+    .center-home .ch-roadmap-number {
+        margin-bottom: 14px;
+        font-size: 27px;
+    }
+
+    .center-home .ch-roadmap-step h3 {
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+
+    .center-home .ch-roadmap-step p {
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .center-home .ch-roadmap-action {
+        margin-top: 18px;
+    }
+
+    /* VIDEO */
+    .center-home .ch-video-section {
+        padding: 43px 0;
+    }
+
+    .center-home .ch-video-grid {
+        grid-template-columns: .8fr 1.2fr;
+        gap: 38px;
+    }
+
+    .center-home .ch-video-copy .ch-heading {
+        margin-bottom: 13px;
+    }
+
+    .center-home .ch-video-box {
+        max-width: 100%;
+        aspect-ratio: 16 / 9;
+    }
+
+        .center-home .ch-video-box video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+    /* TIN TỨC UEF */
+    .center-home .ch-news {
+        padding: 43px 0 50px;
+    }
+
+    .center-home .ch-news-intro {
+        margin-bottom: 22px;
+    }
+
+    .center-home .ch-news-grid {
+        gap: 20px;
+    }
+
+    .center-home .ch-news-card img {
+        height: 190px;
+        margin-bottom: 13px;
+    }
+
+    .center-home .ch-news-card h3 {
+        font-size: 17px;
+        margin-bottom: 8px;
+    }
+
+    .center-home .ch-news-card p {
+        font-size: 13px;
+        line-height: 1.65;
+        margin-bottom: 11px;
+    }
+
+    /* TABLET */
+    @@media (max-width: 991px) {
+        .center-home .ch-container {
+            width: calc(100% - 40px);
+        }
+
+        .center-home .ch-about-grid,
+        .center-home .ch-skills-layout,
+        .center-home .ch-video-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        .center-home .ch-about-image {
+            height: 310px;
+        }
+
+        .center-home .ch-course-list,
+        .center-home .ch-roadmap-grid,
+        .center-home .ch-news-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .center-home .ch-skills-photo {
+            height: 280px;
+        }
+    }
+
+    /* MOBILE */
+    @@media (max-width: 650px) {
+        .center-home .ch-container {
+            width: calc(100% - 32px);
+        }
+
+        .center-home .ch-hero {
+            min-height: 390px;
+        }
+
+        .center-home .ch-hero-content {
+            padding: 42px 0;
+        }
+
+        .center-home .ch-hero h1 {
+            font-size: 34px;
+        }
+
+        .center-home .ch-about,
+        .center-home .ch-courses,
+        .center-home .ch-skills-section,
+        .center-home .ch-roadmap,
+        .center-home .ch-video-section,
+        .center-home .ch-news {
+            padding: 34px 0;
+        }
+
+        .center-home .ch-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .center-home .ch-about-image {
+            height: 240px;
+        }
+
+        .center-home .ch-skills-photo {
+            height: 210px;
+        }
+
+        .center-home .ch-course-list,
+        .center-home .ch-roadmap-grid,
+        .center-home .ch-news-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .center-home .ch-section-head {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .center-home .ch-news-card img {
+            height: 205px;
+        }
+    }
+    /* =========================================
+   THỐNG KÊ GIỚI THIỆU - FIX CỨNG
+   ========================================= */
+
+    .editorial-home .eh-achievements {
+        background: #ffffff;
+        padding: 54px 0 62px;
+    }
+
+    .editorial-home .eh-achievements-container {
+        width: 100%;
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 0 30px;
+        box-sizing: border-box;
+    }
+
+    .editorial-home .eh-achievements-heading {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .editorial-home .eh-achievements-label {
+        color: #bc1828;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 1.4px;
+    }
+
+    .editorial-home .eh-achievements-heading h2 {
+        margin: 12px 0 10px;
+        color: #172131;
+        font-size: 36px;
+        font-weight: 800;
+        line-height: 1.25;
+    }
+
+    .editorial-home .eh-achievements-heading p {
+        color: #64748b;
+        font-size: 15px;
+        line-height: 1.7;
+        margin: 0 auto;
+        max-width: 680px;
+    }
+
+    .editorial-home .eh-achievements-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .editorial-home .eh-achievement-card {
+        position: relative;
+        min-height: 250px;
+        padding: 38px 40px;
+        border-radius: 24px;
+        background: #e6f0f2;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-sizing: border-box;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+        .editorial-home .eh-achievement-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+        }
+
+        /* Họa tiết trang trí nền */
+        .editorial-home .eh-achievement-card::before {
+            content: "";
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            border: 24px solid rgba(80, 151, 166, 0.12);
+            border-radius: 50%;
+            right: -115px;
+            bottom: -135px;
+            pointer-events: none;
+        }
+
+        .editorial-home .eh-achievement-card:nth-child(2)::before,
+        .editorial-home .eh-achievement-card:nth-child(5)::before {
+            right: -130px;
+            bottom: -90px;
+        }
+
+        .editorial-home .eh-achievement-card:nth-child(3)::before,
+        .editorial-home .eh-achievement-card:nth-child(6)::before {
+            right: -30px;
+            bottom: -180px;
+        }
+
+    .editorial-home .eh-achievement-number {
+        position: relative;
+        z-index: 1;
+        display: block;
+        color: #ef343b;
+        font-size: clamp(58px, 5.3vw, 94px);
+        font-weight: 850;
+        line-height: 1;
+        letter-spacing: -3px;
+        white-space: nowrap;
+    }
+
+        .editorial-home .eh-achievement-number small {
+            font-size: 0.48em;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+    .editorial-home .eh-achievement-card h3 {
+        position: relative;
+        z-index: 1;
+        margin: 22px 0 0;
+        color: #475569;
+        font-size: 24px;
+        font-weight: 750;
+        line-height: 1.35;
+    }
+
+    /* Tablet */
+    @@media (max-width: 991px) {
+        .editorial-home .eh-achievements-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .editorial-home .eh-achievement-card {
+            min-height: 220px;
+            padding: 30px;
+        }
+
+            .editorial-home .eh-achievement-card h3 {
+                font-size: 21px;
+            }
+    }
+
+    /* Mobile */
+    @@media (max-width: 575px) {
+        .editorial-home .eh-achievements {
+            padding: 38px 0 44px;
+        }
+
+        .editorial-home .eh-achievements-container {
+            padding: 0 16px;
+        }
+
+        .editorial-home .eh-achievements-heading h2 {
+            font-size: 28px;
+        }
+
+        .editorial-home .eh-achievements-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .editorial-home .eh-achievement-card {
+            min-height: 165px;
+            padding: 20px 16px;
+            border-radius: 16px;
+        }
+
+        .editorial-home .eh-achievement-number {
+            font-size: clamp(37px, 9vw, 58px);
+            letter-spacing: -2px;
+        }
+
+        .editorial-home .eh-achievement-card h3 {
+            font-size: 15px;
+            line-height: 1.4;
+            margin-top: 15px;
+        }
+    }
+    .gioi-thieu-thong-ke .thong-ke-o {
+        min-height: 220px;
+        padding: 30px 35px;
+    }
+
+    .gioi-thieu-thong-ke .thong-ke-so {
+        font-size: 72px;
+    }
+
+    .gioi-thieu-thong-ke .thong-ke-o h3 {
+        font-size: 21px;
+        line-height: 1.4;
+        margin-top: 20px;
+    }
+
+    .gioi-thieu-thong-ke .thong-ke-danh-sach {
+        gap: 20px;
+    }
+
+</style>
+
+<div class="center-home">
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="ch-container" style="padding-top:15px;">
+            <div class="alert alert-danger">
+                @TempData["ErrorMessage"]
+            </div>
+        </div>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="ch-container" style="padding-top:15px;">
+            <div class="alert alert-success">
+                @TempData["SuccessMessage"]
+            </div>
+        </div>
+    }
+
+    @if (Model == null)
+    {
+        <div class="ch-container" style="padding:40px 0;">
+            <div class="alert alert-danger">
+                Không tải được dữ liệu trang chủ.
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- ================= BANNER ================= -->
+
+        <section class="ch-hero">
+
+            <img class="ch-hero-image"
+                 src="@Url.Content("~/Uploads/Images/students-hero.jpg")"
+                 alt="Học viên trao đổi bằng tiếng Anh" />
+
+            <div class="ch-container ch-hero-content">
+                <div class="ch-hero-copy">
+
+                    <span class="ch-label">
+                        TRUNG TÂM ANH NGỮ
+                    </span>
+
+                    <h1>
+                        Học tiếng Anh hiệu quả,
+                        tự tin trong giao tiếp
+                    </h1>
+
+                    <p>
+                        Khám phá các chương trình tiếng Anh từ cơ bản
+                        đến nâng cao. Tìm hiểu và lựa chọn khóa học
+                        phù hợp với trình độ, nhu cầu và mục tiêu của bạn.
+                    </p>
+
+                    <a class="ch-button"
+                       href="@Url.Action("Index", "Courses")">
+                        Khám phá khóa học
+                        <span aria-hidden="true">→</span>
+                    </a>
+
+                </div>
+            </div>
+
+        </section>
+
+        @* THỐNG KÊ GIỚI THIỆU - DỮ LIỆU CỐ ĐỊNH *@
+        <section class="gioi-thieu-thong-ke">
+            <div class="thong-ke-container">
+
+                <div class="thong-ke-tieu-de">
+                    <span>DẤU ẤN PHÁT TRIỂN</span>
+                    <h2>Những con số nổi bật</h2>
+                    <p>
+                        Cùng khám phá những dấu ấn trong hành trình phát triển
+                        và nâng cao chất lượng đào tạo tiếng Anh.
+                    </p>
+                </div>
+
+                <div class="thong-ke-danh-sach">
+
+                    <div class="thong-ke-o">
+                        <div class="thong-ke-so">8+</div>
+                        <h3>Năm hoạt động</h3>
+                    </div>
+
+                    <div class="thong-ke-o">
+                        <div class="thong-ke-so">10+</div>
+                        <h3>Cơ sở đào tạo trên toàn quốc</h3>
+                    </div>
+
+                    <div class="thong-ke-o">
+                        <div class="thong-ke-so">200+</div>
+                        <h3>
+                            Học viên đạt kết quả xuất sắc
+                            trong kỳ thi tiếng Anh quốc tế
+                        </h3>
+                    </div>
+
+                    <div class="thong-ke-o">
+                        <div class="thong-ke-so">100%</div>
+                        <h3>Đội ngũ giáo viên có chuyên môn</h3>
+                    </div>
+
+                    <div class="thong-ke-o">
+                        <div class="thong-ke-so">5.000+</div>
+                        <h3>Học viên hoàn thành mục tiêu học tập</h3>
+                    </div>
+
+                    <div class="thong-ke-o">
+                        <div class="thong-ke-so">10+</div>
+                        <h3>
+                            Chương trình đào tạo
+                            đáp ứng nhiều trình độ khác nhau
+                        </h3>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+        <style>
+            /* KHU VỰC THỐNG KÊ GIỚI THIỆU */
+
+            .gioi-thieu-thong-ke {
+                width: 100%;
+                background: #ffffff;
+                padding: 55px 0 65px;
+                box-sizing: border-box;
+            }
+
+                .gioi-thieu-thong-ke .thong-ke-container {
+                    width: 92%;
+                    max-width: 1500px;
+                    margin: 0 auto;
+                }
+
+                .gioi-thieu-thong-ke .thong-ke-tieu-de {
+                    text-align: center;
+                    margin-bottom: 35px;
+                }
+
+                    .gioi-thieu-thong-ke .thong-ke-tieu-de span {
+                        display: block;
+                        color: #bb1727;
+                        font-size: 14px;
+                        font-weight: 800;
+                        letter-spacing: 1.5px;
+                    }
+
+                    .gioi-thieu-thong-ke .thong-ke-tieu-de h2 {
+                        color: #172131;
+                        font-size: 38px;
+                        font-weight: 800;
+                        margin: 12px 0;
+                    }
+
+                    .gioi-thieu-thong-ke .thong-ke-tieu-de p {
+                        color: #64748b;
+                        font-size: 16px;
+                        line-height: 1.7;
+                        margin: 0 auto;
+                        max-width: 800px;
+                    }
+
+                /* CHIA 6 Ô THÀNH 3 CỘT */
+
+                .gioi-thieu-thong-ke .thong-ke-danh-sach {
+                    display: grid;
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                    gap: 25px;
+                }
+
+                .gioi-thieu-thong-ke .thong-ke-o {
+                    position: relative;
+                    background: #e5f0f2;
+                    border-radius: 25px;
+                    min-height: 260px;
+                    padding: 40px;
+                    box-sizing: border-box;
+                    overflow: hidden;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    transition: transform 0.25s ease, box-shadow 0.25s ease;
+                }
+
+                    .gioi-thieu-thong-ke .thong-ke-o:hover {
+                        transform: translateY(-5px);
+                        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08);
+                    }
+
+                    /* HỌA TIẾT TRANG TRÍ */
+
+                    .gioi-thieu-thong-ke .thong-ke-o::before {
+                        content: "";
+                        position: absolute;
+                        width: 240px;
+                        height: 240px;
+                        border: 25px solid rgba(75, 150, 165, 0.12);
+                        border-radius: 50%;
+                        right: -120px;
+                        bottom: -130px;
+                        pointer-events: none;
+                    }
+
+                    .gioi-thieu-thong-ke .thong-ke-o:nth-child(even)::before {
+                        right: -80px;
+                        bottom: -175px;
+                    }
+
+                /* CON SỐ */
+
+                .gioi-thieu-thong-ke .thong-ke-so {
+                    position: relative;
+                    z-index: 1;
+                    color: #ef343b;
+                    font-size: 85px;
+                    font-weight: 800;
+                    line-height: 1;
+                    letter-spacing: -3px;
+                }
+
+                /* NỘI DUNG */
+
+                .gioi-thieu-thong-ke .thong-ke-o h3 {
+                    position: relative;
+                    z-index: 1;
+                    color: #475569;
+                    font-size: 24px;
+                    font-weight: 700;
+                    line-height: 1.4;
+                    margin: 25px 0 0;
+                }
+
+            /* MÁY TÍNH BẢNG */
+
+            @@media (max-width: 992px) {
+                .gioi-thieu-thong-ke .thong-ke-danh-sach {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .gioi-thieu-thong-ke .thong-ke-o {
+                    min-height: 220px;
+                    padding: 30px;
+                }
+
+                .gioi-thieu-thong-ke .thong-ke-so {
+                    font-size: 65px;
+                }
+
+                .gioi-thieu-thong-ke .thong-ke-o h3 {
+                    font-size: 21px;
+                }
+            }
+
+            /* ĐIỆN THOẠI */
+
+            @@media (max-width: 576px) {
+                .gioi-thieu-thong-ke {
+                    padding: 40px 0;
+                }
+
+                    .gioi-thieu-thong-ke .thong-ke-container {
+                        width: 94%;
+                    }
+
+                    .gioi-thieu-thong-ke .thong-ke-tieu-de h2 {
+                        font-size: 28px;
+                    }
+
+                    .gioi-thieu-thong-ke .thong-ke-danh-sach {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                        gap: 12px;
+                    }
+
+                    .gioi-thieu-thong-ke .thong-ke-o {
+                        min-height: 175px;
+                        padding: 18px;
+                        border-radius: 16px;
+                    }
+
+                    .gioi-thieu-thong-ke .thong-ke-so {
+                        font-size: 43px;
+                        letter-spacing: -1px;
+                    }
+
+                    .gioi-thieu-thong-ke .thong-ke-o h3 {
+                        font-size: 15px;
+                        margin-top: 16px;
+                    }
+            }
+        </style>
+
+        <!-- ================= GIỚI THIỆU ================= -->
+
+        <section id="gioi-thieu" class="ch-about">
+
+            <div class="ch-container ch-about-grid">
+
+                <div>
+                    <img class="ch-about-image"
+                         src="@Url.Content("~/Uploads/Images/students-learning.jpg")"
+                         alt="Giáo viên hướng dẫn học viên trong lớp học"
+                         loading="lazy" />
+                </div>
+
+                <div class="ch-about-copy">
+
+                    <span class="ch-label">
+                        VỀ TRUNG TÂM
+                    </span>
+
+                    <h2 class="ch-heading">
+                        Đồng hành cùng bạn trên hành trình học tiếng Anh
+                    </h2>
+
+                    <p class="ch-paragraph">
+                        Trung tâm Anh ngữ mang đến các chương trình
+                        học tiếng Anh theo nhiều trình độ, giúp học viên
+                        lựa chọn nội dung học tập phù hợp với khả năng
+                        và định hướng của mình.
+                    </p>
+
+                    <p class="ch-paragraph">
+                        Thông qua hệ thống trực tuyến, học viên có thể
+                        tìm hiểu thông tin khóa học, thời lượng, học phí
+                        và các nội dung liên quan trước khi đăng ký.
+                    </p>
+
+                    <div class="ch-about-points">
+
+                        <div class="ch-about-point">
+                            <span>01</span>
+                            <div>
+                                <strong>Chương trình theo từng trình độ</strong>
+                                <p>
+                                    Từ kiến thức nền tảng đến giao tiếp
+                                    và luyện thi chứng chỉ tiếng Anh.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="ch-about-point">
+                            <span>02</span>
+                            <div>
+                                <strong>Thông tin khóa học minh bạch</strong>
+                                <p>
+                                    Xem nội dung, thời lượng và học phí
+                                    của từng chương trình.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="ch-about-point">
+                            <span>03</span>
+                            <div>
+                                <strong>Thuận tiện tra cứu và theo dõi</strong>
+                                <p>
+                                    Tìm kiếm khóa học và sử dụng
+                                    các chức năng quản lý học tập
+                                    được cung cấp trong hệ thống.
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ================= KHÓA HỌC ================= -->
+
+        <section class="ch-courses">
+
+            <div class="ch-container">
+
+                <div class="ch-section-head">
+
+                    <div>
+                        <span class="ch-label">
+                            CHƯƠNG TRÌNH ĐÀO TẠO
+                        </span>
+
+                        <h2 class="ch-heading">
+                            Khám phá các khóa học
+                        </h2>
+                    </div>
+
+                    <a class="ch-link"
+                       href="@Url.Action("Index", "Courses")">
+                        Xem tất cả khóa học
+                        <span aria-hidden="true">→</span>
+                    </a>
+
+                </div>
+
+                @if (Model.FeaturedCourses != null &&
+                     Model.FeaturedCourses.Any())
+                {
+                    <div class="ch-course-list">
+
+                        @{
+                            int courseNumber = 0;
+                        }
+
+                        @foreach (var course in Model.FeaturedCourses.Take(3))
+                        {
+                            courseNumber++;
+
+                            <article class="ch-course-item">
+
+                                <div class="ch-course-number">
+                                    @courseNumber.ToString("00")
+                                </div>
+
+                                <div>
+
+                                    <span class="ch-course-level">
+                                        @course.Level
+                                    </span>
+
+                                    <h3>
+                                        @course.CourseName
+                                    </h3>
+
+                                    <p class="ch-course-desc">
+                                        @(string.IsNullOrWhiteSpace(course.Description)
+                                            ? "Tìm hiểu thông tin và nội dung chi tiết của chương trình học."
+                                            : course.Description)
+                                    </p>
+
+                                    <div class="ch-course-info">
+
+                                        <span>
+                                            Thời lượng:
+                                            <strong>@course.Duration giờ</strong>
+                                        </span>
+
+                                        <span>
+                                            Học phí:
+                                            <strong>
+                                                @course.TuitionFee.ToString("N0") VNĐ
+                                            </strong>
+                                        </span>
+
+                                    </div>
+
+                                    <div class="ch-course-action">
+                                        <a class="ch-link"
+                                           href="@Url.Action("Details", "Courses", new { id = course.Id })">
+                                            Chi tiết chương trình
+                                            <span aria-hidden="true">→</span>
+                                        </a>
+                                    </div>
+
+                                </div>
+
+                            </article>
+                        }
+
+                    </div>
+                }
+                else
+                {
+                    <p class="ch-paragraph">
+                        Các khóa học nổi bật sẽ được cập nhật.
+                    </p>
+                }
+
+            </div>
+
+        </section>
+        @* ===== PHƯƠNG PHÁP HỌC 4 KỸ NĂNG ===== *@
+
+        <section class="ch-skills-section">
+            <div class="ch-container">
+                <div class="ch-skills-layout">
+
+                    <div class="ch-skills-left">
+                        <div class="ch-skills-label">
+                            PHƯƠNG PHÁP HỌC TẬP
+                        </div>
+
+                        <h2 class="ch-skills-title">
+                            Phát triển toàn diện
+                            4 kỹ năng tiếng Anh
+                        </h2>
+
+                        <p class="ch-skills-intro">
+                            Việc học tiếng Anh không chỉ dừng lại ở ghi nhớ
+                            từ vựng và ngữ pháp. Kết hợp các kỹ năng nghe,
+                            nói, đọc và viết giúp người học từng bước xây dựng
+                            nền tảng ngôn ngữ và vận dụng kiến thức trong
+                            những tình huống thực tế.
+                        </p>
+
+                        <img class="ch-skills-photo"
+                             src="@Url.Content("~/Uploads/Images/students-learning.jpg")"
+                             alt="Hoạt động học tiếng Anh trong lớp học"
+                             loading="lazy" />
+                    </div>
+
+                    <div class="ch-skills-right">
+
+                        <div class="ch-skill-item">
+                            <div class="ch-skill-number">01</div>
+                            <div>
+                                <h3 class="ch-skill-name">
+                                    Listening – Kỹ năng Nghe
+                                </h3>
+                                <p class="ch-skill-description">
+                                    Rèn luyện khả năng nhận biết thông tin,
+                                    hiểu nội dung hội thoại và làm quen với
+                                    cách phát âm, ngữ điệu tiếng Anh.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="ch-skill-item">
+                            <div class="ch-skill-number">02</div>
+                            <div>
+                                <h3 class="ch-skill-name">
+                                    Speaking – Kỹ năng Nói
+                                </h3>
+                                <p class="ch-skill-description">
+                                    Thực hành diễn đạt suy nghĩ, đặt câu hỏi
+                                    và phản hồi trong những tình huống giao
+                                    tiếp thường gặp.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="ch-skill-item">
+                            <div class="ch-skill-number">03</div>
+                            <div>
+                                <h3 class="ch-skill-name">
+                                    Reading – Kỹ năng Đọc
+                                </h3>
+                                <p class="ch-skill-description">
+                                    Phát triển khả năng đọc hiểu, xác định
+                                    ý chính, tìm kiếm thông tin và mở rộng
+                                    vốn từ vựng qua các chủ đề khác nhau.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="ch-skill-item">
+                            <div class="ch-skill-number">04</div>
+                            <div>
+                                <h3 class="ch-skill-name">
+                                    Writing – Kỹ năng Viết
+                                </h3>
+                                <p class="ch-skill-description">
+                                    Củng cố ngữ pháp, cách tổ chức câu và
+                                    đoạn văn, từ đó trình bày thông tin
+                                    và ý tưởng bằng tiếng Anh rõ ràng hơn.
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= LỘ TRÌNH HỌC ================= -->
+
+        <section class="ch-roadmap" id="lo-trinh-hoc">
+            <div class="ch-container">
+
+                <div class="ch-roadmap-header">
+
+                    <span class="ch-label">
+                        ĐỊNH HƯỚNG HỌC TẬP
+                    </span>
+
+                    <h2 class="ch-heading">
+                        Lộ trình học tiếng Anh phù hợp với bạn
+                    </h2>
+
+                    <p class="ch-paragraph">
+                        Mỗi người học có trình độ và mục tiêu khác nhau.
+                        Việc xác định nhu cầu, lựa chọn chương trình
+                        và duy trì luyện tập sẽ giúp quá trình học
+                        tiếng Anh có định hướng rõ ràng hơn.
+                    </p>
+
+                </div>
+
+                <div class="ch-roadmap-grid">
+
+                    <!-- BƯỚC 1 -->
+
+                    <article class="ch-roadmap-step">
+
+                        <span class="ch-roadmap-number">
+                            01
+                        </span>
+
+                        <h3>
+                            Xác định trình độ và mục tiêu
+                        </h3>
+
+                        <p>
+                            Đánh giá khả năng tiếng Anh hiện tại,
+                            xác định nhu cầu học giao tiếp,
+                            củng cố kiến thức nền tảng
+                            hoặc chuẩn bị cho các kỳ thi
+                            chứng chỉ tiếng Anh.
+                        </p>
+
+                    </article>
+
+                    <!-- BƯỚC 2 -->
+
+                    <article class="ch-roadmap-step">
+
+                        <span class="ch-roadmap-number">
+                            02
+                        </span>
+
+                        <h3>
+                            Lựa chọn khóa học phù hợp
+                        </h3>
+
+                        <p>
+                            Tham khảo danh sách chương trình
+                            đào tạo, tìm hiểu trình độ,
+                            nội dung, thời lượng và học phí
+                            để lựa chọn khóa học phù hợp
+                            với kế hoạch học tập.
+                        </p>
+
+                    </article>
+
+                    <!-- BƯỚC 3 -->
+
+                    <article class="ch-roadmap-step">
+
+                        <span class="ch-roadmap-number">
+                            03
+                        </span>
+
+                        <h3>
+                            Học tập và phát triển kỹ năng
+                        </h3>
+
+                        <p>
+                            Kết hợp việc học kiến thức với
+                            thực hành nghe, nói, đọc và viết.
+                            Chủ động ôn tập, bổ sung từ vựng
+                            và vận dụng tiếng Anh trong
+                            những tình huống thực tế.
+                        </p>
+
+                    </article>
+
+                </div>
+
+                <div class="ch-roadmap-action">
+
+                    <a class="ch-link"
+                       href="@Url.Action("Index", "Courses")">
+
+                        Tìm hiểu các chương trình đào tạo
+                        <span aria-hidden="true">→</span>
+
+                    </a>
+
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- ================= VIDEO ================= -->
+
+        <section class="ch-video-section">
+
+            <div class="ch-container ch-video-grid">
+
+                <div class="ch-video-copy">
+
+                    <span class="ch-label">
+                        HOẠT ĐỘNG HỌC TẬP
+                    </span>
+
+                    <h2 class="ch-heading">
+                        Khám phá môi trường học tập qua video
+                    </h2>
+
+                    <p class="ch-paragraph">
+                        Cùng tìm hiểu thêm về không gian học tập
+                        và các hoạt động liên quan đến việc học
+                        tiếng Anh thông qua video giới thiệu.
+                    </p>
+
+                </div>
+
+                <div class="ch-video-box">
+
+                    <video controls
+                           playsinline
+                           preload="metadata"
+                           aria-label="Video giới thiệu">
+
+                        <source src="@Url.Content("~/Uploads/Videos/gioi-thieu.mp4")"
+                                type="video/mp4" />
+
+                        Trình duyệt không hỗ trợ video.
+
+                    </video>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ================= TIN TỨC UEF ================= -->
+
+        <section class="ch-news">
+
+            <div class="ch-container">
+
+                <div class="ch-news-intro">
+
+                    <span class="ch-label">
+                        TIN TỨC & KIẾN THỨC
+                    </span>
+
+                    <h2 class="ch-heading">
+                        Tin tức & Góc học tiếng Anh
+                    </h2>
+
+                    <p class="ch-paragraph">
+                        Tham khảo các hoạt động giáo dục,
+                        kinh nghiệm học tập và thông tin
+                        hữu ích từ Trường Đại học
+                        Kinh tế - Tài chính TP.HCM (UEF).
+                    </p>
+
+                </div>
+
+                <div class="ch-news-grid">
+
+                    <!-- BÀI VIẾT 1 -->
+
+                    <article class="ch-news-card">
+
+                        <img src="@Url.Content("~/Uploads/Images/english-in-action.jpg")"
+                             alt="Sinh viên thực hành giao tiếp tiếng Anh"
+                             loading="lazy" />
+
+                        <span class="ch-news-source">
+                            NGUỒN: UEF · 02/10/2026
+                        </span>
+
+                        <h3>
+                            English in Action:
+                            Luyện giao tiếp tiếng Anh thực tế
+                        </h3>
+
+                        <p>
+                            Khám phá các hoạt động thực hành
+                            hội thoại tiếng Anh thông qua
+                            những tình huống đời sống.
+                        </p>
+
+                        <a class="ch-link"
+                           href="https://www.uef.edu.vn/tin-tuc-su-kien/english-in-action-xay-dung-moi-truong-giao-tiep-tieng-anh-thuc-te-voi-cac-chu-de-doi-song-cho-uefers-38245"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            Đọc bài viết tại UEF
+                            <span aria-hidden="true">→</span>
+                        </a>
+
+                    </article>
+
+                    <!-- BÀI VIẾT 2 -->
+
+                    <article class="ch-news-card">
+
+                        <img src="@Url.Content("~/Uploads/Images/ielts-vstep.jpg")"
+                             alt="Sinh viên tìm hiểu IELTS và VSTEP"
+                             loading="lazy" />
+
+                        <span class="ch-news-source">
+                            NGUỒN: UEF · 08/10/2026
+                        </span>
+
+                        <h3>
+                            IELTS hay VSTEP?
+                            Lựa chọn lộ trình học phù hợp
+                        </h3>
+
+                        <p>
+                            Tìm hiểu các chứng chỉ tiếng Anh
+                            và cách định hướng kế hoạch
+                            học tập, ôn luyện.
+                        </p>
+
+                        <a class="ch-link"
+                           href="https://www.uef.edu.vn/vienquocte/tin-tuc-su-kien/sinh-vien-vien-quoc-te-uef-tim-hieu-ielts-va-vstep-dinh-huong-lo-trinh-hoc-tieng-anh-38309"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            Đọc bài viết tại UEF
+                            <span aria-hidden="true">→</span>
+                        </a>
+
+                    </article>
+
+                    <!-- BÀI VIẾT 3 -->
+
+                    <article class="ch-news-card">
+
+                        <img src="@Url.Content("~/Uploads/Images/english-self-study.jpg")"
+                             alt="Sinh viên tự học tiếng Anh"
+                             loading="lazy" />
+
+                        <span class="ch-news-source">
+                            NGUỒN: UEF · 23/09/2026
+                        </span>
+
+                        <h3>
+                            Khai thác website để
+                            tự học tiếng Anh hiệu quả
+                        </h3>
+
+                        <p>
+                            Tham khảo cách lựa chọn nguồn
+                            tài liệu trực tuyến và xây dựng
+                            thói quen tự học chủ động.
+                        </p>
+
+                        <a class="ch-link"
+                           href="https://www.uef.edu.vn/tin-tuc-su-kien/khoa-tieng-anh-khoi-dong-chuoi-english-workshop-voi-ky-nang-khai-thac-website-tu-hoc-tieng-anh-38118"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                            Đọc bài viết tại UEF
+                            <span aria-hidden="true">→</span>
+                        </a>
+
+                    </article>
+
+                </div>
+
+            </div>
+
+        </section>
+    }
+
+</div>

@@ -1,0 +1,811 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Users.UserEditViewModel
+
+@using System.Collections.Generic
+@using System.Web.Mvc
+
+@{
+    ViewBag.Title = "Chỉnh sửa người dùng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    string initial = string.IsNullOrWhiteSpace(Model.FullName)
+        ? "U"
+        : Model.FullName.Trim().Substring(0, 1).ToUpper();
+}
+
+<style>
+    .ue-page {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 0 0 16px;
+        color: #25324a;
+    }
+
+        .ue-page * {
+            box-sizing: border-box;
+        }
+
+    .ue-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .ue-eyebrow {
+        margin-bottom: 6px;
+        color: #929db0;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+    }
+
+    .ue-header h1 {
+        margin: 0 0 5px;
+        color: #25324a;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .ue-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .ue-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 36px;
+        padding: 8px 12px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+
+    .ue-back,
+    .ue-cancel {
+        border-color: #dce3ed;
+        background: #fff;
+        color: #526078;
+    }
+
+        .ue-back:hover,
+        .ue-cancel:hover {
+            background: #f5f7fb;
+            color: #25324a;
+        }
+
+    .ue-save {
+        border-color: #c92828;
+        background: #c92828;
+        color: #fff;
+    }
+
+        .ue-save:hover {
+            border-color: #a91f1f;
+            background: #a91f1f;
+            color: #fff;
+        }
+
+    .ue-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 225px;
+        align-items: start;
+        gap: 16px;
+    }
+
+    .ue-card,
+    .ue-side-card {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(26,42,69,.035);
+    }
+
+    .ue-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 15px 19px;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+    .ue-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 43px;
+        height: 43px;
+        flex-shrink: 0;
+        overflow: hidden;
+        border-radius: 12px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+        .ue-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .ue-card-header h2 {
+        margin: 0 0 4px;
+        color: #25324a;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .ue-card-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 11px;
+    }
+
+    .ue-card-body {
+        padding: 18px 20px;
+    }
+
+    .ue-validation-summary {
+        margin-bottom: 18px;
+        padding: 11px 13px;
+        border: 1px solid #ffdada;
+        border-radius: 8px;
+        background: #fff4f4;
+        color: #b42323;
+        font-size: 12px;
+    }
+
+    .ue-section {
+        margin-bottom: 20px;
+    }
+
+        .ue-section:last-child {
+            margin-bottom: 0;
+        }
+
+    .ue-section-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0 0 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #edf0f5;
+        color: #29364d;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .ue-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 25px;
+        height: 25px;
+        flex-shrink: 0;
+        border-radius: 7px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 11px;
+    }
+
+    .ue-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px 16px;
+    }
+
+    .ue-field {
+        min-width: 0;
+    }
+
+    .ue-full {
+        grid-column: 1 / -1;
+    }
+
+    .ue-label {
+        display: block;
+        margin-bottom: 6px;
+        color: #435169;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .ue-required {
+        margin-left: 3px;
+        color: #c92828;
+    }
+
+    .ue-control {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        min-height: 39px;
+        padding: 8px 11px;
+        border: 1px solid #d9e1ec;
+        border-radius: 8px;
+        background: #fff;
+        color: #25324a;
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .ue-control:focus {
+            border-color: #c92828;
+            box-shadow: 0 0 0 3px rgba(201,40,40,.08);
+        }
+
+        .ue-control[readonly] {
+            background: #f5f7fb;
+            color: #7d899e;
+            cursor: not-allowed;
+        }
+
+        .ue-control::placeholder {
+            color: #9ba6b8;
+        }
+
+    .ue-help {
+        display: block;
+        margin-top: 5px;
+        color: #8995aa;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    .ue-validation {
+        display: block;
+        margin-top: 5px;
+        color: #bd2626;
+        font-size: 11px;
+    }
+
+    .ue-profile {
+        margin-top: 14px;
+        padding: 14px;
+        border: 1px solid #e5eaf2;
+        border-radius: 9px;
+        background: #fafbfd;
+    }
+
+    .ue-profile-heading {
+        margin-bottom: 12px;
+        color: #29364d;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .ue-image-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+        .ue-image-row img,
+        .ue-image-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            flex-shrink: 0;
+            overflow: hidden;
+            border-radius: 10px;
+            background: #fff0f0;
+            color: #c92828;
+            font-size: 18px;
+            font-weight: 800;
+            object-fit: cover;
+        }
+
+    .ue-image-info strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #435169;
+        font-size: 11px;
+    }
+
+    .ue-image-info span {
+        color: #8995aa;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    .ue-footer {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 14px 20px;
+        border-top: 1px solid #edf0f5;
+        background: #fbfcfe;
+    }
+
+    .ue-side-card {
+        margin-bottom: 12px;
+    }
+
+    .ue-side-header {
+        padding: 13px 15px;
+        border-bottom: 1px solid #edf0f5;
+        color: #29364d;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .ue-side-body {
+        padding: 14px;
+    }
+
+    .ue-tip {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin-bottom: 13px;
+    }
+
+        .ue-tip:last-child {
+            margin-bottom: 0;
+        }
+
+    .ue-tip-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        flex-shrink: 0;
+        border-radius: 7px;
+        background: #f1f4f9;
+        color: #63718a;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .ue-tip strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #344159;
+        font-size: 11px;
+    }
+
+    .ue-tip p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 10px;
+        line-height: 1.7;
+    }
+
+    .ue-note {
+        padding: 12px;
+        border: 1px solid #f1dfb5;
+        border-radius: 8px;
+        background: #fff9ed;
+        color: #8a6418;
+        font-size: 10px;
+        line-height: 1.7;
+    }
+
+        .ue-note strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+    @@media (max-width: 1000px) {
+        .ue-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .ue-sidebar {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .ue-side-card {
+            margin-bottom: 0;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .ue-header h1 {
+            font-size: 21px;
+        }
+
+        .ue-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .ue-full {
+            grid-column: auto;
+        }
+
+        .ue-card-body,
+        .ue-card-header {
+            padding: 14px;
+        }
+
+        .ue-footer {
+            padding: 12px 14px;
+        }
+
+        .ue-sidebar {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+</style>
+
+<div class="ue-page">
+
+    <div class="ue-header">
+        <div>
+            <div class="ue-eyebrow">ENGLISH LANGUAGE CENTER / QUẢN LÝ NGƯỜI DÙNG</div>
+            <h1>Chỉnh sửa người dùng</h1>
+            <p>Cập nhật thông tin tài khoản và hồ sơ liên quan.</p>
+        </div>
+
+        <a href="@Url.Action("Index", "Users")" class="ue-btn ue-back">
+            ← Quay lại danh sách
+        </a>
+    </div>
+
+    <div class="ue-layout">
+
+        <section class="ue-card">
+
+            <div class="ue-card-header">
+                <div class="ue-avatar">
+                    @if (!string.IsNullOrWhiteSpace(Model.ExistingAvatarUrl))
+                    {
+                        <img src="@Url.Content(Model.ExistingAvatarUrl)"
+                             alt="Ảnh đại diện" />
+                    }
+                    else
+                    {
+                        @initial
+                    }
+                </div>
+
+                <div>
+                    <h2>Thông tin tài khoản</h2>
+                    <p>Mã người dùng: #@Model.Id</p>
+                </div>
+            </div>
+
+            @using (Html.BeginForm("Edit", "Users", FormMethod.Post,
+                new { enctype = "multipart/form-data", @class = "ue-form" }))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.Id)
+                @Html.HiddenFor(m => m.ExistingAvatarUrl)
+
+                <div class="ue-card-body">
+
+                    @Html.ValidationSummary(false,
+                        "Vui lòng kiểm tra lại thông tin:",
+                        new { @class = "ue-validation-summary" })
+
+                    <div class="ue-section">
+                        <h3 class="ue-section-title">
+                            <span class="ue-number">01</span>
+                            Thông tin đăng nhập
+                        </h3>
+
+                        <div class="ue-grid">
+
+                            <div class="ue-field">
+                                @Html.LabelFor(m => m.Username, new { @class = "ue-label" })
+
+                                @Html.TextBoxFor(m => m.Username, new
+                                {
+                                    @class = "ue-control",
+                                    @readonly = "readonly",
+                                    autocomplete = "username"
+                                })
+
+                                <small class="ue-help">
+                                    Tên đăng nhập được giữ nguyên.
+                                </small>
+
+                                @Html.ValidationMessageFor(m => m.Username, "",
+                                    new { @class = "ue-validation" })
+                            </div>
+
+                            <div class="ue-field">
+                                @Html.LabelFor(m => m.NewPassword, new { @class = "ue-label" })
+
+                                @Html.PasswordFor(m => m.NewPassword, new
+                                {
+                                    @class = "ue-control",
+                                    placeholder = "Bỏ trống nếu không đổi",
+                                    autocomplete = "new-password"
+                                })
+
+                                <small class="ue-help">
+                                    Chỉ nhập khi muốn đổi mật khẩu.
+                                </small>
+
+                                @Html.ValidationMessageFor(m => m.NewPassword, "",
+                                    new { @class = "ue-validation" })
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="ue-section">
+                        <h3 class="ue-section-title">
+                            <span class="ue-number">02</span>
+                            Thông tin cá nhân
+                        </h3>
+
+                        <div class="ue-grid">
+
+                            <div class="ue-field ue-full">
+                                @Html.LabelFor(m => m.FullName, new { @class = "ue-label" })
+                                <span class="ue-required">*</span>
+
+                                @Html.TextBoxFor(m => m.FullName, new
+                                {
+                                    @class = "ue-control",
+                                    placeholder = "Nhập họ và tên",
+                                    autocomplete = "name"
+                                })
+
+                                @Html.ValidationMessageFor(m => m.FullName, "",
+                                    new { @class = "ue-validation" })
+                            </div>
+
+                            <div class="ue-field">
+                                @Html.LabelFor(m => m.Email, new { @class = "ue-label" })
+                                <span class="ue-required">*</span>
+
+                                @Html.TextBoxFor(m => m.Email, new
+                                {
+                                    @class = "ue-control",
+                                    type = "email",
+                                    placeholder = "example@email.com",
+                                    autocomplete = "email"
+                                })
+
+                                @Html.ValidationMessageFor(m => m.Email, "",
+                                    new { @class = "ue-validation" })
+                            </div>
+
+                            <div class="ue-field">
+                                @Html.LabelFor(m => m.Phone, new { @class = "ue-label" })
+
+                                @Html.TextBoxFor(m => m.Phone, new
+                                {
+                                    @class = "ue-control",
+                                    type = "tel",
+                                    placeholder = "Nhập số điện thoại",
+                                    autocomplete = "tel"
+                                })
+
+                                @Html.ValidationMessageFor(m => m.Phone, "",
+                                    new { @class = "ue-validation" })
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="ue-section">
+                        <h3 class="ue-section-title">
+                            <span class="ue-number">03</span>
+                            Vai trò và hồ sơ
+                        </h3>
+
+                        <div class="ue-field">
+                            @Html.LabelFor(m => m.RoleId, new { @class = "ue-label" })
+
+                            @Html.DropDownListFor(
+                                m => m.RoleId,
+                                (IEnumerable<SelectListItem>)ViewBag.RoleId,
+                                "-- Chọn vai trò --",
+                                new { @class = "ue-control", id = "ueRoleSelect" })
+
+                            @Html.ValidationMessageFor(m => m.RoleId, "",
+                                new { @class = "ue-validation" })
+                        </div>
+
+                        <div id="ueTeacherFields" class="ue-profile" style="display:none;">
+                            <div class="ue-profile-heading">Hồ sơ giáo viên</div>
+
+                            <div class="ue-field">
+                                @Html.LabelFor(m => m.Specialization, new { @class = "ue-label" })
+
+                                @Html.TextBoxFor(m => m.Specialization, new
+                                {
+                                    @class = "ue-control",
+                                    placeholder = "Nhập chuyên môn giảng dạy"
+                                })
+
+                                @Html.ValidationMessageFor(m => m.Specialization, "",
+                                    new { @class = "ue-validation" })
+                            </div>
+                        </div>
+
+                        <div id="ueStudentFields" class="ue-profile" style="display:none;">
+                            <div class="ue-profile-heading">Hồ sơ học viên</div>
+
+                            <div class="ue-grid">
+
+                                <div class="ue-field">
+                                    @Html.LabelFor(m => m.DateOfBirth, new { @class = "ue-label" })
+
+                                    @Html.TextBoxFor(m => m.DateOfBirth, "{0:yyyy-MM-dd}", new
+                                    {
+                                        @class = "ue-control",
+                                        type = "date"
+                                    })
+
+                                    @Html.ValidationMessageFor(m => m.DateOfBirth, "",
+                                        new { @class = "ue-validation" })
+                                </div>
+
+                                <div class="ue-field">
+                                    @Html.LabelFor(m => m.Address, new { @class = "ue-label" })
+
+                                    @Html.TextBoxFor(m => m.Address, new
+                                    {
+                                        @class = "ue-control",
+                                        placeholder = "Nhập địa chỉ thường trú"
+                                    })
+
+                                    @Html.ValidationMessageFor(m => m.Address, "",
+                                        new { @class = "ue-validation" })
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ue-section">
+                        <h3 class="ue-section-title">
+                            <span class="ue-number">04</span>
+                            Ảnh đại diện
+                        </h3>
+
+                        <div class="ue-image-row">
+                            @if (!string.IsNullOrWhiteSpace(Model.ExistingAvatarUrl))
+                            {
+                                <img src="@Url.Content(Model.ExistingAvatarUrl)"
+                                     alt="Ảnh đại diện hiện tại" />
+                            }
+                            else
+                            {
+                                <div class="ue-image-placeholder">@initial</div>
+                            }
+
+                            <div class="ue-image-info">
+                                <strong>Ảnh đại diện hiện tại</strong>
+                                <span>Chọn tệp mới nếu muốn thay ảnh.</span>
+                            </div>
+                        </div>
+
+                        <div class="ue-field">
+                            @Html.LabelFor(m => m.AvatarFile, new { @class = "ue-label" })
+
+                            <input type="file"
+                                   id="ueAvatarFile"
+                                   name="AvatarFile"
+                                   class="ue-control"
+                                   accept="image/*" />
+
+                            @Html.ValidationMessageFor(m => m.AvatarFile, "",
+                                new { @class = "ue-validation" })
+
+                            <small class="ue-help">
+                                Không chọn tệp mới nếu muốn giữ ảnh hiện tại.
+                            </small>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="ue-footer">
+                    <a href="@Url.Action("Index", "Users")" class="ue-btn ue-cancel">
+                        Hủy bỏ
+                    </a>
+
+                    <button type="submit" class="ue-btn ue-save">
+                        ✓ Lưu thay đổi
+                    </button>
+                </div>
+            }
+
+        </section>
+
+        <aside class="ue-sidebar">
+
+            <section class="ue-side-card">
+                <div class="ue-side-header">Hướng dẫn chỉnh sửa</div>
+
+                <div class="ue-side-body">
+
+                    <div class="ue-tip">
+                        <div class="ue-tip-number">1</div>
+                        <div>
+                            <strong>Cập nhật thông tin</strong>
+                            <p>Kiểm tra họ tên, email và số điện thoại.</p>
+                        </div>
+                    </div>
+
+                    <div class="ue-tip">
+                        <div class="ue-tip-number">2</div>
+                        <div>
+                            <strong>Đổi mật khẩu</strong>
+                            <p>Bỏ trống trường mật khẩu mới nếu không muốn đổi.</p>
+                        </div>
+                    </div>
+
+                    <div class="ue-tip">
+                        <div class="ue-tip-number">3</div>
+                        <div>
+                            <strong>Kiểm tra hồ sơ</strong>
+                            <p>Xem lại thông tin phù hợp với vai trò.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <section class="ue-side-card">
+                <div class="ue-side-header">Lưu ý</div>
+                <div class="ue-side-body">
+                    <div class="ue-note">
+                        <strong>Trước khi lưu</strong>
+                        Tên đăng nhập không thay đổi. Kiểm tra các trường bắt buộc trước khi gửi.
+                    </div>
+                </div>
+            </section>
+
+        </aside>
+
+    </div>
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+
+    <script>
+                $(function () {
+                    function toggleProfileFields() {
+                        var text = $("#ueRoleSelect option:selected")
+                            .text().toLowerCase();
+
+                        var isTeacher =
+                            text.indexOf("teacher") >= 0 ||
+                            text.indexOf("giáo viên") >= 0;
+
+                        var isStudent =
+                            text.indexOf("student") >= 0 ||
+                            text.indexOf("học viên") >= 0 ||
+                            text.indexOf("học sinh") >= 0;
+
+                        $("#ueTeacherFields").toggle(isTeacher);
+                        $("#ueStudentFields").toggle(isStudent);
+                    }
+
+                    toggleProfileFields();
+                    $("#ueRoleSelect").on("change", toggleProfileFields);
+                });
+    </script>
+}

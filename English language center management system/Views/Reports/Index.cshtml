@@ -1,0 +1,688 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Reports.ReportIndexViewModel
+
+@using System
+@using System.Collections.Generic
+@using System.Linq
+@using English_language_center_management_system.Models
+@using English_language_center_management_system.Models.ViewModels.Reports
+
+@{
+    ViewBag.Title = "Báo cáo & Thống kê";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var courseSummaries = Model.CourseSummaries
+        ?? new List<CourseRevenueSummaryItem>();
+
+    var methodSummaries = Model.PaymentMethodSummaries
+        ?? new List<PaymentMethodSummaryItem>();
+
+    var payments = Model.PaymentDetails
+        ?? new List<Payment>();
+
+    decimal totalRevenue = Model.TotalRevenue;
+
+    Func<string, string> methodLabel = method =>
+    {
+        switch (method)
+        {
+            case "Cash": return "Tiền mặt";
+            case "Bank Transfer": return "Chuyển khoản";
+            case "Credit Card": return "Thẻ tín dụng";
+            default:
+                return String.IsNullOrWhiteSpace(method)
+                    ? "Khác" : method;
+        }
+    };
+
+    Func<string, string> paymentStatusLabel = status =>
+    {
+        switch (status)
+        {
+            case "Paid": return "Đã thanh toán";
+            case "Completed": return "Hoàn tất";
+            case "Partial": return "Thanh toán một phần";
+            case "Pending": return "Chờ thanh toán";
+            default:
+                return String.IsNullOrWhiteSpace(status)
+                    ? "Chưa xác định" : status;
+        }
+    };
+
+    Func<string, string> paymentStatusClass = status =>
+    {
+        switch (status)
+        {
+            case "Paid":
+            case "Completed":
+                return "report-status-paid";
+
+            case "Partial":
+                return "report-status-partial";
+
+            case "Pending":
+                return "report-status-pending";
+
+            default:
+                return "report-status-default";
+        }
+    };
+
+    var filterFromDate = Model.FromDate.HasValue
+        ? Model.FromDate.Value.ToString("yyyy-MM-dd")
+        : "";
+
+    var filterToDate = Model.ToDate.HasValue
+        ? Model.ToDate.Value.ToString("yyyy-MM-dd")
+        : "";
+}
+
+<div class="admin-reports-page">
+
+    <!-- HEADER -->
+    <div class="admin-reports-header">
+        <div>
+            <div class="admin-reports-eyebrow">
+                TRUNG TÂM ANH NGỮ
+            </div>
+
+            <h2>Báo cáo &amp; Thống kê</h2>
+
+            <p>
+                Theo dõi doanh thu, hoạt động ghi danh và tình hình đào tạo.
+            </p>
+        </div>
+
+        <!-- ĐÃ SỬA: truyền ngày và khóa học sang trang in -->
+        <a href="@Url.Action("Print", "Reports", new {
+                fromDate = filterFromDate,
+                toDate = filterToDate,
+                courseId = Model.SelectedCourseId
+            })"
+           target="_blank"
+           class="admin-reports-print-btn">
+
+            <i class="glyphicon glyphicon-print"></i>
+            In báo cáo
+        </a>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="admin-reports-alert report-alert-success">
+            <i class="glyphicon glyphicon-ok-circle"></i>
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="admin-reports-alert report-alert-error">
+            <i class="glyphicon glyphicon-exclamation-sign"></i>
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- FILTER -->
+    <div class="admin-reports-filter-card">
+
+        <div class="admin-reports-section-heading">
+            <div class="admin-reports-heading-icon">
+                <i class="glyphicon glyphicon-filter"></i>
+            </div>
+
+            <div>
+                <h3>Bộ lọc báo cáo</h3>
+                <p>
+                    Chọn thời gian và khóa học để xem kết quả phù hợp.
+                </p>
+            </div>
+        </div>
+
+        @using (Html.BeginForm(
+            "Index",
+            "Reports",
+            FormMethod.Get,
+            new { @class = "admin-reports-filter-form" }))
+        {
+            <div class="admin-reports-filter-group">
+                <label for="fromDate">Từ ngày</label>
+
+                <input type="date"
+                       id="fromDate"
+                       name="fromDate"
+                       value="@filterFromDate"
+                       class="admin-reports-control" />
+            </div>
+
+            <div class="admin-reports-filter-group">
+                <label for="toDate">Đến ngày</label>
+
+                <input type="date"
+                       id="toDate"
+                       name="toDate"
+                       value="@filterToDate"
+                       class="admin-reports-control" />
+            </div>
+
+            <div class="admin-reports-filter-group report-course-filter">
+                <label for="courseId">Khóa học</label>
+
+                <select id="courseId"
+                        name="courseId"
+                        class="admin-reports-control">
+
+                    <option value="">Tất cả khóa học</option>
+
+                    @if (Model.Courses != null)
+                    {
+                        foreach (var course in Model.Courses)
+                        {
+                            if (Model.SelectedCourseId == course.Id)
+                            {
+                                <option value="@course.Id" selected="selected">
+                                    @course.CourseName
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="@course.Id">
+                                    @course.CourseName
+                                </option>
+                            }
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="admin-reports-filter-actions">
+                <button type="submit" class="report-filter-submit">
+                    <i class="glyphicon glyphicon-search"></i>
+                    Xem báo cáo
+                </button>
+
+                <a href="@Url.Action("Index", "Reports")"
+                   class="report-filter-reset">
+                    Đặt lại
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- REPORT PERIOD -->
+    <div class="admin-reports-period">
+        <i class="glyphicon glyphicon-calendar"></i>
+
+        <span>
+            Kỳ báo cáo:
+            <strong>
+                @(Model.FromDate.HasValue
+                    ? Model.FromDate.Value.ToString("dd/MM/yyyy")
+                    : "Không xác định")
+            </strong>
+
+            đến
+
+            <strong>
+                @(Model.ToDate.HasValue
+                    ? Model.ToDate.Value.ToString("dd/MM/yyyy")
+                    : "Không xác định")
+            </strong>
+        </span>
+    </div>
+
+    <!-- KPI -->
+    <div class="admin-reports-kpi-grid">
+
+        <div class="admin-reports-kpi">
+            <div class="report-kpi-top">
+                <div class="report-kpi-icon kpi-revenue">
+                    <i class="glyphicon glyphicon-usd"></i>
+                </div>
+
+                <span class="report-kpi-label">
+                    DOANH THU TRONG KỲ
+                </span>
+            </div>
+
+            <strong class="report-kpi-value report-kpi-money">
+                @Model.TotalRevenue.ToString("N0")
+                <small>VNĐ</small>
+            </strong>
+
+            <span class="report-kpi-description">
+                Tổng tiền giao dịch trong kết quả lọc
+            </span>
+        </div>
+
+        <div class="admin-reports-kpi">
+            <div class="report-kpi-top">
+                <div class="report-kpi-icon kpi-enrollment">
+                    <i class="glyphicon glyphicon-list-alt"></i>
+                </div>
+
+                <span class="report-kpi-label">
+                    LƯỢT GHI DANH
+                </span>
+            </div>
+
+            <strong class="report-kpi-value">
+                @Model.TotalEnrollments
+            </strong>
+
+            <span class="report-kpi-description">
+                Lượt ghi danh trong khoảng thời gian
+            </span>
+        </div>
+
+        <div class="admin-reports-kpi">
+            <div class="report-kpi-top">
+                <div class="report-kpi-icon kpi-classes">
+                    <i class="glyphicon glyphicon-education"></i>
+                </div>
+
+                <span class="report-kpi-label">
+                    LỚP ĐANG HOẠT ĐỘNG
+                </span>
+            </div>
+
+            <strong class="report-kpi-value">
+                @Model.TotalActiveClasses
+            </strong>
+
+            <span class="report-kpi-description">
+                Lớp đang mở hoặc đang học hiện tại
+            </span>
+        </div>
+
+        <div class="admin-reports-kpi">
+            <div class="report-kpi-top">
+                <div class="report-kpi-icon kpi-students">
+                    <i class="glyphicon glyphicon-user"></i>
+                </div>
+
+                <span class="report-kpi-label">
+                    TỔNG HỌC VIÊN
+                </span>
+            </div>
+
+            <strong class="report-kpi-value">
+                @Model.TotalStudents
+            </strong>
+
+            <span class="report-kpi-description">
+                Tổng hồ sơ học viên hiện có
+            </span>
+        </div>
+
+    </div>
+
+    <!-- REVENUE BY COURSE -->
+    <div class="admin-reports-card">
+
+        <div class="admin-reports-section-heading">
+            <div class="admin-reports-heading-icon">
+                <i class="glyphicon glyphicon-book"></i>
+            </div>
+
+            <div>
+                <h3>Doanh thu theo khóa học</h3>
+                <p>
+                    So sánh số lớp, lượt ghi danh và doanh thu từng khóa học.
+                </p>
+            </div>
+        </div>
+
+        <div class="admin-reports-table-wrap">
+            <table class="admin-reports-table">
+
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Khóa học</th>
+                        <th>Số lớp</th>
+                        <th>Lượt ghi danh</th>
+                        <th>Doanh thu</th>
+                        <th>Tỷ trọng</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (courseSummaries.Any())
+                    {
+                        var index = 0;
+
+                        foreach (var item in courseSummaries)
+                        {
+                            index++;
+
+                            decimal revenuePercent =
+                                totalRevenue > 0
+                                ? item.TotalRevenue * 100m / totalRevenue
+                                : 0;
+
+                            <tr>
+                                <td>
+                                    <span class="report-row-number">
+                                        @index
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="report-course-name">
+                                        <strong>@item.CourseName</strong>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="report-count">
+                                        @item.TotalClasses
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="report-count">
+                                        @item.TotalEnrollments
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <strong class="report-revenue-value">
+                                        @item.TotalRevenue.ToString("N0") VNĐ
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    <div class="report-share-cell">
+                                        <div class="report-share-track">
+                                            <div class="report-share-bar"
+                                                 style="width: @(revenuePercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;">
+                                            </div>
+                                        </div>
+
+                                        <span>
+                                            @revenuePercent.ToString("0.0")%
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6">
+                                <div class="admin-reports-empty">
+                                    <i class="glyphicon glyphicon-inbox"></i>
+
+                                    <strong>Chưa có dữ liệu theo khóa học</strong>
+
+                                    <p>
+                                        Không có lượt ghi danh hoặc doanh thu
+                                        phù hợp với bộ lọc hiện tại.
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+                @if (courseSummaries.Any())
+                {
+                    <tfoot>
+                        <tr>
+                            <td colspan="4">
+                                <strong>Tổng doanh thu trong kỳ</strong>
+                            </td>
+
+                            <td colspan="2">
+                                <strong class="report-total-revenue">
+                                    @Model.TotalRevenue.ToString("N0") VNĐ
+                                </strong>
+                            </td>
+                        </tr>
+                    </tfoot>
+                }
+            </table>
+        </div>
+    </div>
+
+    <!-- PAYMENT METHOD SUMMARY -->
+    <div class="admin-reports-card">
+
+        <div class="admin-reports-section-heading">
+            <div class="admin-reports-heading-icon method-heading-icon">
+                <i class="glyphicon glyphicon-credit-card"></i>
+            </div>
+
+            <div>
+                <h3>Thống kê theo phương thức thanh toán</h3>
+                <p>
+                    Tổng hợp số giao dịch và số tiền theo từng phương thức.
+                </p>
+            </div>
+        </div>
+
+        <div class="admin-reports-method-grid">
+
+            @if (methodSummaries.Any())
+            {
+                foreach (var item in methodSummaries)
+                {
+                    decimal methodPercent =
+                        totalRevenue > 0
+                        ? item.TotalAmount * 100m / totalRevenue
+                        : 0;
+
+                    <div class="admin-reports-method-card">
+
+                        <div class="report-method-top">
+                            <div class="report-method-icon">
+                                <i class="glyphicon glyphicon-credit-card"></i>
+                            </div>
+
+                            <span class="report-method-count">
+                                @item.TransactionCount giao dịch
+                            </span>
+                        </div>
+
+                        <h4>@methodLabel(item.PaymentMethod)</h4>
+
+                        <strong class="report-method-amount">
+                            @item.TotalAmount.ToString("N0") VNĐ
+                        </strong>
+
+                        <div class="report-method-progress">
+                            <div class="report-method-progress-bar"
+                                 style="width: @(methodPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;">
+                            </div>
+                        </div>
+
+                        <div class="report-method-footer">
+                            <span>Tỷ trọng doanh thu</span>
+                            <strong>@methodPercent.ToString("0.0")%</strong>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="admin-reports-empty">
+                    <i class="glyphicon glyphicon-inbox"></i>
+
+                    <strong>Chưa có dữ liệu thanh toán</strong>
+
+                    <p>
+                        Chưa có giao dịch phù hợp với kỳ báo cáo.
+                    </p>
+                </div>
+            }
+
+        </div>
+    </div>
+
+    <!-- PAYMENT DETAILS -->
+    <div class="admin-reports-card">
+
+        <div class="admin-reports-section-heading report-transactions-heading">
+            <div class="admin-reports-heading-icon transaction-heading-icon">
+                <i class="glyphicon glyphicon-list-alt"></i>
+            </div>
+
+            <div>
+                <h3>Chi tiết giao dịch trong kỳ</h3>
+                <p>
+                    Danh sách giao dịch đã được lọc theo thời gian và khóa học.
+                </p>
+            </div>
+
+            <span class="report-transaction-count">
+                @payments.Count giao dịch
+            </span>
+        </div>
+
+        <div class="admin-reports-table-wrap">
+            <table class="admin-reports-table">
+
+                <thead>
+                    <tr>
+                        <th>Mã giao dịch</th>
+                        <th>Biên lai</th>
+                        <th>Học viên</th>
+                        <th>Lớp học</th>
+                        <th>Phương thức</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày thanh toán</th>
+                        <th>Số tiền</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (payments.Any())
+                    {
+                        foreach (var payment in payments)
+                        {
+                            var studentName =
+                                payment.Enrollment != null &&
+                                payment.Enrollment.Student != null
+                                ? payment.Enrollment.Student.FullName
+                                : "Chưa xác định";
+
+                            var className =
+                                payment.Enrollment != null &&
+                                payment.Enrollment.Class != null
+                                ? payment.Enrollment.Class.ClassName
+                                : "Chưa xác định";
+
+                            var courseName =
+                                payment.Enrollment != null &&
+                                payment.Enrollment.Class != null &&
+                                payment.Enrollment.Class.Course != null
+                                ? payment.Enrollment.Class.Course.CourseName
+                                : "";
+
+                            <tr>
+                                <td>
+                                    <span class="report-transaction-id">
+                                        #@payment.Id
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <strong class="report-receipt-number">
+                                        @(String.IsNullOrWhiteSpace(payment.ReceiptNumber)
+                                            ? "Chưa có biên lai"
+                                            : payment.ReceiptNumber)
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    <strong class="report-student-name">
+                                        @(String.IsNullOrWhiteSpace(studentName)
+                                            ? "Chưa xác định"
+                                            : studentName)
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    <div class="report-transaction-class">
+                                        <strong>@className</strong>
+                                        <small>@courseName</small>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    @methodLabel(payment.PaymentMethod)
+                                </td>
+
+                                <td>
+                                    <span class="report-payment-status @paymentStatusClass(payment.PaymentStatus)">
+                                        @paymentStatusLabel(payment.PaymentStatus)
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="report-transaction-date">
+                                        @(payment.PaymentDate.HasValue ? payment.PaymentDate.Value.ToString("dd/MM/yyyy") : "Chưa cập nhật")
+                                    </div>
+
+                                    <small class="report-transaction-time">
+                                        @(payment.PaymentDate.HasValue ? payment.PaymentDate.Value.ToString("HH:mm") : "Chưa cập nhật")
+                                    </small>
+                                </td>
+
+                                <td>
+                                    <strong class="report-transaction-amount">
+                                        @payment.AmountPaid.ToString("N0") VNĐ
+                                    </strong>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8">
+                                <div class="admin-reports-empty">
+                                    <i class="glyphicon glyphicon-inbox"></i>
+
+                                    <strong>Không có giao dịch trong kỳ</strong>
+
+                                    <p>
+                                        Thử thay đổi khoảng thời gian hoặc
+                                        lựa chọn khóa học.
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+
+        <div class="admin-reports-table-footer">
+            <span>
+                Tổng cộng @payments.Count giao dịch đang hiển thị.
+            </span>
+
+            <strong>
+                @totalRevenue.ToString("N0") VNĐ
+            </strong>
+        </div>
+    </div>
+
+    <!-- FOOTNOTE -->
+    <div class="admin-reports-footnote">
+        <i class="glyphicon glyphicon-info-sign"></i>
+
+        <p>
+            Doanh thu được tính bằng tổng AmountPaid của các giao dịch trong
+            khoảng thời gian và khóa học đã chọn. Số học viên và số lớp hoạt động
+            là số liệu hiện tại; tổng lượt ghi danh được tính trong khoảng thời gian.
+            Báo cáo không tự xác nhận rằng mọi giao dịch đều đã thanh toán đủ học phí.
+        </p>
+    </div>
+
+</div>

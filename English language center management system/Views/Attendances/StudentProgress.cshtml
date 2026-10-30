@@ -1,0 +1,717 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Attendances.StudentProgressViewModel
+
+@using System.Collections.Generic
+@using System.Linq
+@using System.Web.Mvc
+@using English_language_center_management_system.Models
+
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewBag.Title = "Tiến trình học tập & Bảng điểm";
+
+    var studentName =
+        Model.StudentInfo != null &&
+        !string.IsNullOrWhiteSpace(Model.StudentInfo.FullName)
+        ? Model.StudentInfo.FullName
+        : "Học viên";
+
+    var enrollments = Model.Enrollments ?? new List<Enrollment>();
+    var attendanceRecords = Model.AttendanceRecords ?? new List<Attendance>();
+    var feedbacks = Model.TeacherFeedbacks ?? new List<TeacherFeedback>();
+
+    var enrollmentOptions = enrollments.Select(e =>
+        new SelectListItem
+        {
+            Value = e.Id.ToString(),
+            Text =
+                (e.Class != null && e.Class.Course != null
+                    ? e.Class.Course.CourseName
+                    : "Khóa học")
+                + " - "
+                + (e.Class != null ? e.Class.ClassName : "Lớp học"),
+            Selected = Model.SelectedEnrollmentId == e.Id
+        }).ToList();
+
+    var score = Model.Score;
+    var hasCertificate = Model.Certificate != null;
+}
+
+<div class="student-portal">
+
+    @* SIDEBAR *@
+    <aside class="student-sidebar">
+
+        <a href="@Url.Action("StudentDashboard", "Home")"
+           class="student-brand">
+
+            <span class="student-brand-mark">EC</span>
+
+            <span class="student-brand-text">
+                ELC PORTAL
+                <small>STUDENT SPACE</small>
+            </span>
+
+        </a>
+
+        <div class="student-sidebar-caption">
+            KHÔNG GIAN HỌC TẬP
+        </div>
+
+        <nav class="student-side-nav">
+
+            <a href="@Url.Action("StudentDashboard", "Home")"
+               class="student-nav-link">
+                <span class="student-nav-icon">⌂</span>
+                Dashboard
+            </a>
+
+            <a href="@Url.Action("StudentTimetable", "ClassSessions")"
+               class="student-nav-link">
+                <span class="student-nav-icon">▦</span>
+                Thời khóa biểu
+            </a>
+
+            <a href="@Url.Action("StudentEnroll", "Enrollments")"
+               class="student-nav-link">
+                <span class="student-nav-icon">＋</span>
+                Đăng ký lớp học
+            </a>
+
+            <a href="@Url.Action("StudentProgress", "Attendances")"
+               class="student-nav-link is-active">
+                <span class="student-nav-icon">▤</span>
+                Kết quả học tập
+            </a>
+
+            <a href="@Url.Action("StudentPayments", "Payments")"
+               class="student-nav-link">
+                <span class="student-nav-icon">₫</span>
+                Học phí &amp; hóa đơn
+            </a>
+
+        </nav>
+
+        <div class="student-sidebar-bottom">
+
+            <div class="student-support-card">
+                <span class="student-support-icon">?</span>
+                <strong>Cần hỗ trợ?</strong>
+                <p>Liên hệ trung tâm khi bạn cần giải đáp.</p>
+
+                @Html.ActionLink(
+                    "Liên hệ trung tâm →",
+                    "Contact",
+                    "Home",
+                    null,
+                    new { @class = "student-support-link" })
+            </div>
+
+            @Html.ActionLink(
+                "↪ Đăng xuất",
+                "Logout",
+                "Auth",
+                null,
+                new { @class = "student-logout-link" })
+
+        </div>
+
+    </aside>
+
+    @* NỘI DUNG CHÍNH *@
+    <div class="student-main">
+
+        <header class="student-topbar">
+
+            <div class="student-topbar-title">
+                <span>CỔNG HỌC VIÊN</span>
+                <strong>Tiến trình học tập</strong>
+            </div>
+
+            <div class="student-topbar-user">
+
+                <span class="student-avatar-small">
+                    @studentName.Substring(0, 1).ToUpper()
+                </span>
+
+                <span class="student-topbar-user-info">
+                    <strong>@studentName</strong>
+                    <small>Học viên</small>
+                </span>
+
+            </div>
+
+        </header>
+
+        <main class="student-content">
+
+            <div class="student-breadcrumb">
+                Dashboard <span>/</span> Tiến trình học tập &amp; Bảng điểm
+            </div>
+
+            @* TIÊU ĐỀ VÀ CHỌN LỚP *@
+            <section class="progress-page-heading">
+
+                <div>
+                    <span class="student-panel-eyebrow">
+                        ACADEMIC PERFORMANCE
+                    </span>
+
+                    <h1>Tiến trình học tập &amp; Bảng điểm</h1>
+
+                    <p>
+                        Theo dõi chuyên cần, điểm đánh giá,
+                        nhận xét giáo viên và kết quả khóa học.
+                    </p>
+                </div>
+
+                @if (enrollments.Any())
+                {
+                    <div class="progress-course-selector">
+
+                        @using (Html.BeginForm(
+                            "StudentProgress",
+                            "Attendances",
+                            FormMethod.Get,
+                            new { @class = "progress-course-form" }))
+                        {
+                            <label for="enrollmentId">
+                                Chọn lớp học
+                            </label>
+
+                            @Html.DropDownList(
+                                "enrollmentId",
+                                enrollmentOptions,
+                                new { @class = "form-select", id = "enrollmentId" })
+
+                            <button type="submit" class="btn btn-primary">
+                                Xem kết quả
+                            </button>
+                        }
+
+                    </div>
+                }
+
+            </section>
+
+            @if (Model.SelectedEnrollment == null)
+            {
+                <section class="student-panel">
+
+                    <div class="student-empty-state">
+                        <div class="student-empty-icon">▤</div>
+
+                        <h3>Chưa có lớp học để xem kết quả</h3>
+
+                        <p>
+                            Khi lượt đăng ký của bạn được duyệt,
+                            tiến trình và bảng điểm sẽ hiển thị tại đây.
+                        </p>
+
+                        @Html.ActionLink(
+                            "Khám phá khóa học",
+                            "Index",
+                            "Courses",
+                            null,
+                            new { @class = "btn btn-primary" })
+                    </div>
+
+                </section>
+            }
+            else
+            {
+                var selectedClass = Model.SelectedEnrollment.Class;
+                var selectedCourse =
+                    selectedClass != null ? selectedClass.Course : null;
+
+                @* TÊN KHÓA HỌC *@
+                <section class="progress-selected-course">
+
+                    <div>
+                        <span>KHÓA HỌC ĐANG XEM</span>
+
+                        <h2>
+                            @(selectedCourse != null
+                                ? selectedCourse.CourseName
+                                : "Khóa học")
+                        </h2>
+
+                        <p>
+                            Lớp:
+                            @(selectedClass != null
+                                ? selectedClass.ClassName
+                                : "Chưa cập nhật")
+                        </p>
+                    </div>
+
+                    <span class="progress-course-level">
+                        @(selectedCourse != null
+                            ? selectedCourse.Level
+                            : "Học viên")
+                    </span>
+
+                </section>
+
+                @* 4 THẺ THỐNG KÊ *@
+                <section class="progress-metric-grid">
+
+                    <article class="progress-metric-card">
+
+                        <span class="progress-metric-icon progress-icon-blue">
+                            %
+                        </span>
+
+                        <span class="progress-metric-label">
+                            TỶ LỆ CHUYÊN CẦN
+                        </span>
+
+                        @if (Model.TotalAttendanceRecords > 0)
+                        {
+                            <strong>
+                                @Model.AttendanceRate.ToString("0.#")%
+                            </strong>
+
+                            <small>
+                                @(
+                                    Model.PresentCount + Model.LateCount
+                                )/@Model.TotalAttendanceRecords bản ghi
+                            </small>
+                        }
+                        else
+                        {
+                            <strong>—</strong>
+                            <small>Chưa có dữ liệu điểm danh</small>
+                        }
+
+                    </article>
+
+                    <article class="progress-metric-card">
+
+                        <span class="progress-metric-icon progress-icon-orange">
+                            M
+                        </span>
+
+                        <span class="progress-metric-label">
+                            ĐIỂM GIỮA KỲ
+                        </span>
+
+                        <strong>
+                            @(score != null && score.MidtermScore.HasValue
+                                ? score.MidtermScore.Value.ToString("0.##") + " / 10"
+                                : "—")
+                        </strong>
+
+                        <small>Điểm được ghi nhận trong CSDL</small>
+
+                    </article>
+
+                    <article class="progress-metric-card">
+
+                        <span class="progress-metric-icon progress-icon-purple">
+                            F
+                        </span>
+
+                        <span class="progress-metric-label">
+                            ĐIỂM CUỐI KỲ
+                        </span>
+
+                        <strong>
+                            @(score != null && score.FinalScore.HasValue
+                                ? score.FinalScore.Value.ToString("0.##") + " / 10"
+                                : "—")
+                        </strong>
+
+                        <small>Điểm được ghi nhận trong CSDL</small>
+
+                    </article>
+
+                    <article class="progress-metric-card">
+
+                        <span class="progress-metric-icon progress-icon-green">
+                            ✓
+                        </span>
+
+                        <span class="progress-metric-label">
+                            KẾT QUẢ CHUNG
+                        </span>
+
+                        <strong class="progress-outcome">
+                            @(
+                                score != null &&
+                                !string.IsNullOrWhiteSpace(score.LearningOutcome)
+                                ? score.LearningOutcome
+                                : "Chưa có"
+                            )
+                        </strong>
+
+                        <small>
+                            @(
+                                hasCertificate
+                                ? "Đã có chứng chỉ trong hệ thống"
+                                : "Chưa ghi nhận chứng chỉ"
+                            )
+                        </small>
+
+                    </article>
+
+                </section>
+
+                @* NỘI DUNG CHÍNH VÀ CỘT PHỤ *@
+                <div class="progress-content-grid">
+
+                    @* NHẬT KÝ ĐIỂM DANH *@
+                    <section class="student-panel progress-panel">
+
+                        <div class="student-panel-heading">
+
+                            <div>
+                                <span class="student-panel-eyebrow">
+                                    ATTENDANCE HISTORY
+                                </span>
+
+                                <h2>Nhật ký điểm danh</h2>
+
+                                <p>
+                                    Danh sách các buổi học đã có bản ghi điểm danh.
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <div class="progress-attendance-summary">
+
+                            <span>
+                                <i class="progress-dot dot-present"></i>
+                                Có mặt: <strong>@Model.PresentCount</strong>
+                            </span>
+
+                            <span>
+                                <i class="progress-dot dot-late"></i>
+                                Đi muộn: <strong>@Model.LateCount</strong>
+                            </span>
+
+                            <span>
+                                <i class="progress-dot dot-absent"></i>
+                                Vắng: <strong>@Model.AbsentCount</strong>
+                            </span>
+
+                            <span>
+                                <i class="progress-dot dot-excused"></i>
+                                Có phép: <strong>@Model.ExcusedCount</strong>
+                            </span>
+
+                        </div>
+
+                        @if (attendanceRecords.Any())
+                        {
+                            <div class="progress-table-wrapper">
+
+                                <table class="table progress-attendance-table">
+
+                                    <thead>
+                                        <tr>
+                                            <th>Ngày học</th>
+                                            <th>Giờ học</th>
+                                            <th>Trạng thái</th>
+                                            <th>Ghi chú</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        @foreach (var attendance in attendanceRecords)
+                                        {
+                                            var session = attendance.ClassSession;
+
+                                            var statusLabel =
+                                                attendance.Status == "Present"
+                                                ? "Có mặt"
+                                                : attendance.Status == "Late"
+                                                    ? "Đi muộn"
+                                                    : attendance.Status == "Absent"
+                                                        ? "Vắng mặt"
+                                                        : attendance.Status == "Excused"
+                                                            ? "Có phép"
+                                                            : attendance.Status;
+
+                                            var statusClass =
+                                                attendance.Status == "Present"
+                                                ? "progress-status-present"
+                                                : attendance.Status == "Late"
+                                                    ? "progress-status-late"
+                                                    : attendance.Status == "Absent"
+                                                        ? "progress-status-absent"
+                                                        : "progress-status-excused";
+
+                                            <tr>
+
+                                                <td>
+                                                    @(session != null
+                                                        ? session.SessionDate.ToString("dd/MM/yyyy")
+                                                        : "—")
+                                                </td>
+
+                                                <td>
+                                                    @(session != null
+                                                        ? session.StartTime.ToString(@"hh\:mm")
+                                                            + " – "
+                                                            + session.EndTime.ToString(@"hh\:mm")
+                                                        : "—")
+                                                </td>
+
+                                                <td>
+                                                    <span class="progress-status @statusClass">
+                                                        @statusLabel
+                                                    </span>
+                                                </td>
+
+                                                <td>
+                                                    @(string.IsNullOrWhiteSpace(attendance.Notes)
+                                                        ? "—"
+                                                        : attendance.Notes)
+                                                </td>
+
+                                            </tr>
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="student-empty-state student-empty-state-compact">
+                                <div class="student-empty-icon">▦</div>
+
+                                <p>
+                                    Chưa có bản ghi điểm danh cho lớp này.
+                                </p>
+                            </div>
+                        }
+
+                    </section>
+
+                    @* THÀNH PHẦN ĐIỂM *@
+                    <section class="student-panel progress-panel">
+
+                        <div class="student-panel-heading">
+
+                            <div>
+                                <span class="student-panel-eyebrow">
+                                    SCORE BREAKDOWN
+                                </span>
+
+                                <h2>Thành phần điểm số</h2>
+
+                                <p>Điểm đã được giáo viên ghi nhận.</p>
+                            </div>
+
+                        </div>
+
+                        @if (score != null)
+                        {
+                            <div class="progress-score-list">
+
+                                <div class="progress-score-row">
+                                    <div>
+                                        <strong>Điểm giữa kỳ</strong>
+                                        <small>Midterm</small>
+                                    </div>
+
+                                    <span>
+                                        @(score.MidtermScore.HasValue
+                                            ? score.MidtermScore.Value.ToString("0.##") + " / 10"
+                                            : "Chưa có")
+                                    </span>
+                                </div>
+
+                                <div class="progress-score-row">
+                                    <div>
+                                        <strong>Điểm cuối kỳ</strong>
+                                        <small>Final</small>
+                                    </div>
+
+                                    <span>
+                                        @(score.FinalScore.HasValue
+                                            ? score.FinalScore.Value.ToString("0.##") + " / 10"
+                                            : "Chưa có")
+                                    </span>
+                                </div>
+
+                                <div class="progress-score-total">
+                                    <span>Tổng kết khóa học</span>
+
+                                    <strong>
+                                        @(score.TotalScore.HasValue
+                                            ? score.TotalScore.Value.ToString("0.##") + " / 10"
+                                            : "Chưa có")
+                                    </strong>
+                                </div>
+
+                                <div class="progress-outcome-box">
+                                    <small>Kết quả học tập</small>
+
+                                    <strong>
+                                        @(
+                                            string.IsNullOrWhiteSpace(score.LearningOutcome)
+                                            ? "Chưa có kết quả"
+                                            : score.LearningOutcome
+                                        )
+                                    </strong>
+                                </div>
+
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="student-empty-state student-empty-state-compact">
+                                <div class="student-empty-icon">▤</div>
+
+                                <p>
+                                    Giáo viên chưa nhập bảng điểm cho lớp này.
+                                </p>
+                            </div>
+                        }
+
+                    </section>
+
+                    @* NHẬN XÉT GIÁO VIÊN *@
+                    <section class="student-panel progress-panel">
+
+                        <div class="student-panel-heading">
+
+                            <div>
+                                <span class="student-panel-eyebrow">
+                                    TEACHER FEEDBACK
+                                </span>
+
+                                <h2>Nhận xét từ giáo viên</h2>
+
+                                <p>
+                                    Góp ý về quá trình học tập của bạn.
+                                </p>
+                            </div>
+
+                        </div>
+
+                        @if (feedbacks.Any())
+                        {
+                            <div class="progress-feedback-list">
+
+                                @foreach (var feedback in feedbacks)
+                                {
+                                    <article class="progress-feedback-item">
+
+                                        <div class="progress-feedback-header">
+
+                                            <div class="progress-teacher-avatar">
+                                                @(feedback.Teacher != null &&
+                                                  !string.IsNullOrWhiteSpace(feedback.Teacher.FullName)
+                                                    ? feedback.Teacher.FullName.Substring(0, 1).ToUpper()
+                                                    : "G")
+                                            </div>
+
+                                            <div>
+                                                <strong>
+                                                    @(feedback.Teacher != null
+                                                        ? feedback.Teacher.FullName
+                                                        : "Giáo viên")
+                                                </strong>
+
+                                                <small>
+                                                    @feedback.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                                </small>
+                                            </div>
+
+                                        </div>
+
+                                        <p>@feedback.Comments</p>
+
+                                    </article>
+                                }
+
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="student-empty-state student-empty-state-compact">
+                                <div class="student-empty-icon">✎</div>
+
+                                <p>
+                                    Chưa có nhận xét của giáo viên cho lớp này.
+                                </p>
+                            </div>
+                        }
+
+                    </section>
+
+                    @* CHỨNG CHỈ *@
+                    <section class="student-panel progress-panel">
+
+                        <div class="student-panel-heading">
+
+                            <div>
+                                <span class="student-panel-eyebrow">
+                                    COURSE CERTIFICATE
+                                </span>
+
+                                <h2>Chứng nhận hoàn thành khóa học</h2>
+
+                                <p>
+                                    Thông tin chứng chỉ được cấp trong hệ thống.
+                                </p>
+                            </div>
+
+                        </div>
+
+                        @if (hasCertificate)
+                        {
+                            <div class="progress-certificate">
+
+                                <div class="progress-certificate-icon">✓</div>
+
+                                <div>
+                                    <strong>Đã có chứng chỉ</strong>
+
+                                    <p>
+                                        Mã chứng chỉ:
+                                        <strong>@Model.Certificate.CertificateCode</strong>
+                                    </p>
+
+                                    <p>
+                                        Ngày cấp:
+                                        @Model.Certificate.IssueDate.ToString("dd/MM/yyyy")
+                                    </p>
+                                </div>
+
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="student-empty-state student-empty-state-compact">
+                                <div class="student-empty-icon">▤</div>
+
+                                <p>
+                                    Chưa có chứng chỉ được cấp cho lượt ghi danh này.
+                                </p>
+                            </div>
+                        }
+
+                    </section>
+
+                </div>
+
+            }
+
+        </main>
+
+        <footer class="student-footer">
+            <span>© @DateTime.Now.Year English Center</span>
+            <span>Student Information System</span>
+        </footer>
+
+    </div>
+
+</div>

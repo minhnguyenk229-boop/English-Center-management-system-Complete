@@ -1,0 +1,732 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Courses.CourseAdminDetailViewModel
+
+@using System.Linq
+@using English_language_center_management_system.Models.ViewModels.Courses
+
+@{
+    ViewBag.Title = "Chi tiết khóa học";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var course = Model.Course;
+    var classItems = Model.Classes ?? new System.Collections.Generic.List<CourseAdminClassItemViewModel>();
+
+    string description = string.IsNullOrWhiteSpace(course.Description)
+        ? "Chưa có mô tả khóa học."
+        : course.Description;
+
+    string syllabus = string.IsNullOrWhiteSpace(course.Syllabus)
+        ? "Chưa cập nhật khung chương trình."
+        : course.Syllabus;
+}
+
+<style>
+    .cad-page {
+        padding-bottom: 18px;
+        color: #25324a;
+    }
+
+        .cad-page * {
+            box-sizing: border-box;
+        }
+
+    .cad-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 17px;
+    }
+
+    .cad-eyebrow {
+        margin-bottom: 6px;
+        color: #929db0;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+    }
+
+    .cad-header h1 {
+        margin: 0 0 5px;
+        color: #25324a;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .cad-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .cad-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .cad-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 36px;
+        padding: 8px 12px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none !important;
+        transition: .2s ease;
+    }
+
+    .cad-back {
+        border-color: #dce3ed;
+        background: #fff;
+        color: #526078;
+    }
+
+        .cad-back:hover {
+            background: #f5f7fb;
+            color: #25324a;
+        }
+
+    .cad-edit {
+        border-color: #c92828;
+        background: #c92828;
+        color: #fff;
+    }
+
+        .cad-edit:hover {
+            background: #a91f1f;
+            color: #fff;
+        }
+
+    .cad-delete {
+        border-color: #f0cccc;
+        background: #fff;
+        color: #c92828;
+    }
+
+        .cad-delete:hover {
+            background: #fff0f0;
+            color: #a91f1f;
+        }
+
+    .cad-stats {
+        display: grid;
+        grid-template-columns: repeat(4,minmax(0,1fr));
+        gap: 13px;
+        margin-bottom: 17px;
+    }
+
+    .cad-stat {
+        min-width: 0;
+        padding: 16px 17px;
+        border: 1px solid #e3e9f1;
+        border-top: 3px solid var(--cad-accent);
+        border-radius: 11px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(26,42,69,.03);
+    }
+
+    .cad-stat-label {
+        margin-bottom: 9px;
+        color: #78859b;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.6;
+        letter-spacing: .3px;
+        text-transform: uppercase;
+    }
+
+    .cad-stat-value {
+        color: #26344c;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .cad-stat-sub {
+        margin-top: 5px;
+        color: #8995aa;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    .cad-stat-green {
+        --cad-accent: #198754;
+    }
+
+    .cad-stat-blue {
+        --cad-accent: #2878e5;
+    }
+
+    .cad-stat-orange {
+        --cad-accent: #e7a400;
+    }
+
+    .cad-stat-cyan {
+        --cad-accent: #0bbbd4;
+    }
+
+    .cad-panel {
+        margin-bottom: 17px;
+        overflow: hidden;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(26,42,69,.035);
+    }
+
+    .cad-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 14px 18px;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+        .cad-panel-header h2 {
+            margin: 0;
+            color: #29364d;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .cad-panel-header p {
+            margin: 4px 0 0;
+            color: #8995aa;
+            font-size: 10px;
+        }
+
+    .cad-panel-body {
+        padding: 18px;
+    }
+
+    .cad-overview {
+        display: grid;
+        grid-template-columns: 180px minmax(0,1fr) minmax(0,1fr);
+        gap: 20px;
+        align-items: start;
+    }
+
+    .cad-image {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 125px;
+        max-height: 170px;
+        padding: 6px;
+        overflow: hidden;
+        border: 1px solid #e5eaf2;
+        border-radius: 9px;
+        background: #f7f9fc;
+        color: #8995aa;
+        font-size: 11px;
+        text-align: center;
+    }
+
+        .cad-image img {
+            max-width: 100%;
+            max-height: 158px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
+    .cad-info-item {
+        margin-bottom: 13px;
+    }
+
+        .cad-info-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .cad-info-label {
+        display: block;
+        margin-bottom: 5px;
+        color: #8995aa;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .cad-info-value {
+        color: #344159;
+        font-size: 12px;
+        line-height: 1.8;
+        overflow-wrap: anywhere;
+        white-space: pre-line;
+    }
+
+    .cad-level {
+        display: inline-block;
+        padding: 5px 9px;
+        border-radius: 6px;
+        background: #e9f1ff;
+        color: #245bb5;
+        font-size: 10px;
+        font-weight: 800;
+    }
+
+    .cad-syllabus {
+        min-height: 90px;
+        max-height: 155px;
+        overflow-y: auto;
+        padding: 12px;
+        border: 1px solid #e5eaf2;
+        border-radius: 8px;
+        background: #f8fafc;
+        color: #526078;
+        font-size: 12px;
+        line-height: 1.8;
+        overflow-wrap: anywhere;
+        white-space: pre-line;
+    }
+
+    .cad-status {
+        display: inline-block;
+        padding: 5px 8px;
+        border-radius: 6px;
+        background: #eef2f8;
+        color: #526078;
+        font-size: 10px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .cad-status-open, .cad-status-studying {
+        background: #e8f8ef;
+        color: #087443;
+    }
+
+    .cad-status-completed {
+        background: #edf0f5;
+        color: #657188;
+    }
+
+    .cad-status-cancelled {
+        background: #fff0f0;
+        color: #b42323;
+    }
+
+    .cad-create-class {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        padding: 7px 10px;
+        border: 1px solid #dce3ed;
+        border-radius: 7px;
+        background: #fff;
+        color: #526078;
+        font-size: 11px;
+        font-weight: 700;
+        text-decoration: none !important;
+    }
+
+        .cad-create-class:hover {
+            background: #f5f7fb;
+            color: #25324a;
+        }
+
+    .cad-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .cad-table {
+        width: 100%;
+        min-width: 850px;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+        .cad-table th {
+            padding: 12px 11px;
+            background: #f6f8fb;
+            border-bottom: 1px solid #e7ecf3;
+            color: #728098;
+            font-size: 10px;
+            font-weight: 800;
+            text-align: left;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .cad-table td {
+            padding: 13px 11px;
+            border-bottom: 1px solid #edf0f5;
+            color: #526078;
+            font-size: 11px;
+            line-height: 1.6;
+            vertical-align: middle;
+        }
+
+        .cad-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .cad-table tbody tr:hover {
+            background: #fafbfd;
+        }
+
+    .cad-class-name {
+        color: #26344c;
+        font-size: 12px;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+
+    .cad-subtext {
+        display: block;
+        margin-top: 4px;
+        color: #8995aa;
+        font-size: 10px;
+    }
+
+    .cad-capacity {
+        display: inline-block;
+        padding: 5px 8px;
+        border-radius: 6px;
+        background: #edf4ff;
+        color: #245bb5;
+        font-size: 10px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .cad-revenue {
+        color: #16804a;
+        font-size: 11px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .cad-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 7px 9px;
+        border: 1px solid #dce6f5;
+        border-radius: 7px;
+        background: #edf4ff;
+        color: #245bb5;
+        font-size: 10px;
+        font-weight: 700;
+        text-decoration: none !important;
+        white-space: nowrap;
+    }
+
+        .cad-link:hover {
+            background: #dceaff;
+            color: #184a9e;
+        }
+
+    .cad-empty {
+        padding: 32px 15px !important;
+        text-align: center;
+        color: #8995aa !important;
+    }
+
+        .cad-empty strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #526078;
+            font-size: 12px;
+        }
+
+        .cad-empty span {
+            font-size: 10px;
+        }
+
+    @@media(max-width:1150px) {
+        .cad-stats {
+            grid-template-columns: repeat(2,minmax(0,1fr));
+        }
+
+        .cad-overview {
+            grid-template-columns: 150px minmax(0,1fr);
+        }
+
+        .cad-syllabus-column {
+            grid-column: 2;
+        }
+    }
+
+    @@media(max-width:700px) {
+        .cad-header h1 {
+            font-size: 21px;
+        }
+
+        .cad-stats {
+            gap: 9px;
+        }
+
+        .cad-stat {
+            padding: 12px;
+        }
+
+        .cad-stat-value {
+            font-size: 18px;
+        }
+
+        .cad-overview {
+            grid-template-columns: minmax(0,1fr);
+            gap: 14px;
+        }
+
+        .cad-syllabus-column {
+            grid-column: auto;
+        }
+
+        .cad-image {
+            max-width: 240px;
+        }
+
+        .cad-panel-body {
+            padding: 14px;
+        }
+    }
+</style>
+
+<div class="cad-page">
+
+    <div class="cad-header">
+        <div>
+            <div class="cad-eyebrow">ENGLISH LANGUAGE CENTER / QUẢN LÝ KHÓA HỌC</div>
+            <h1>@course.CourseName</h1>
+            <p>Thông tin tổng quan, thống kê và các lớp học thuộc khóa học.</p>
+        </div>
+
+        <div class="cad-actions">
+            <a href="@Url.Action("AdminIndex", "Courses")" class="cad-btn cad-back">
+                ← Danh sách
+            </a>
+            <a href="@Url.Action("Edit", "Courses", new { id = course.Id })" class="cad-btn cad-edit">
+                ✎ Sửa khóa học
+            </a>
+            <a href="@Url.Action("Delete", "Courses", new { id = course.Id })" class="cad-btn cad-delete">
+                Xóa
+            </a>
+        </div>
+    </div>
+
+    <div class="cad-stats">
+
+        <div class="cad-stat cad-stat-green">
+            <div class="cad-stat-label">Doanh thu khóa học</div>
+            <div class="cad-stat-value">@Model.TotalRevenueGenerated.ToString("N0")</div>
+            <div class="cad-stat-sub">VNĐ ghi nhận ở các giao dịch hoàn tất</div>
+        </div>
+
+        <div class="cad-stat cad-stat-blue">
+            <div class="cad-stat-label">Tổng học viên ghi danh</div>
+            <div class="cad-stat-value">@Model.TotalStudentsCount</div>
+            <div class="cad-stat-sub">Theo dữ liệu tổng hợp từ hệ thống</div>
+        </div>
+
+        <div class="cad-stat cad-stat-orange">
+            <div class="cad-stat-label">Lớp đang mở / đang học</div>
+            <div class="cad-stat-value">@Model.ActiveClassesCount / @Model.TotalClassesCount</div>
+            <div class="cad-stat-sub">Số lớp hoạt động trên tổng số lớp</div>
+        </div>
+
+        <div class="cad-stat cad-stat-cyan">
+            <div class="cad-stat-label">Học phí quy định</div>
+            <div class="cad-stat-value">@course.TuitionFee.ToString("N0")</div>
+            <div class="cad-stat-sub">VNĐ / khóa học</div>
+        </div>
+
+    </div>
+
+    <section class="cad-panel">
+
+        <div class="cad-panel-header">
+            <h2>Thông tin chung và hình ảnh</h2>
+            <span class="cad-status @(course.IsHidden ? "cad-status-cancelled" : "cad-status-open")">
+                @(course.IsHidden ? "Đang ẩn" : "Đang hiển thị")
+            </span>
+        </div>
+
+        <div class="cad-panel-body">
+
+            <div class="cad-overview">
+
+                <div>
+                    <div class="cad-image">
+                        @if (!string.IsNullOrWhiteSpace(course.ImageUrl))
+                        {
+                            <img src="@Url.Content(course.ImageUrl)" alt="@course.CourseName" />
+                        }
+                        else
+                        {
+                            <span>Chưa có hình ảnh khóa học</span>
+                        }
+                    </div>
+                </div>
+
+                <div>
+                    <div class="cad-info-item">
+                        <span class="cad-info-label">Cấp độ</span>
+                        <span class="cad-level">@course.Level</span>
+                    </div>
+
+                    <div class="cad-info-item">
+                        <span class="cad-info-label">Thời lượng học</span>
+                        <div class="cad-info-value">
+                            <strong>@course.Duration giờ</strong>
+                            <br />
+                            @course.SessionsPerWeek buổi/tuần ×
+                            @course.HoursPerSession giờ/buổi ×
+                            @course.TotalWeeks tuần
+                        </div>
+                    </div>
+
+                    <div class="cad-info-item">
+                        <span class="cad-info-label">Học phí</span>
+                        <div class="cad-info-value">
+                            <strong>@course.TuitionFee.ToString("N0") VNĐ</strong>
+                        </div>
+                    </div>
+
+                    <div class="cad-info-item">
+                        <span class="cad-info-label">Mô tả khóa học</span>
+                        <div class="cad-info-value">@description</div>
+                    </div>
+                </div>
+
+                <div class="cad-syllabus-column">
+                    <div class="cad-info-item">
+                        <span class="cad-info-label">Giáo trình / Khung chương trình</span>
+                        <div class="cad-syllabus">@syllabus</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="cad-panel">
+
+        <div class="cad-panel-header">
+            <div>
+                <h2>Danh sách lớp học thuộc khóa học</h2>
+                <p>@classItems.Count lớp liên kết với khóa học này.</p>
+            </div>
+
+            <a href="@Url.Action("Create", "Classes")" class="cad-create-class">
+                + Mở lớp mới
+            </a>
+        </div>
+
+        <div class="cad-table-wrap">
+            <table class="cad-table">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Tên lớp</th>
+                        <th>Giáo viên</th>
+                        <th>Phòng học</th>
+                        <th>Sĩ số</th>
+                        <th>Doanh thu</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (classItems.Any())
+                    {
+                        var index = 1;
+
+                        foreach (var item in classItems)
+                        {
+                            if (item.Class != null)
+                            {
+                                string status = item.Class.Status ?? "Chưa cập nhật";
+                                string statusLower = status.ToLowerInvariant();
+
+                                string statusClass =
+                                    statusLower == "open" ||
+                                    statusLower == "mở đăng ký"
+                                        ? "cad-status-open"
+                                        : statusLower == "studying" ||
+                                          statusLower == "đang học"
+                                            ? "cad-status-studying"
+                                            : statusLower == "completed" ||
+                                              statusLower == "đã hoàn thành"
+                                                ? "cad-status-completed"
+                                                : statusLower == "cancelled" ||
+                                                  statusLower == "đã hủy"
+                                                    ? "cad-status-cancelled"
+                                                    : "";
+
+                                <tr>
+                                    <td>@(index++)</td>
+
+                                    <td>
+                                        <span class="cad-class-name">@item.Class.ClassName</span>
+                                        <span class="cad-subtext">Mã lớp #@item.Class.Id</span>
+                                    </td>
+
+                                    <td>
+                                        @(item.Class.Teacher != null
+                                            ? item.Class.Teacher.FullName
+                                            : "Chưa phân công")
+                                    </td>
+
+                                    <td>
+                                        @(item.Class.Room != null
+                                            ? item.Class.Room.RoomName
+                                            : "Chưa xếp phòng")
+                                    </td>
+
+                                    <td>
+                                        <span class="cad-capacity">
+                                            @item.EnrolledCount / @item.Class.MaxCapacity
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="cad-revenue">
+                                            @item.ClassRevenue.ToString("N0") đ
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span class="cad-status @statusClass">@status</span>
+                                    </td>
+
+                                    <td>
+                                        <a href="@Url.Action("Details", "Classes", new { id = item.Class.Id })"
+                                           class="cad-link">
+                                            Chi tiết lớp
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="cad-empty">
+                                <strong>Chưa có lớp học nào</strong>
+                                <span>Khóa học này chưa có lớp liên kết.</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+
+</div>

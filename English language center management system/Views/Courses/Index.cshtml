@@ -1,0 +1,896 @@
+﻿
+@model English_language_center_management_system.Models.ViewModels.Courses.CourseCatalogViewModel
+
+@{
+    ViewBag.Title = "Khóa học";
+
+    var levels = new[]
+    {
+        new { Value = "Beginner", Text = "Sơ cấp" },
+        new { Value = "Elementary", Text = "Cơ bản" },
+        new { Value = "Intermediate", Text = "Trung cấp" },
+        new { Value = "Upper Intermediate", Text = "Trung cấp nâng cao" },
+        new { Value = "Advanced", Text = "Nâng cao" },
+        new { Value = "IELTS/TOEIC preparation", Text = "Luyện thi IELTS / TOEIC" }
+    };
+
+    var levelNames = new Dictionary<string, string>
+{
+        { "Beginner", "Sơ cấp" },
+        { "Elementary", "Cơ bản" },
+        { "Intermediate", "Trung cấp" },
+        { "Upper Intermediate", "Trung cấp nâng cao" },
+        { "Advanced", "Nâng cao" },
+        { "IELTS/TOEIC preparation", "Luyện thi IELTS / TOEIC" }
+    };
+
+    var courseCount = Model != null && Model.Courses != null
+        ? Model.Courses.Count
+        : 0;
+
+    var isFiltering = Model != null &&
+        (!string.IsNullOrWhiteSpace(Model.SearchTerm) ||
+         !string.IsNullOrWhiteSpace(Model.SelectedLevel));
+}
+
+<style>
+    /* ============================================
+       TRANG KHÓA HỌC - GIAO DIỆN TỐI ƯU
+       ============================================ */
+
+    .course-page {
+        --cp-navy: #172232;
+        --cp-red: #b91f2c;
+        --cp-red-dark: #971823;
+        --cp-muted: #66768a;
+        --cp-border: #e3e8ed;
+        --cp-light: #f5f7f9;
+        color: var(--cp-navy);
+        font-family: inherit;
+    }
+
+        .course-page *,
+        .course-page *::before,
+        .course-page *::after {
+            box-sizing: border-box;
+        }
+
+        .course-page a {
+            text-decoration: none;
+        }
+
+        .course-page .cp-container {
+            width: calc(100% - 48px);
+            max-width: 1320px;
+            margin: 0 auto;
+        }
+
+        /* ========== BANNER ========== */
+
+        .course-page .cp-banner {
+            position: relative;
+            display: flex;
+            align-items: center;
+            min-height: 250px;
+            overflow: hidden;
+            background: #172232;
+        }
+
+        .course-page .cp-banner-image {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 42%;
+        }
+
+        .course-page .cp-banner::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient( 90deg, rgba(15, 26, 40, .95) 0%, rgba(15, 26, 40, .83) 45%, rgba(15, 26, 40, .35) 100% );
+        }
+
+        .course-page .cp-banner-inner {
+            position: relative;
+            z-index: 1;
+            padding: 42px 0;
+            color: #fff;
+        }
+
+        .course-page .cp-eyebrow {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--cp-red);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+        }
+
+        .course-page .cp-banner .cp-eyebrow {
+            color: #ffc5cb;
+        }
+
+        .course-page .cp-banner h1 {
+            margin: 0 0 12px;
+            color: #fff;
+            font-size: clamp(32px, 4vw, 46px);
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .course-page .cp-banner p {
+            max-width: 660px;
+            margin: 0;
+            color: #e4eaf0;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        /* ========== NỘI DUNG CHÍNH ========== */
+
+        .course-page .cp-main {
+            padding: 35px 0 55px;
+            background: #fff;
+        }
+
+        .course-page .cp-intro {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 22px;
+        }
+
+            .course-page .cp-intro h2 {
+                margin: 0 0 9px;
+                color: var(--cp-navy);
+                font-size: clamp(26px, 3vw, 34px);
+                font-weight: 800;
+                line-height: 1.25;
+            }
+
+            .course-page .cp-intro p {
+                max-width: 750px;
+                margin: 0;
+                color: var(--cp-muted);
+                font-size: 14px;
+                line-height: 1.75;
+            }
+
+        .course-page .cp-count {
+            flex-shrink: 0;
+            padding-bottom: 3px;
+            color: var(--cp-muted);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+            .course-page .cp-count strong {
+                margin-right: 4px;
+                color: var(--cp-red);
+                font-size: 20px;
+                font-weight: 800;
+            }
+
+        /* ========== BỘ LỌC ========== */
+
+        .course-page .cp-filter-box {
+            margin-bottom: 26px;
+            padding: 20px 24px;
+            border: 1px solid var(--cp-border);
+            background: var(--cp-light);
+        }
+
+        .course-page .cp-filter-title {
+            margin: 0 0 15px;
+            color: var(--cp-navy);
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .course-page .cp-filter-form {
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto auto;
+            align-items: end;
+            gap: 12px;
+        }
+
+        .course-page .cp-field {
+            min-width: 0;
+        }
+
+            .course-page .cp-field label {
+                display: block;
+                margin-bottom: 7px;
+                color: #39485a;
+                font-size: 13px;
+                font-weight: 700;
+            }
+
+            .course-page .cp-field input,
+            .course-page .cp-field select {
+                display: block;
+                width: 100%;
+                height: 44px;
+                padding: 0 13px;
+                border: 1px solid #d5dce3;
+                border-radius: 3px;
+                outline: none;
+                background: #fff;
+                color: var(--cp-navy);
+                font-family: inherit;
+                font-size: 14px;
+                transition: border-color .2s, box-shadow .2s;
+            }
+
+                .course-page .cp-field input:focus,
+                .course-page .cp-field select:focus {
+                    border-color: var(--cp-red);
+                    box-shadow: 0 0 0 3px rgba(185, 31, 44, .10);
+                }
+
+        .course-page .cp-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 44px;
+            padding: 0 22px;
+            border: 1px solid var(--cp-red);
+            border-radius: 3px;
+            background: var(--cp-red);
+            color: #fff;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+            .course-page .cp-button:hover {
+                background: var(--cp-red-dark);
+                color: #fff;
+            }
+
+        .course-page .cp-clear {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 44px;
+            padding: 0 16px;
+            border: 1px solid #d5dce3;
+            border-radius: 3px;
+            background: #fff;
+            color: var(--cp-navy);
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+            .course-page .cp-clear:hover {
+                border-color: var(--cp-red);
+                color: var(--cp-red);
+            }
+
+        /* ========== TIÊU ĐỀ DANH SÁCH ========== */
+
+        .course-page .cp-list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+            padding-bottom: 13px;
+            border-bottom: 1px solid var(--cp-border);
+        }
+
+            .course-page .cp-list-header h3 {
+                margin: 0;
+                color: var(--cp-navy);
+                font-size: 21px;
+                font-weight: 800;
+            }
+
+            .course-page .cp-list-header span {
+                color: var(--cp-muted);
+                font-size: 13px;
+            }
+
+        /* ========== LƯỚI KHÓA HỌC ========== */
+
+        .course-page .cp-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 22px;
+            align-items: stretch;
+        }
+
+        .course-page .cp-card {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid var(--cp-border);
+            background: #fff;
+            transition: transform .2s, box-shadow .2s, border-color .2s;
+        }
+
+            .course-page .cp-card:hover {
+                transform: translateY(-3px);
+                border-color: #d0d8e0;
+                box-shadow: 0 10px 25px rgba(20, 35, 55, .08);
+            }
+
+        /* Giữ ảnh từ database, chỉ chuẩn hóa kích thước */
+
+        .course-page .cp-card-visual {
+            position: relative;
+            height: 190px;
+            overflow: hidden;
+            background: #e8edf1;
+        }
+
+        .course-page .cp-card-image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .course-page .cp-card-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            background: #e9eff3;
+            color: #516477;
+            font-size: 18px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .course-page .cp-level {
+            position: absolute;
+            left: 13px;
+            bottom: 13px;
+            max-width: calc(100% - 26px);
+            padding: 7px 11px;
+            background: var(--cp-red);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            line-height: 1.4;
+        }
+
+        /* ========== NỘI DUNG THẺ ========== */
+
+        .course-page .cp-card-body {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            padding: 18px 20px 19px;
+        }
+
+        .course-page .cp-card h4 {
+            display: -webkit-box;
+            min-height: 50px;
+            margin: 0 0 9px;
+            overflow: hidden;
+            color: var(--cp-navy);
+            font-size: 18px;
+            font-weight: 800;
+            line-height: 1.4;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+
+        .course-page .cp-card-description {
+            display: -webkit-box;
+            min-height: 65px;
+            margin: 0 0 14px;
+            overflow: hidden;
+            color: var(--cp-muted);
+            font-size: 13px;
+            line-height: 1.7;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+        }
+
+        /* Thời lượng và học phí luôn nằm cùng vị trí */
+
+        .course-page .cp-card-meta {
+            display: grid;
+            gap: 10px;
+            margin-top: auto;
+            padding: 14px 0;
+            border-top: 1px solid var(--cp-border);
+            border-bottom: 1px solid var(--cp-border);
+        }
+
+        .course-page .cp-meta-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            min-width: 0;
+            font-size: 13px;
+        }
+
+        .course-page .cp-meta-label {
+            flex-shrink: 0;
+            color: var(--cp-muted);
+        }
+
+        .course-page .cp-meta-value {
+            min-width: 0;
+            color: var(--cp-navy);
+            font-weight: 700;
+            text-align: right;
+            overflow-wrap: anywhere;
+        }
+
+        .course-page .cp-price {
+            color: var(--cp-red);
+            font-size: 15px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .course-page .cp-detail {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 14px;
+            color: var(--cp-red);
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+            .course-page .cp-detail:hover {
+                color: var(--cp-red-dark);
+            }
+
+        .course-page .cp-detail-arrow {
+            flex-shrink: 0;
+            font-size: 19px;
+            line-height: 1;
+        }
+
+        /* ========== KHÔNG CÓ KẾT QUẢ ========== */
+
+        .course-page .cp-empty {
+            padding: 50px 25px;
+            border: 1px solid var(--cp-border);
+            background: var(--cp-light);
+            text-align: center;
+        }
+
+            .course-page .cp-empty h3 {
+                margin: 0 0 10px;
+                color: var(--cp-navy);
+                font-size: 22px;
+                font-weight: 800;
+            }
+
+            .course-page .cp-empty p {
+                margin: 0 auto 18px;
+                max-width: 560px;
+                color: var(--cp-muted);
+                font-size: 14px;
+                line-height: 1.7;
+            }
+
+        /* ========== HƯỚNG DẪN ========== */
+
+        .course-page .cp-guide {
+            margin-top: 28px;
+            padding: 22px 26px;
+            border-left: 4px solid var(--cp-red);
+            background: var(--cp-light);
+        }
+
+            .course-page .cp-guide h3 {
+                margin: 0 0 8px;
+                color: var(--cp-navy);
+                font-size: 18px;
+                font-weight: 800;
+            }
+
+            .course-page .cp-guide p {
+                margin: 0;
+                color: var(--cp-muted);
+                font-size: 13px;
+                line-height: 1.8;
+            }
+
+    /* ========== RESPONSIVE ========== */
+
+    @@media (max-width: 1050px) {
+        .course-page .cp-filter-form {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .course-page .cp-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 650px) {
+        .course-page .cp-container {
+            width: calc(100% - 30px);
+        }
+
+        .course-page .cp-banner {
+            min-height: 220px;
+        }
+
+        .course-page .cp-banner-inner {
+            padding: 35px 0;
+        }
+
+        .course-page .cp-banner h1 {
+            font-size: 32px;
+        }
+
+        .course-page .cp-main {
+            padding: 27px 0 42px;
+        }
+
+        .course-page .cp-intro,
+        .course-page .cp-list-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .course-page .cp-filter-box {
+            padding: 18px 16px;
+        }
+
+        .course-page .cp-filter-form,
+        .course-page .cp-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .course-page .cp-button,
+        .course-page .cp-clear {
+            width: 100%;
+        }
+
+        .course-page .cp-card-visual {
+            height: 200px;
+        }
+
+        .course-page .cp-card-body {
+            padding: 18px;
+        }
+
+        .course-page .cp-guide {
+            padding: 20px;
+        }
+    }
+</style>
+
+<div class="course-page">
+
+    @* ========== BANNER ========== *@
+
+    <section class="cp-banner">
+
+        <img class="cp-banner-image"
+             src="@Url.Content("~/Uploads/Images/students-learning.jpg")"
+             alt="Không gian học tập tiếng Anh" />
+
+        <div class="cp-container cp-banner-inner">
+
+            <span class="cp-eyebrow">
+                CHƯƠNG TRÌNH ĐÀO TẠO
+            </span>
+
+            <h1>Khóa học tiếng Anh</h1>
+
+            <p>
+                Khám phá các chương trình tiếng Anh từ cơ bản đến nâng cao.
+                Tìm kiếm, tham khảo thông tin và lựa chọn khóa học phù hợp
+                với trình độ cũng như mục tiêu học tập của bạn.
+            </p>
+
+        </div>
+    </section>
+
+    @* ========== THÔNG BÁO HỆ THỐNG ========== *@
+
+    <div class="cp-container">
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger" style="margin-top:18px;">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success" style="margin-top:18px;">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+    </div>
+
+    <main class="cp-main">
+        <div class="cp-container">
+
+            @* ========== GIỚI THIỆU ========== *@
+
+            <div class="cp-intro">
+
+                <div>
+                    <span class="cp-eyebrow">
+                        KHÁM PHÁ CHƯƠNG TRÌNH
+                    </span>
+
+                    <h2>Chọn khóa học phù hợp với bạn</h2>
+
+                    <p>
+                        Tham khảo nội dung, trình độ, thời lượng và học phí
+                        của các chương trình đào tạo hiện có.
+                    </p>
+                </div>
+
+                <div class="cp-count">
+                    <strong>@courseCount</strong> khóa học
+                </div>
+
+            </div>
+
+            @* ========== TÌM KIẾM VÀ LỌC ========== *@
+
+            <section class="cp-filter-box">
+
+                <h3 class="cp-filter-title">
+                    Tìm kiếm chương trình đào tạo
+                </h3>
+
+                @using (Html.BeginForm(
+                    "Index",
+                    "Courses",
+                    FormMethod.Get,
+                    new { @class = "cp-filter-form" }))
+                {
+                    <div class="cp-field">
+
+                        <label for="searchTerm">
+                            Tên khóa học
+                        </label>
+
+                        <input id="searchTerm"
+                               type="text"
+                               name="searchTerm"
+                               value="@(Model != null ? Model.SearchTerm : "")"
+                               placeholder="Nhập tên khóa học cần tìm..." />
+
+                    </div>
+
+                    <div class="cp-field">
+
+                        <label for="level">
+                            Trình độ
+                        </label>
+
+                        <select id="level" name="level">
+
+                            <option value="">
+                                Tất cả trình độ
+                            </option>
+
+                            @foreach (var item in levels)
+                            {
+                                if (Model != null &&
+                                    Model.SelectedLevel == item.Value)
+                                {
+                                    <option value="@item.Value"
+                                            selected="selected">
+                                        @item.Text
+                                    </option>
+                                }
+                                else
+                                {
+                                    <option value="@item.Value">
+                                        @item.Text
+                                    </option>
+                                }
+                            }
+
+                        </select>
+
+                    </div>
+
+                    <button type="submit" class="cp-button">
+                        Tìm kiếm
+                    </button>
+
+                    <a class="cp-clear"
+                       href="@Url.Action("Index", "Courses")">
+                        Xóa bộ lọc
+                    </a>
+                }
+
+            </section>
+
+            @* ========== DANH SÁCH KHÓA HỌC ========== *@
+
+            <section class="cp-course-list">
+
+                <div class="cp-list-header">
+
+                    <h3>
+                        @(isFiltering
+                            ? "Kết quả tìm kiếm"
+                            : "Danh sách khóa học")
+                    </h3>
+
+                    <span>
+                        Hiển thị @courseCount khóa học
+                    </span>
+
+                </div>
+
+                @if (Model != null &&
+                     Model.Courses != null &&
+                     Model.Courses.Any())
+                {
+                    <div class="cp-grid">
+
+                        @foreach (var course in Model.Courses)
+                        {
+                            var displayLevel = course.Level;
+
+                            if (!string.IsNullOrWhiteSpace(course.Level) &&
+                                levelNames.ContainsKey(course.Level))
+                            {
+                                displayLevel = levelNames[course.Level];
+                            }
+
+                            if (string.IsNullOrWhiteSpace(displayLevel))
+                            {
+                                displayLevel = "Chưa phân loại";
+                            }
+
+                            <article class="cp-card">
+
+                                <div class="cp-card-visual">
+
+                                    @if (!string.IsNullOrWhiteSpace(course.ImageUrl))
+                                    {
+                                        <img class="cp-card-image"
+                                             src="@Url.Content(course.ImageUrl)"
+                                             alt="@course.CourseName"
+                                             loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="cp-card-placeholder">
+                                            Chương trình tiếng Anh
+                                        </div>
+                                    }
+
+                                    <span class="cp-level">
+                                        @displayLevel
+                                    </span>
+
+                                </div>
+
+                                <div class="cp-card-body">
+
+                                    <h4>
+                                        @course.CourseName
+                                    </h4>
+
+                                    <p class="cp-card-description">
+                                        @(string.IsNullOrWhiteSpace(course.Description)
+                                            ? "Khám phá nội dung và thông tin chi tiết của chương trình đào tạo tiếng Anh."
+                                            : course.Description)
+                                    </p>
+
+                                    <div class="cp-card-meta">
+
+                                        <div class="cp-meta-row">
+
+                                            <span class="cp-meta-label">
+                                                Thời lượng
+                                            </span>
+
+                                            <span class="cp-meta-value">
+                                                @course.Duration giờ học
+                                            </span>
+
+                                        </div>
+
+                                        <div class="cp-meta-row">
+
+                                            <span class="cp-meta-label">
+                                                Học phí
+                                            </span>
+
+                                            <strong class="cp-meta-value cp-price">
+                                                @course.TuitionFee.ToString("N0") VNĐ
+                                            </strong>
+
+                                        </div>
+
+                                    </div>
+
+                                    <a class="cp-detail"
+                                       href="@Url.Action("Details", "Courses", new { id = course.Id })">
+
+                                        <span>
+                                            Xem chi tiết khóa học
+                                        </span>
+
+                                        <span class="cp-detail-arrow"
+                                              aria-hidden="true">
+                                            →
+                                        </span>
+
+                                    </a>
+
+                                </div>
+
+                            </article>
+                        }
+
+                    </div>
+                }
+                else
+                {
+                    <div class="cp-empty">
+
+                        <h3>
+                            Không tìm thấy khóa học phù hợp
+                        </h3>
+
+                        <p>
+                            Hiện chưa có khóa học đáp ứng điều kiện tìm kiếm.
+                            Bạn có thể thay đổi từ khóa hoặc trình độ để thử lại.
+                        </p>
+
+                        <a class="cp-button"
+                           href="@Url.Action("Index", "Courses")">
+                            Xem tất cả khóa học
+                        </a>
+
+                    </div>
+                }
+
+            </section>
+
+            @* ========== HƯỚNG DẪN CHỌN KHÓA HỌC ========== *@
+
+            <aside class="cp-guide">
+
+                <h3>
+                    Làm thế nào để chọn khóa học phù hợp?
+                </h3>
+
+                <p>
+                    Trước tiên, hãy xác định trình độ tiếng Anh hiện tại
+                    và mục tiêu học tập của bạn. Sau đó, tham khảo nội dung,
+                    thời lượng và học phí của từng chương trình.
+                    Chọn <strong>“Xem chi tiết khóa học”</strong>
+                    để tìm hiểu thêm trước khi quyết định.
+                </p>
+
+            </aside>
+
+        </div>
+    </main>
+
+</div>

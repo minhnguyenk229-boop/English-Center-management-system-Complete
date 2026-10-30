@@ -1,0 +1,519 @@
+﻿
+@model English_language_center_management_system.Models.User
+
+@{
+    ViewBag.Title = "Chi tiết người dùng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    string avatarUrl = Model.TeacherProfile != null
+        ? Model.TeacherProfile.AvatarUrl
+        : null;
+
+    if (string.IsNullOrWhiteSpace(avatarUrl) && Model.StudentProfile != null)
+    {
+        avatarUrl = Model.StudentProfile.AvatarUrl;
+    }
+
+    string fullName = string.IsNullOrWhiteSpace(Model.FullName)
+        ? "Chưa cập nhật họ tên"
+        : Model.FullName;
+
+    string username = string.IsNullOrWhiteSpace(Model.Username)
+        ? "Chưa có tên đăng nhập"
+        : Model.Username;
+
+    string roleName = Model.Role != null
+        ? Model.Role.Name
+        : "Chưa phân quyền";
+
+    string roleLower = roleName.ToLowerInvariant();
+
+    string roleClass =
+        roleLower.Contains("admin") ||
+        roleLower.Contains("administrator") ||
+        roleLower.Contains("quản trị")
+            ? "ud-role-admin"
+            : roleLower.Contains("teacher") ||
+              roleLower.Contains("giáo viên")
+                ? "ud-role-teacher"
+                : "ud-role-student";
+
+    string initial = string.IsNullOrWhiteSpace(fullName)
+        ? "U"
+        : fullName.Trim().Substring(0, 1).ToUpper();
+
+    string email = string.IsNullOrWhiteSpace(Model.Email)
+        ? "Chưa cập nhật"
+        : Model.Email;
+
+    string phone = string.IsNullOrWhiteSpace(Model.Phone)
+        ? "Chưa cập nhật"
+        : Model.Phone;
+}
+
+<style>
+    .ud-page {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 0 0 16px;
+        color: #25324a;
+    }
+
+        .ud-page * {
+            box-sizing: border-box;
+        }
+
+    .ud-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .ud-eyebrow {
+        margin-bottom: 6px;
+        color: #929db0;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+    }
+
+    .ud-header h1 {
+        margin: 0 0 5px;
+        color: #25324a;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .ud-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .ud-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .ud-btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        min-height: 36px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none !important;
+        transition: .2s ease;
+    }
+
+    .ud-back {
+        border: 1px solid #dce3ed;
+        background: #fff;
+        color: #526078;
+    }
+
+        .ud-back:hover {
+            background: #f5f7fb;
+            color: #25324a;
+        }
+
+    .ud-edit {
+        border: 1px solid #c92828;
+        background: #c92828;
+        color: #fff;
+    }
+
+        .ud-edit:hover {
+            background: #a91f1f;
+            color: #fff;
+        }
+
+    .ud-identity {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 16px 19px;
+        margin-bottom: 16px;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(26,42,69,.035);
+    }
+
+    .ud-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 58px;
+        height: 58px;
+        flex-shrink: 0;
+        overflow: hidden;
+        border-radius: 14px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 23px;
+        font-weight: 800;
+    }
+
+        .ud-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .ud-identity-text {
+        flex: 1;
+        min-width: 150px;
+    }
+
+        .ud-identity-text h2 {
+            margin: 0 0 4px;
+            color: #25324a;
+            font-size: 18px;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        .ud-identity-text p {
+            margin: 0;
+            color: #8995aa;
+            font-size: 12px;
+        }
+
+    .ud-role {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 7px;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .ud-role-admin {
+        background: #fff0f0;
+        color: #b42323;
+    }
+
+    .ud-role-teacher {
+        background: #eaf2ff;
+        color: #245bb5;
+    }
+
+    .ud-role-student {
+        background: #e8f8ef;
+        color: #087443;
+    }
+
+    .ud-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .ud-card {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(26,42,69,.035);
+    }
+
+    .ud-card-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid #edf0f5;
+        color: #29364d;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .ud-card-body {
+        padding: 3px 18px;
+    }
+
+    .ud-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 11px 0;
+        border-bottom: 1px solid #f0f2f6;
+    }
+
+        .ud-row:last-child {
+            border-bottom: none;
+        }
+
+    .ud-label {
+        flex-shrink: 0;
+        color: #8995aa;
+        font-size: 11px;
+    }
+
+    .ud-value {
+        color: #29364d;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: right;
+        overflow-wrap: anywhere;
+    }
+
+    .ud-extra {
+        padding: 17px 19px;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(26,42,69,.035);
+    }
+
+        .ud-extra h3 {
+            margin: 0 0 13px;
+            color: #29364d;
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+    .ud-extra-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .ud-extra-item {
+        padding: 12px;
+        border: 1px solid #edf0f5;
+        border-radius: 9px;
+        background: #fafbfd;
+    }
+
+        .ud-extra-item span {
+            display: block;
+            margin-bottom: 5px;
+            color: #8995aa;
+            font-size: 11px;
+        }
+
+        .ud-extra-item strong {
+            color: #29364d;
+            font-size: 12px;
+            overflow-wrap: anywhere;
+        }
+
+    .ud-empty {
+        margin: 0;
+        color: #8995aa;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    @@media (max-width: 800px) {
+        .ud-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .ud-header h1 {
+            font-size: 21px;
+        }
+
+        .ud-grid {
+            gap: 12px;
+        }
+
+        .ud-identity,
+        .ud-extra {
+            padding: 14px;
+        }
+
+        .ud-extra-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ud-row {
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .ud-value {
+            text-align: left;
+        }
+    }
+</style>
+
+<div class="ud-page">
+
+    <div class="ud-header">
+        <div>
+            <div class="ud-eyebrow">ENGLISH LANGUAGE CENTER / QUẢN LÝ NGƯỜI DÙNG</div>
+            <h1>Chi tiết người dùng</h1>
+            <p>Thông tin tài khoản và hồ sơ liên quan.</p>
+        </div>
+
+        <div class="ud-actions">
+            <a href="@Url.Action("Index", "Users")" class="ud-btn ud-back">
+                ← Danh sách
+            </a>
+
+            <a href="@Url.Action("Edit", "Users", new { id = Model.Id })"
+               class="ud-btn ud-edit">
+                ✎ Chỉnh sửa
+            </a>
+        </div>
+    </div>
+
+    <div class="ud-identity">
+
+        <div class="ud-avatar">
+            @if (!string.IsNullOrWhiteSpace(avatarUrl))
+            {
+                <img src="@Url.Content(avatarUrl)" alt="Ảnh đại diện" />
+            }
+            else
+            {
+                @initial
+            }
+        </div>
+
+        <div class="ud-identity-text">
+            <h2>@fullName</h2>
+            <p>@@@username</p>
+        </div>
+
+        <span class="ud-role @roleClass">@roleName</span>
+
+    </div>
+
+    <div class="ud-grid">
+
+        <section class="ud-card">
+            <div class="ud-card-header">Thông tin cá nhân</div>
+
+            <div class="ud-card-body">
+
+                <div class="ud-row">
+                    <span class="ud-label">Họ và tên</span>
+                    <span class="ud-value">@fullName</span>
+                </div>
+
+                <div class="ud-row">
+                    <span class="ud-label">Email</span>
+                    <span class="ud-value">@email</span>
+                </div>
+
+                <div class="ud-row">
+                    <span class="ud-label">Số điện thoại</span>
+                    <span class="ud-value">@phone</span>
+                </div>
+
+                @if (Model.StudentProfile != null)
+                {
+                    <div class="ud-row">
+                        <span class="ud-label">Ngày sinh</span>
+                        <span class="ud-value">
+                            @(Model.StudentProfile.DateOfBirth.HasValue
+                                ? Model.StudentProfile.DateOfBirth.Value.ToString("dd/MM/yyyy")
+                                : "Chưa cập nhật")
+                        </span>
+                    </div>
+
+                    <div class="ud-row">
+                        <span class="ud-label">Địa chỉ</span>
+                        <span class="ud-value">
+                            @(string.IsNullOrWhiteSpace(Model.StudentProfile.Address)
+                                ? "Chưa cập nhật"
+                                : Model.StudentProfile.Address)
+                        </span>
+                    </div>
+                }
+
+                @if (Model.TeacherProfile != null)
+                {
+                    <div class="ud-row">
+                        <span class="ud-label">Chuyên môn</span>
+                        <span class="ud-value">
+                            @(string.IsNullOrWhiteSpace(Model.TeacherProfile.Specialization)
+                                ? "Chưa cập nhật"
+                                : Model.TeacherProfile.Specialization)
+                        </span>
+                    </div>
+                }
+
+            </div>
+        </section>
+
+        <section class="ud-card">
+            <div class="ud-card-header">Thông tin tài khoản</div>
+
+            <div class="ud-card-body">
+
+                <div class="ud-row">
+                    <span class="ud-label">Mã người dùng</span>
+                    <span class="ud-value">#@Model.Id</span>
+                </div>
+
+                <div class="ud-row">
+                    <span class="ud-label">Tên đăng nhập</span>
+                    <span class="ud-value">@username</span>
+                </div>
+
+                <div class="ud-row">
+                    <span class="ud-label">Vai trò</span>
+                    <span class="ud-value">@roleName</span>
+                </div>
+
+                <div class="ud-row">
+                    <span class="ud-label">Ngày tạo</span>
+                    <span class="ud-value">
+                        @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    </span>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+    <section class="ud-extra">
+        <h3>Hồ sơ liên quan</h3>
+
+        @if (Model.StudentProfile != null || Model.TeacherProfile != null)
+        {
+            <div class="ud-extra-grid">
+
+                @if (Model.StudentProfile != null)
+                {
+                    <div class="ud-extra-item">
+                        <span>Hồ sơ</span>
+                        <strong>Học viên</strong>
+                    </div>
+                }
+
+                @if (Model.TeacherProfile != null)
+                {
+                    <div class="ud-extra-item">
+                        <span>Hồ sơ</span>
+                        <strong>Giáo viên</strong>
+                    </div>
+                }
+
+            </div>
+        }
+        else
+        {
+            <p class="ud-empty">
+                Tài khoản chưa có hồ sơ học viên hoặc giáo viên liên kết.
+            </p>
+        }
+    </section>
+
+</div>

@@ -1,0 +1,667 @@
+﻿
+@model English_language_center_management_system.Models.ClassSession
+
+@using System.Collections.Generic
+@using System.Web.Mvc
+
+@{
+    ViewBag.Title = "Chỉnh sửa buổi học";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var classOptions = ViewBag.ClassId as IEnumerable<SelectListItem>
+        ?? new List<SelectListItem>();
+
+    var roomOptions = ViewBag.RoomId as IEnumerable<SelectListItem>
+        ?? new List<SelectListItem>();
+
+    string className = Model.Class != null
+        ? Model.Class.ClassName
+        : "Lớp #" + Model.ClassId;
+}
+
+<style>
+    .cse-page {
+        max-width: 1050px;
+        margin: 0 auto;
+        padding-bottom: 22px;
+        color: #25324a;
+    }
+
+        .cse-page * {
+            box-sizing: border-box;
+        }
+
+    .cse-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 17px;
+    }
+
+    .cse-eyebrow {
+        margin-bottom: 6px;
+        color: #929db0;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+    }
+
+    .cse-header h1 {
+        margin: 0 0 5px;
+        color: #25324a;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .cse-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .cse-btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 7px;
+        min-height: 36px;
+        padding: 8px 12px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+
+    .cse-btn-back,
+    .cse-btn-cancel {
+        border-color: #dce3ed;
+        background: #fff;
+        color: #526078;
+    }
+
+        .cse-btn-back:hover,
+        .cse-btn-cancel:hover {
+            background: #f5f7fb;
+            color: #25324a;
+        }
+
+    .cse-btn-save {
+        border-color: #c92828;
+        background: #c92828;
+        color: #fff;
+    }
+
+        .cse-btn-save:hover {
+            border-color: #a91f1f;
+            background: #a91f1f;
+            color: #fff;
+        }
+
+    .cse-card {
+        overflow: hidden;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 15px rgba(26,42,69,.04);
+    }
+
+    .cse-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+    .cse-header-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 43px;
+        height: 43px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 19px;
+    }
+
+    .cse-card-header h2 {
+        margin: 0 0 4px;
+        color: #25324a;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .cse-card-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 11px;
+    }
+
+    .cse-card-body {
+        padding: 20px;
+    }
+
+    .cse-validation-summary {
+        margin-bottom: 18px;
+        padding: 11px 13px;
+        border: 1px solid #ffdada;
+        border-radius: 8px;
+        background: #fff4f4;
+        color: #b42323;
+        font-size: 12px;
+    }
+
+    .cse-section {
+        margin-bottom: 22px;
+    }
+
+        .cse-section:last-child {
+            margin-bottom: 0;
+        }
+
+    .cse-section-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0 0 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #edf0f5;
+        color: #29364d;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .cse-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 25px;
+        height: 25px;
+        flex-shrink: 0;
+        border-radius: 7px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 11px;
+    }
+
+    .cse-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .cse-field {
+        min-width: 0;
+    }
+
+    .cse-full {
+        grid-column: 1 / -1;
+    }
+
+    .cse-label {
+        display: block;
+        margin-bottom: 7px;
+        color: #435169;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .cse-required {
+        color: #c92828;
+        margin-left: 3px;
+    }
+
+    .cse-control {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        min-height: 41px;
+        padding: 9px 12px;
+        border: 1px solid #d9e1ec;
+        border-radius: 8px;
+        background: #fff;
+        color: #25324a;
+        font-family: inherit;
+        font-size: 12px;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+        .cse-control:focus {
+            border-color: #c92828;
+            box-shadow: 0 0 0 3px rgba(201,40,40,.08);
+        }
+
+        .cse-control::placeholder {
+            color: #9ba6b8;
+        }
+
+    .cse-help {
+        display: block;
+        margin-top: 6px;
+        color: #8995aa;
+        font-size: 10px;
+        line-height: 1.7;
+    }
+
+    .cse-validation {
+        display: block;
+        margin-top: 5px;
+        color: #bd2626;
+        font-size: 11px;
+    }
+
+    .cse-time-panel {
+        padding: 15px;
+        border: 1px solid #e2e8f1;
+        border-radius: 10px;
+        background: #f8fafc;
+    }
+
+    .cse-time-title {
+        margin-bottom: 13px;
+        color: #245bb5;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .cse-duration-preview {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+        padding: 12px;
+        border: 1px solid #dbe7fb;
+        border-radius: 8px;
+        background: #eef4ff;
+    }
+
+        .cse-duration-preview span {
+            color: #526078;
+            font-size: 11px;
+        }
+
+        .cse-duration-preview strong {
+            color: #245bb5;
+            font-size: 15px;
+            font-weight: 800;
+        }
+
+    .cse-time-warning {
+        display: none;
+        margin-top: 10px;
+        padding: 9px 11px;
+        border: 1px solid #ffdada;
+        border-radius: 7px;
+        background: #fff4f4;
+        color: #a92323;
+        font-size: 11px;
+        line-height: 1.6;
+    }
+
+        .cse-time-warning.is-visible {
+            display: block;
+        }
+
+    .cse-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-top: 17px;
+        padding: 12px 13px;
+        border: 1px solid #dce8fa;
+        border-radius: 8px;
+        background: #f4f8ff;
+        color: #47658e;
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    .cse-card-footer {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 14px 20px;
+        border-top: 1px solid #edf0f5;
+        background: #fbfcfe;
+    }
+
+    @@media(max-width: 650px) {
+        .cse-header h1 {
+            font-size: 21px;
+        }
+
+        .cse-card-body,
+        .cse-card-header {
+            padding: 14px;
+        }
+
+        .cse-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .cse-full {
+            grid-column: auto;
+        }
+
+        .cse-card-footer {
+            padding: 12px 14px;
+        }
+    }
+</style>
+
+<div class="cse-page">
+
+    <div class="cse-header">
+        <div>
+            <div class="cse-eyebrow">
+                ENGLISH LANGUAGE CENTER / QUẢN LÝ LỊCH HỌC
+            </div>
+
+            <h1>Chỉnh sửa buổi học</h1>
+
+            <p>Cập nhật lớp, ngày học, khung giờ và phòng học.</p>
+        </div>
+
+        <div>
+            <a href="@Url.Action("Details", "ClassSessions", new { id = Model.Id })"
+               class="cse-btn cse-btn-back">
+                Xem chi tiết
+            </a>
+
+            <a href="@Url.Action("Index", "ClassSessions")"
+               class="cse-btn cse-btn-back">
+                ← Danh sách
+            </a>
+        </div>
+    </div>
+
+    <section class="cse-card">
+
+        <div class="cse-card-header">
+            <div class="cse-header-icon">
+                <i class="glyphicon glyphicon-edit"></i>
+            </div>
+
+            <div>
+                <h2>Thông tin buổi học</h2>
+                <p>Đang chỉnh sửa buổi học #@Model.Id — @className</p>
+            </div>
+        </div>
+
+        @using (Html.BeginForm("Edit", "ClassSessions", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.Id)
+
+            <div class="cse-card-body">
+
+                @Html.ValidationSummary(true,
+                    "Vui lòng kiểm tra lại thông tin:",
+                    new { @class = "cse-validation-summary" })
+
+                <div class="cse-section">
+
+                    <h3 class="cse-section-title">
+                        <span class="cse-number">01</span>
+                        Lớp học và ngày diễn ra
+                    </h3>
+
+                    <div class="cse-grid">
+
+                        <div class="cse-field cse-full">
+
+                            @Html.LabelFor(m => m.ClassId, "Lớp học",
+                                new { @class = "cse-label" })
+
+                            <span class="cse-required">*</span>
+
+                            @Html.DropDownListFor(
+                                m => m.ClassId,
+                                classOptions,
+                                "-- Chọn lớp học --",
+                                new { @class = "cse-control" })
+
+                            @Html.ValidationMessageFor(m => m.ClassId, "",
+                                new { @class = "cse-validation" })
+
+                            <small class="cse-help">
+                                Chọn lớp mà buổi học này thuộc về.
+                            </small>
+
+                        </div>
+
+                        <div class="cse-field cse-full">
+
+                            @Html.LabelFor(m => m.SessionDate, "Ngày học",
+                                new { @class = "cse-label" })
+
+                            <span class="cse-required">*</span>
+
+                            @Html.TextBoxFor(m => m.SessionDate, "{0:yyyy-MM-dd}", new
+                            {
+                                @class = "cse-control",
+                                type = "date"
+                            })
+
+                            @Html.ValidationMessageFor(m => m.SessionDate, "",
+                                new { @class = "cse-validation" })
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="cse-section">
+
+                    <h3 class="cse-section-title">
+                        <span class="cse-number">02</span>
+                        Thời gian buổi học
+                    </h3>
+
+                    <div class="cse-time-panel">
+
+                        <div class="cse-time-title">
+                            Khung giờ bắt đầu và kết thúc
+                        </div>
+
+                        <div class="cse-grid">
+
+                            <div class="cse-field">
+
+                                @Html.LabelFor(m => m.StartTime, "Giờ bắt đầu",
+                                    new { @class = "cse-label" })
+
+                                <span class="cse-required">*</span>
+
+                                @Html.TextBoxFor(m => m.StartTime, "{0:hh\\:mm}", new
+                                {
+                                    @class = "cse-control",
+                                    type = "time",
+                                    id = "cseStartTime",
+                                    step = "60"
+                                })
+
+                                @Html.ValidationMessageFor(m => m.StartTime, "",
+                                    new { @class = "cse-validation" })
+
+                            </div>
+
+                            <div class="cse-field">
+
+                                @Html.LabelFor(m => m.EndTime, "Giờ kết thúc",
+                                    new { @class = "cse-label" })
+
+                                <span class="cse-required">*</span>
+
+                                @Html.TextBoxFor(m => m.EndTime, "{0:hh\\:mm}", new
+                                {
+                                    @class = "cse-control",
+                                    type = "time",
+                                    id = "cseEndTime",
+                                    step = "60"
+                                })
+
+                                @Html.ValidationMessageFor(m => m.EndTime, "",
+                                    new { @class = "cse-validation" })
+
+                            </div>
+
+                        </div>
+
+                        <div class="cse-duration-preview">
+                            <span>Thời lượng dự kiến</span>
+                            <strong id="cseDuration">Chưa xác định</strong>
+                        </div>
+
+                        <div id="cseTimeWarning" class="cse-time-warning">
+                            Giờ kết thúc phải sau giờ bắt đầu.
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="cse-section">
+
+                    <h3 class="cse-section-title">
+                        <span class="cse-number">03</span>
+                        Phòng học
+                    </h3>
+
+                    <div class="cse-field">
+
+                        @Html.LabelFor(m => m.RoomId, "Phòng học",
+                            new { @class = "cse-label" })
+
+                        @Html.DropDownListFor(
+                            m => m.RoomId,
+                            roomOptions,
+                            "-- Chưa chọn phòng học --",
+                            new { @class = "cse-control" })
+
+                        @Html.ValidationMessageFor(m => m.RoomId, "",
+                            new { @class = "cse-validation" })
+
+                        <small class="cse-help">
+                            Chọn phòng đang hoạt động do hệ thống cung cấp.
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <div class="cse-note">
+                    <i class="glyphicon glyphicon-info-sign"></i>
+                    <div>
+                        <strong>Lưu ý:</strong>
+                        Kiểm tra ngày học, giờ bắt đầu và giờ kết thúc trước khi lưu.
+                        Các thay đổi sẽ cập nhật vào buổi học hiện tại.
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="cse-card-footer">
+
+                <a href="@Url.Action("Details", "ClassSessions", new { id = Model.Id })"
+                   class="cse-btn cse-btn-cancel">
+                    Hủy chỉnh sửa
+                </a>
+
+                <button type="submit" class="cse-btn cse-btn-save">
+                    <i class="glyphicon glyphicon-ok"></i>
+                    Lưu thay đổi
+                </button>
+
+            </div>
+        }
+
+    </section>
+
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+
+    <script>
+        (function () {
+            "use strict";
+
+            var startInput = document.getElementById("cseStartTime");
+            var endInput = document.getElementById("cseEndTime");
+            var durationText = document.getElementById("cseDuration");
+            var warning = document.getElementById("cseTimeWarning");
+
+            if (!startInput || !endInput || !durationText || !warning) {
+                return;
+            }
+
+            function toMinutes(value) {
+                if (!value || value.indexOf(":") < 0) {
+                    return null;
+                }
+
+                var pieces = value.split(":");
+                var hours = parseInt(pieces[0], 10);
+                var minutes = parseInt(pieces[1], 10);
+
+                if (!isFinite(hours) || !isFinite(minutes)) {
+                    return null;
+                }
+
+                return hours * 60 + minutes;
+            }
+
+            function updateDuration() {
+                var start = toMinutes(startInput.value);
+                var end = toMinutes(endInput.value);
+
+                warning.classList.remove("is-visible");
+
+                if (start === null || end === null) {
+                    durationText.textContent = "Chưa xác định";
+                    return;
+                }
+
+                if (end <= start) {
+                    durationText.textContent = "Không hợp lệ";
+                    warning.classList.add("is-visible");
+                    return;
+                }
+
+                var difference = end - start;
+                var hours = Math.floor(difference / 60);
+                var minutes = difference % 60;
+
+                if (hours > 0 && minutes > 0) {
+                    durationText.textContent =
+                        hours + " giờ " + minutes + " phút";
+                } else if (hours > 0) {
+                    durationText.textContent = hours + " giờ";
+                } else {
+                    durationText.textContent = minutes + " phút";
+                }
+            }
+
+            startInput.addEventListener("input", updateDuration);
+            startInput.addEventListener("change", updateDuration);
+            endInput.addEventListener("input", updateDuration);
+            endInput.addEventListener("change", updateDuration);
+
+            updateDuration();
+        })();
+    </script>
+}

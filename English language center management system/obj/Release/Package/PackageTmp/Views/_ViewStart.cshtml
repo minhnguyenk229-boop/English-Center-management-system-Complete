@@ -1,0 +1,47 @@
+﻿@using System
+
+@{
+    string controller = Convert.ToString(
+        ViewContext.RouteData.Values["controller"]);
+
+    string action = Convert.ToString(
+        ViewContext.RouteData.Values["action"]);
+
+    string route = controller + "." + action;
+
+    string[] teacherRoutes =
+    {
+        "Home.TeacherDashboard",
+        "ClassSessions.TeacherTeachingSchedule",
+        "Attendances.TeacherAttendance",
+        "AssessmentScores.TeacherGrades",
+        "Assignments.TeacherSubmissions",
+        "CourseMaterials.TeacherClassResources",
+        "Profiles.TeacherProfile"
+    };
+
+    string[] studentRoutes =
+    {
+        "Home.StudentDashboard",
+        "ClassSessions.StudentTimetable",
+        "Enrollments.StudentEnroll",
+        "Enrollments.StudentEnrollList",
+        "Attendances.StudentProgress",
+        "Assignments.StudentLearningResources",
+        "Payments.StudentPayments",
+        "Profiles.StudentProfile"
+    };
+
+    if (Array.IndexOf(teacherRoutes, route) >= 0)
+    {
+        Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+    }
+    else if (Array.IndexOf(studentRoutes, route) >= 0)
+    {
+        Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    }
+    else
+    {
+        Layout = "~/Views/Shared/_Layout.cshtml";
+    }
+}

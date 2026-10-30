@@ -1,0 +1,114 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Enrollments.EnrollmentEditViewModel
+@using System
+@using System.Collections.Generic
+@using System.Web.Mvc
+@{
+    ViewBag.Title = "Sửa ghi danh";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var selectedStatus = Model != null && !String.IsNullOrWhiteSpace(Model.Status) ? Model.Status : "Pending";
+    var statusOptions = new List<SelectListItem>
+{
+        new SelectListItem { Value = "Pending", Text = "Chờ duyệt", Selected = selectedStatus == "Pending" },
+        new SelectListItem { Value = "Approved", Text = "Đã duyệt", Selected = selectedStatus == "Approved" },
+        new SelectListItem { Value = "Active", Text = "Đang học", Selected = selectedStatus == "Active" },
+        new SelectListItem { Value = "Confirmed", Text = "Đã xác nhận", Selected = selectedStatus == "Confirmed" },
+        new SelectListItem { Value = "Studying", Text = "Đang học", Selected = selectedStatus == "Studying" },
+        new SelectListItem { Value = "Completed", Text = "Hoàn thành", Selected = selectedStatus == "Completed" },
+        new SelectListItem { Value = "Withdrawn", Text = "Đã rút", Selected = selectedStatus == "Withdrawn" },
+        new SelectListItem { Value = "Rejected", Text = "Đã từ chối", Selected = selectedStatus == "Rejected" },
+        new SelectListItem { Value = "Cancelled", Text = "Đã hủy", Selected = selectedStatus == "Cancelled" }
+    };
+    var studentOptions = ViewBag.StudentId as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
+    var classOptions = ViewBag.ClassId as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
+    var currentStudentId = Model.StudentId.ToString();
+    var currentClassId = Model.ClassId.ToString();
+}
+<div class="admin-enrollment-edit-page">
+    <div class="enrollment-edit-header">
+        <div>
+            <div class="enrollment-edit-eyebrow">QUẢN LÝ ĐÀO TẠO</div>
+            <h2>Sửa thông tin ghi danh</h2>
+            <p>Cập nhật học viên, lớp học, trạng thái và ngày ghi danh.</p>
+        </div>
+        <div class="enrollment-edit-header-icon">
+            <i class="glyphicon glyphicon-edit"></i>
+        </div>
+    </div>
+    <div class="enrollment-edit-card">
+        <div class="enrollment-edit-card-heading">
+            <div class="enrollment-edit-section-icon">
+                <i class="glyphicon glyphicon-list-alt"></i>
+            </div>
+            <div>
+                <h3>Ghi danh #@Model.Id</h3>
+                <p>Hãy kiểm tra thông tin trước khi lưu thay đổi.</p>
+            </div>
+            <span class="enrollment-edit-id">MÃ #@Model.Id</span>
+        </div>
+        @using (Html.BeginForm("Edit", "Enrollments", FormMethod.Post, new { @class = "enrollment-edit-form" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.Id)
+            @Html.ValidationSummary(false, "", new { @class = "enrollment-edit-validation" })
+            <div class="enrollment-edit-grid">
+                <div class="enrollment-edit-group">
+                    @Html.LabelFor(m => m.StudentId, "Học viên *", new { @class = "enrollment-edit-label" })
+                    <select id="StudentId" name="StudentId" class="enrollment-edit-control">
+                        <option value="">-- Chọn học viên --</option>
+                        @foreach (var option in studentOptions)
+                        {
+                            <option value="@option.Value" selected="@(option.Value == currentStudentId ? "selected" : null)">@option.Text</option>
+                        }
+                    </select>
+                    @Html.ValidationMessageFor(m => m.StudentId, "", new { @class = "enrollment-edit-error" })
+                </div>
+                <div class="enrollment-edit-group">
+                    @Html.LabelFor(m => m.ClassId, "Lớp học *", new { @class = "enrollment-edit-label" })
+                    <select id="ClassId" name="ClassId" class="enrollment-edit-control">
+                        <option value="">-- Chọn lớp học --</option>
+                        @foreach (var option in classOptions)
+                        {
+                            <option value="@option.Value" selected="@(option.Value == currentClassId ? "selected" : null)">@option.Text</option>
+                        }
+                    </select>
+                    @Html.ValidationMessageFor(m => m.ClassId, "", new { @class = "enrollment-edit-error" })
+                </div>
+                <div class="enrollment-edit-group">
+                    @Html.LabelFor(m => m.Status, "Trạng thái ghi danh *", new { @class = "enrollment-edit-label" })
+                    @Html.DropDownListFor(m => m.Status, statusOptions, new { @class = "enrollment-edit-control" })
+                    @Html.ValidationMessageFor(m => m.Status, "", new { @class = "enrollment-edit-error" })
+                    <small>Lưu ý: Nếu đổi sang "Đã duyệt", hệ thống sẽ kiểm tra đóng tiền và sĩ số lớp.</small>
+                </div>
+                <div class="enrollment-edit-group">
+                    @Html.LabelFor(m => m.EnrollmentDate, "Ngày ghi danh *", new { @class = "enrollment-edit-label" })
+                    @Html.TextBoxFor(m => m.EnrollmentDate, "{0:yyyy-MM-ddTHH:mm}", new { @class = "enrollment-edit-control", type = "datetime-local", required = "required" })
+                    @Html.ValidationMessageFor(m => m.EnrollmentDate, "", new { @class = "enrollment-edit-error" })
+                </div>
+            </div>
+
+            <!-- THÔNG BÁO CẬP NHẬT LOGIC MỚI -->
+            <div class="enrollment-edit-notice">
+                <i class="glyphicon glyphicon-info-sign"></i>
+                <div>
+                    <strong>Lưu ý khi cập nhật trạng thái</strong>
+                    <p>
+                        Nếu bạn đổi trạng thái sang <strong>Đã duyệt</strong> hoặc <strong>Đang học</strong>, backend sẽ kiểm tra xem đơn này đã có thanh toán (Paid/Partial) hay chưa. Hệ thống sẽ báo lỗi và từ chối lưu nếu học viên chưa nộp tiền.
+                    </p>
+                </div>
+            </div>
+            <div class="enrollment-edit-actions">
+                <a href="@Url.Action("Index", "Enrollments")" class="enrollment-edit-btn enrollment-edit-cancel">
+                    <i class="glyphicon glyphicon-arrow-left"></i>
+                    Hủy và quay lại
+                </a>
+                <button type="submit" class="enrollment-edit-btn enrollment-edit-submit">
+                    <i class="glyphicon glyphicon-floppy-disk"></i>
+                    Lưu thay đổi
+                </button>
+            </div>
+        }
+    </div>
+</div>
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

@@ -1,0 +1,73 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Payments.PaymentEditViewModel
+@using System
+@using System.Web.Mvc
+@{
+    ViewBag.Title = "Sửa phiếu thu";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var enrollmentOptions = ViewBag.EnrollmentId as IEnumerable<SelectListItem> ?? new List<SelectListItem>();
+}
+<div class="admin-payment-edit-page">
+    <div class="payment-edit-header">
+        <div>
+            <div class="payment-edit-eyebrow">QUẢN LÝ TÀI CHÍNH</div>
+            <h2>Sửa phiếu thu #@Model.Id</h2>
+        </div>
+    </div>
+
+    <div class="payment-edit-card">
+        @using (Html.BeginForm("Edit", "Payments", FormMethod.Post, new { @class = "payment-edit-form" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.Id)
+
+            <!-- THÊM LẠI KHỐI BÁO LỖI ĐỂ TRÁNH LỖI NGẦM -->
+            @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+
+            <div class="payment-edit-grid">
+                <div class="payment-edit-group payment-edit-full">
+                    @Html.LabelFor(m => m.EnrollmentId, "Học viên và Lớp học *", new { @class = "payment-edit-label" })
+                    @Html.DropDownListFor(m => m.EnrollmentId, enrollmentOptions, new { @class = "payment-edit-control" })
+                </div>
+
+                <div class="payment-edit-group">
+                    @Html.LabelFor(m => m.AmountPaid, "Số tiền thu thực tế (VNĐ) *", new { @class = "payment-edit-label" })
+                    @Html.TextBoxFor(m => m.AmountPaid, new { @class = "payment-edit-control", type = "number", min = "0" })
+                </div>
+
+                <div class="payment-edit-group">
+                    @Html.LabelFor(m => m.PaymentDate, "Ngày thanh toán *", new { @class = "payment-edit-label" })
+                    @Html.TextBoxFor(m => m.PaymentDate, "{0:yyyy-MM-ddTHH:mm}", new { @class = "payment-edit-control", type = "datetime-local" })
+                </div>
+
+                <!-- THÊM LẠI MÃ BIÊN LAI (BẮT BUỘC) -->
+                <div class="payment-edit-group">
+                    @Html.LabelFor(m => m.ReceiptNumber, "Mã biên lai", new { @class = "payment-edit-label" })
+                    @Html.TextBoxFor(m => m.ReceiptNumber, new { @class = "payment-edit-control" })
+                </div>
+
+                <!-- THÊM LẠI PHƯƠNG THỨC THANH TOÁN (BẮT BUỘC) -->
+                <div class="payment-edit-group">
+                    @Html.LabelFor(m => m.PaymentMethod, "Phương thức *", new { @class = "payment-edit-label" })
+                    <select id="PaymentMethod" name="PaymentMethod" class="payment-edit-control">
+                        <option value="Cash" @(Model.PaymentMethod == "Cash" ? "selected" : "")>Tiền mặt</option>
+                        <option value="Bank Transfer" @(Model.PaymentMethod == "Bank Transfer" ? "selected" : "")>Chuyển khoản</option>
+                        <option value="Credit Card" @(Model.PaymentMethod == "Credit Card" ? "selected" : "")>Thẻ tín dụng</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Vẫn ẩn trạng thái đi để Backend tự xử lý -->
+            <input type="hidden" name="PaymentStatus" value="@Model.PaymentStatus" />
+
+            <div class="payment-edit-actions" style="margin-top: 20px;">
+                <button type="submit" class="payment-edit-btn payment-edit-submit">Cập nhật và Tự tính lại Dư Nợ</button>
+                <a href="@Url.Action("Index", "Payments")" class="payment-edit-btn payment-edit-cancel" style="margin-left: 10px;">Quay lại</a>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- KHAI BÁO SCRIPT ĐỂ HIỂN THỊ LỖI FRONTEND -->
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

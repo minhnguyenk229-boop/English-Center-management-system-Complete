@@ -1,0 +1,545 @@
+﻿@{
+    Layout = null;
+
+    string currentController = Convert.ToString(
+        ViewContext.RouteData.Values["controller"]);
+
+    string currentAction = Convert.ToString(
+        ViewContext.RouteData.Values["action"]);
+
+    string teacherName = Session["FullName"] as string;
+
+    if (string.IsNullOrWhiteSpace(teacherName))
+    {
+        teacherName = Session["Username"] as string;
+    }
+
+    if (string.IsNullOrWhiteSpace(teacherName))
+    {
+        teacherName = "Giáo viên";
+    }
+
+    string teacherInitial =
+        teacherName.Substring(0, 1).ToUpperInvariant();
+
+    bool isDashboard =
+        currentController == "Home" &&
+        currentAction == "TeacherDashboard";
+
+    bool isSchedule =
+        currentController == "ClassSessions" &&
+        currentAction == "TeacherTeachingSchedule";
+
+    bool isAttendance =
+        currentController == "Attendances" &&
+        currentAction == "TeacherAttendance";
+
+    bool isGrades =
+        currentController == "AssessmentScores" &&
+        currentAction == "TeacherGrades";
+
+    bool isSubmissions =
+        currentController == "Assignments" &&
+        currentAction == "TeacherSubmissions";
+
+    bool isResources =
+        currentController == "CourseMaterials" &&
+        currentAction == "TeacherClassResources";
+
+    bool isProfile =
+        currentController == "Profiles" &&
+        currentAction == "TeacherProfile";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewBag.Title - English Center | Teacher Portal</title>
+
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <style>
+        /* Khung chung theo phong cách Admin */
+        .teacher-role-layout {
+            min-height: 100vh;
+        }
+
+            .teacher-role-layout .admin-sidebar {
+                z-index: 20;
+                overflow-y: auto;
+            }
+
+            .teacher-role-layout .admin-main {
+                display: flex;
+                flex: 1;
+                flex-direction: column;
+                min-width: 0;
+            }
+
+            .teacher-role-layout .admin-content {
+                min-width: 0;
+                flex: 1;
+            }
+
+            .teacher-role-layout .admin-sidebar-user > div {
+                min-width: 0;
+            }
+
+            .teacher-role-layout .admin-sidebar-user strong {
+                display: block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .teacher-role-layout .admin-nav-link.is-active {
+                border-color: #f1d6d6;
+                background: linear-gradient(100deg, #fff0f0, #fff8f8);
+                color: #b42329;
+                font-weight: 800;
+                box-shadow: inset 3px 0 0 #c62828;
+            }
+
+                .teacher-role-layout .admin-nav-link.is-active > .bi {
+                    color: #c62828;
+                }
+
+            .teacher-role-layout .admin-role-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 12px;
+                border-radius: 9px;
+                background: #fff0f0;
+                color: #b91f1f;
+                font-size: 11px;
+                font-weight: 800;
+                white-space: nowrap;
+            }
+
+        /* Chỉ chỉnh khung ngoài cũ của view, giữ lại nội dung */
+        .role-content-teacher {
+            width: 100%;
+            min-width: 0;
+        }
+
+            .role-content-teacher .teacher-portal {
+                display: block !important;
+                width: 100% !important;
+                max-width: none !important;
+                min-width: 0 !important;
+                min-height: 0 !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: transparent !important;
+                grid-template-columns: minmax(0, 1fr) !important;
+                gap: 0 !important;
+            }
+
+            .role-content-teacher .teacher-sidebar {
+                display: none !important;
+            }
+
+            .role-content-teacher .teacher-main {
+                display: block !important;
+                width: 100% !important;
+                max-width: none !important;
+                min-width: 0 !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                grid-column: auto !important;
+            }
+
+            .role-content-teacher .teacher-topbar,
+            .role-content-teacher .teacher-footer {
+                display: none !important;
+            }
+
+            .role-content-teacher .teacher-content {
+                width: 100% !important;
+                max-width: none !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .role-content-teacher .teacher-content-wrapper {
+                width: 100% !important;
+                max-width: none !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* Icon trong nội dung trang */
+            .role-content-teacher .bi {
+                display: inline-block;
+                line-height: 1;
+                vertical-align: -0.125em;
+            }
+
+            .role-content-teacher button .bi,
+            .role-content-teacher a .bi {
+                flex-shrink: 0;
+            }
+
+        @@media (max-width: 767px) {
+            .teacher-role-layout .admin-sidebar {
+                width: 72px;
+                min-width: 72px;
+                padding-right: 9px;
+                padding-left: 9px;
+            }
+
+            .teacher-role-layout .admin-brand {
+                justify-content: center;
+                gap: 0;
+                padding-right: 0;
+                padding-left: 0;
+            }
+
+                .teacher-role-layout .admin-brand > span:last-child,
+                .teacher-role-layout .admin-sidebar-caption,
+                .teacher-role-layout .admin-sidebar-user > div,
+                .teacher-role-layout .admin-sidebar-bottom .admin-logout-link {
+                    display: none;
+                }
+
+            .teacher-role-layout .admin-navigation {
+                gap: 7px;
+            }
+
+            .teacher-role-layout .admin-nav-link {
+                justify-content: center;
+                gap: 0;
+                padding: 0;
+                overflow: hidden;
+                font-size: 0;
+            }
+
+                .teacher-role-layout .admin-nav-link > .bi {
+                    width: auto;
+                    min-width: 0;
+                    font-size: 18px;
+                }
+
+            .teacher-role-layout .admin-sidebar-user {
+                justify-content: center;
+            }
+
+            .teacher-role-layout .admin-content {
+                padding: 16px 12px;
+            }
+
+            .teacher-role-layout .admin-topbar {
+                padding: 12px 15px;
+                gap: 10px;
+            }
+
+            .teacher-role-layout .admin-role-label {
+                padding: 7px 9px;
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body class="admin-body teacher-role-layout">
+
+    <div class="admin-shell">
+
+        <!-- SIDEBAR DÙNG CHUNG -->
+        <aside class="admin-sidebar">
+
+            <a href="@Url.Action("TeacherDashboard", "Home")"
+               class="admin-brand">
+
+                <span class="admin-brand-mark">
+                    <i class="bi bi-book-half"></i>
+                </span>
+
+                <span>
+                    ELC MANAGEMENT
+                    <small>TEACHER PORTAL</small>
+                </span>
+
+            </a>
+
+            <div class="admin-sidebar-caption">
+                KHÔNG GIAN GIẢNG DẠY
+            </div>
+
+            <nav class="admin-navigation">
+
+                <a href="@Url.Action("TeacherDashboard", "Home")"
+                   class="admin-nav-link @(isDashboard ? "is-active" : "")">
+
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    Dashboard
+                </a>
+
+                <a href="@Url.Action("TeacherTeachingSchedule", "ClassSessions")"
+                   class="admin-nav-link @(isSchedule ? "is-active" : "")">
+
+                    <i class="bi bi-calendar3-week-fill"></i>
+                    Lịch dạy &amp; Lớp phụ trách
+                </a>
+
+                <a href="@Url.Action("TeacherAttendance", "Attendances")"
+                   class="admin-nav-link @(isAttendance ? "is-active" : "")">
+
+                    <i class="bi bi-person-check-fill"></i>
+                    Điểm danh
+                </a>
+
+                <a href="@Url.Action("TeacherGrades", "AssessmentScores")"
+                   class="admin-nav-link @(isGrades ? "is-active" : "")">
+
+                    <i class="bi bi-journal-check"></i>
+                    Nhập điểm &amp; Đánh giá
+                </a>
+
+                <a href="@Url.Action("TeacherSubmissions", "Assignments")"
+                   class="admin-nav-link @(isSubmissions ? "is-active" : "")">
+
+                    <i class="bi bi-file-earmark-check"></i>
+                    Chấm bài tập
+                </a>
+
+                <a href="@Url.Action("TeacherClassResources", "CourseMaterials")"
+                   class="admin-nav-link @(isResources ? "is-active" : "")">
+
+                    <i class="bi bi-folder2-open"></i>
+                    Bài tập &amp; Tài liệu
+                </a>
+
+                <a href="@Url.Action("TeacherProfile", "Profiles")"
+                   class="admin-nav-link @(isProfile ? "is-active" : "")">
+
+                    <i class="bi bi-person-vcard-fill"></i>
+                    Hồ sơ cá nhân
+                </a>
+
+            </nav>
+
+            <div class="admin-sidebar-bottom">
+
+                <div class="admin-sidebar-user">
+                    <span class="admin-avatar">@teacherInitial</span>
+
+                    <div>
+                        <strong>@teacherName</strong>
+                        <small>Giáo viên</small>
+                    </div>
+                </div>
+
+                <a href="@Url.Action("Contact", "Home")"
+                   class="admin-logout-link"
+                   style="color:#667085;">
+
+                    <i class="bi bi-headset"></i>
+                    Liên hệ hỗ trợ
+                </a>
+
+                <a href="@Url.Action("Logout", "Auth")"
+                   class="admin-logout-link">
+
+                    <i class="bi bi-box-arrow-right"></i>
+                    Đăng xuất
+                </a>
+
+            </div>
+
+        </aside>
+
+        <!-- MAIN -->
+        <div class="admin-main">
+
+            <header class="admin-topbar">
+
+                <div>
+                    <span>ENGLISH LANGUAGE CENTER</span>
+                    <strong>@(ViewBag.Title ?? "Cổng giáo viên")</strong>
+                </div>
+
+                <div class="admin-role-label">
+                    <i class="bi bi-person-workspace"></i>
+                    Giáo viên
+                </div>
+
+            </header>
+
+            <main class="admin-content">
+
+                <div class="role-content-teacher page-@currentController-@currentAction">
+
+                    @RenderBody()
+
+                </div>
+
+            </main>
+
+            <footer class="admin-footer">
+                © @DateTime.Now.Year English Center
+                · Hệ thống quản lý trung tâm Anh ngữ
+            </footer>
+
+        </div>
+
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+
+    <script>
+                (function () {
+                    "use strict";
+
+                    var iconMap = {
+                        "glyphicon-adjust": "bi-circle-half",
+                        "glyphicon-alert": "bi-exclamation-triangle-fill",
+                        "glyphicon-arrow-left": "bi-arrow-left",
+                        "glyphicon-arrow-right": "bi-arrow-right",
+                        "glyphicon-book": "bi-book-half",
+                        "glyphicon-calendar": "bi-calendar3",
+                        "glyphicon-check": "bi-check2-square",
+                        "glyphicon-chevron-left": "bi-chevron-left",
+                        "glyphicon-chevron-right": "bi-chevron-right",
+                        "glyphicon-cloud-download": "bi-cloud-download",
+                        "glyphicon-cloud-upload": "bi-cloud-upload",
+                        "glyphicon-credit-card": "bi-credit-card-fill",
+                        "glyphicon-dashboard": "bi-speedometer2",
+                        "glyphicon-download": "bi-download",
+                        "glyphicon-download-alt": "bi-download",
+                        "glyphicon-edit": "bi-pencil-square",
+                        "glyphicon-education": "bi-mortarboard-fill",
+                        "glyphicon-envelope": "bi-envelope-fill",
+                        "glyphicon-exclamation-sign": "bi-exclamation-circle-fill",
+                        "glyphicon-eye-close": "bi-eye-slash-fill",
+                        "glyphicon-eye-open": "bi-eye-fill",
+                        "glyphicon-file": "bi-file-earmark",
+                        "glyphicon-filter": "bi-funnel-fill",
+                        "glyphicon-floppy-disk": "bi-floppy",
+                        "glyphicon-folder-close": "bi-folder",
+                        "glyphicon-folder-open": "bi-folder2-open",
+                        "glyphicon-home": "bi-house-fill",
+                        "glyphicon-inbox": "bi-inbox-fill",
+                        "glyphicon-info-sign": "bi-info-circle-fill",
+                        "glyphicon-list": "bi-list-ul",
+                        "glyphicon-list-alt": "bi-card-list",
+                        "glyphicon-lock": "bi-lock-fill",
+                        "glyphicon-log-in": "bi-box-arrow-in-right",
+                        "glyphicon-log-out": "bi-box-arrow-right",
+                        "glyphicon-map-marker": "bi-geo-alt-fill",
+                        "glyphicon-minus": "bi-dash-lg",
+                        "glyphicon-ok": "bi-check-lg",
+                        "glyphicon-ok-circle": "bi-check-circle",
+                        "glyphicon-ok-sign": "bi-check-circle-fill",
+                        "glyphicon-pencil": "bi-pencil-fill",
+                        "glyphicon-plus": "bi-plus-lg",
+                        "glyphicon-print": "bi-printer-fill",
+                        "glyphicon-refresh": "bi-arrow-clockwise",
+                        "glyphicon-remove": "bi-x-lg",
+                        "glyphicon-remove-circle": "bi-x-circle",
+                        "glyphicon-search": "bi-search",
+                        "glyphicon-stats": "bi-bar-chart-line-fill",
+                        "glyphicon-tasks": "bi-list-check",
+                        "glyphicon-time": "bi-clock-fill",
+                        "glyphicon-trash": "bi-trash3-fill",
+                        "glyphicon-upload": "bi-upload",
+                        "glyphicon-user": "bi-person-fill",
+                        "glyphicon-usd": "bi-currency-dollar",
+                        "glyphicon-warning-sign": "bi-exclamation-triangle-fill"
+                    };
+
+                    document.querySelectorAll(".role-content-teacher .glyphicon").forEach(function (element) {
+                        var oldClass = Array.prototype.slice.call(element.classList).find(function (name) {
+                            return name.indexOf("glyphicon-") === 0;
+                        });
+
+                        if (!oldClass) {
+                            return;
+                        }
+
+                        var replacement = iconMap[oldClass] || "bi-question-circle";
+
+                        var keepClasses = Array.prototype.slice.call(element.classList).filter(function (name) {
+                            return name !== "glyphicon" && name.indexOf("glyphicon-") !== 0;
+                        });
+
+                        element.className = ["bi", replacement].concat(keepClasses).join(" ");
+                        element.setAttribute("aria-hidden", "true");
+                    });
+
+                    var symbols = {
+                        "▦": "bi-grid-1x2-fill",
+                        "♙": "bi-person-fill",
+                        "♟": "bi-person-fill",
+                        "▤": "bi-book-half",
+                        "▣": "bi-collection-fill",
+                        "✓": "bi-check-circle-fill",
+                        "₫": "bi-cash-coin",
+                        "▥": "bi-bar-chart-line-fill",
+                        "📅": "bi-calendar3",
+                        "📚": "bi-journal-bookmark-fill",
+                        "↑": "bi-cloud-upload-fill",
+                        "⌕": "bi-search",
+                        "✎": "bi-pencil-square",
+                        "+": "bi-plus-lg",
+                        "＋": "bi-plus-lg",
+                        "🎓": "bi-mortarboard-fill",
+                        "📄": "bi-file-earmark-text-fill",
+                        "💳": "bi-credit-card-fill",
+                        "👤": "bi-person-fill",
+                        "✉": "bi-envelope-fill",
+                        "?": "bi-question-circle-fill",
+                        "A+": "bi-journal-check",
+                        "EC": "bi-book-half"
+                    };
+
+                    document.querySelectorAll(
+                        ".role-content-teacher .teacher-stat-icon, " +
+                        ".role-content-teacher .teacher-icon, " +
+                        ".role-content-teacher .teacher-welcome-icon"
+                    ).forEach(function (container) {
+                        if (container.children.length > 0) {
+                            return;
+                        }
+
+                        var symbol = (container.textContent || "").trim();
+                        var iconName = symbols[symbol];
+
+                        if (!iconName) {
+                            return;
+                        }
+
+                        var icon = document.createElement("i");
+                        icon.className = "bi " + iconName;
+                        icon.setAttribute("aria-hidden", "true");
+
+                        container.textContent = "";
+                        container.appendChild(icon);
+                    });
+                })();
+    </script>
+
+    @if (IsSectionDefined("Scripts"))
+    {
+        @RenderSection("Scripts", required: false)
+    }
+    else if (IsSectionDefined("scripts"))
+    {
+        @RenderSection("scripts", required: false)
+    }
+
+</body>
+</html>

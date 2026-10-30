@@ -1,0 +1,252 @@
+﻿@using System.Collections.Generic
+@using System.Linq
+@using English_language_center_management_system.Models
+@using English_language_center_management_system.Models.ViewModels.Classes
+@model ClassIndexViewModel
+
+@{
+    ViewBag.Title = "Quản lý lớp học";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var classItems = Model.Classes ?? new List<ClassIndexItemViewModel>();
+    var courses = Model.Courses ?? new List<Course>();
+    int totalCapacity = classItems.Sum(x => x.Class.MaxCapacity);
+    int totalEnrolled = classItems.Sum(x => x.EnrolledCount);
+    int openClasses = classItems.Count(x => x.Class.Status == "Mở đăng ký" || x.Class.Status == "Đang học" || x.Class.Status == "Open" || x.Class.Status == "Studying");
+    int nearFullClasses = classItems.Count(x => x.Class.MaxCapacity > 0 && x.EnrolledCount * 100.0 / x.Class.MaxCapacity >= 80);
+}
+
+<div class="admin-classes-page">
+    <!-- HEADER -->
+    <section class="admin-classes-header">
+        <div>
+            <span class="admin-classes-eyebrow">CLASS MANAGEMENT</span>
+            <h1>Quản lý lớp học</h1>
+            <p>Quản lý khóa học được mở lớp, giáo viên phụ trách, phòng học và số lượng học viên.</p>
+        </div>
+        <a href="@Url.Action("Create", "Classes")" class="admin-classes-primary-btn">+ Mở lớp mới</a>
+    </section>
+
+    <!-- THÔNG BÁO -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="admin-classes-alert success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="admin-classes-alert error">@TempData["ErrorMessage"]</div>
+    }
+
+    <!-- THẺ THỐNG KÊ -->
+    <section class="admin-classes-stats">
+        <article class="admin-classes-stat-card">
+            <span class="admin-classes-stat-icon red">▣</span>
+            <div>
+                <span>Lớp trong kết quả</span>
+                <strong>@classItems.Count</strong>
+            </div>
+        </article>
+        <article class="admin-classes-stat-card">
+            <span class="admin-classes-stat-icon blue">♙</span>
+            <div>
+                <span>Lượt ghi danh thành công</span>
+                <strong>@totalEnrolled</strong>
+            </div>
+        </article>
+        <article class="admin-classes-stat-card">
+            <span class="admin-classes-stat-icon green">✓</span>
+            <div>
+                <span>Lớp mở / đang học</span>
+                <strong>@openClasses</strong>
+            </div>
+        </article>
+        <article class="admin-classes-stat-card">
+            <span class="admin-classes-stat-icon orange">!</span>
+            <div>
+                <span>Lớp gần đầy</span>
+                <strong>@nearFullClasses</strong>
+            </div>
+        </article>
+    </section>
+
+    <!-- BỘ LỌC -->
+    <section class="admin-classes-panel">
+        <div class="admin-classes-panel-heading">
+            <div>
+                <h2>Danh sách lớp học</h2>
+                <p>Tìm kiếm và lọc lớp theo nhu cầu quản lý.</p>
+            </div>
+        </div>
+        <form method="get" action="@Url.Action("Index", "Classes")" class="admin-classes-filter">
+            <div class="admin-classes-filter-field">
+                <label for="searchTerm">Tìm kiếm</label>
+                <input type="text" id="searchTerm" name="searchTerm" value="@Model.SearchTerm" class="admin-classes-input" placeholder="Tên lớp hoặc phòng học..." />
+            </div>
+            <div class="admin-classes-filter-field">
+                <label for="courseId">Khóa học</label>
+                <select id="courseId" name="courseId" class="admin-classes-input">
+                    <option value="">Tất cả khóa học</option>
+                    @foreach (var course in courses)
+                    {
+                        <option value="@course.Id" @(Model.SelectedCourseId == course.Id ? "selected" : "")>@course.CourseName</option>
+                    }
+                </select>
+            </div>
+            <div class="admin-classes-filter-field">
+                <label for="status">Trạng thái</label>
+                <select id="status" name="status" class="admin-classes-input">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="Mở đăng ký" @(Model.SelectedStatus == "Mở đăng ký" || Model.SelectedStatus == "Open" ? "selected" : "")>Mở đăng ký</option>
+                    <option value="Đã đủ sĩ số" @(Model.SelectedStatus == "Đã đủ sĩ số" || Model.SelectedStatus == "Full" ? "selected" : "")>Đã đủ sĩ số</option>
+                    <option value="Đang học" @(Model.SelectedStatus == "Đang học" || Model.SelectedStatus == "Studying" ? "selected" : "")>Đang học</option>
+                    <option value="Đã hoàn thành" @(Model.SelectedStatus == "Đã hoàn thành" || Model.SelectedStatus == "Completed" ? "selected" : "")>Đã kết thúc</option>
+                    <option value="Đã đóng" @(Model.SelectedStatus == "Đã đóng" || Model.SelectedStatus == "Closed" ? "selected" : "")>Đã đóng</option>
+                </select>
+            </div>
+            <div class="admin-classes-filter-actions">
+                <button type="submit" class="admin-classes-primary-btn">Tìm kiếm</button>
+                <a href="@Url.Action("Index", "Classes")" class="admin-classes-reset-btn">Đặt lại</a>
+            </div>
+        </form>
+
+        <!-- TOOLBAR -->
+        <div class="admin-classes-table-toolbar">
+            <span>Tìm thấy <strong>@classItems.Count</strong> lớp học</span>
+            <a href="@Url.Action("Index", "Courses", new { area = "" })" class="admin-classes-text-link">Danh mục khóa học →</a>
+        </div>
+
+        <!-- BẢNG LỚP HỌC -->
+        <div class="admin-classes-table-wrap">
+            <table class="admin-classes-table">
+                <thead>
+                    <tr>
+                        <th>LỚP HỌC</th>
+                        <th>KHÓA HỌC</th>
+                        <th>GIÁO VIÊN</th>
+                        <th>PHÒNG</th>
+                        <th>SĨ SỐ</th>
+                        <th>SỨC CHỨA</th>
+                        <th>TRẠNG THÁI</th>
+                        <th>THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (classItems.Any())
+                    {
+                        foreach (var item in classItems)
+                        {
+                            var classStatus = item.Class.Status ?? "";
+                            string statusLabel = classStatus;
+                            string statusClass = "neutral";
+                            if (classStatus == "Mở đăng ký" || classStatus == "Open")
+                            {
+                                statusLabel = "Mở đăng ký";
+                                statusClass = "open";
+                            }
+                            else if (classStatus == "Đã đủ sĩ số" || classStatus == "Full")
+                            {
+                                statusLabel = "Đã đủ sĩ số";
+                                statusClass = "full";
+                            }
+                            else if (classStatus == "Đang học" || classStatus == "Studying")
+                            {
+                                statusLabel = "Đang học";
+                                statusClass = "studying";
+                            }
+                            else if (classStatus == "Đã hoàn thành" || classStatus == "Completed")
+                            {
+                                statusLabel = "Đã kết thúc";
+                                statusClass = "completed";
+                            }
+                            else if (classStatus == "Đã đóng" || classStatus == "Closed")
+                            {
+                                statusLabel = "Đã đóng";
+                                statusClass = "closed";
+                            }
+
+                            decimal occupancy = item.Class.MaxCapacity > 0 ? Math.Round(item.EnrolledCount * 100m / item.Class.MaxCapacity, 1) : 0m;
+
+                            <tr>
+                                <!-- TÊN LỚP -->
+                                <td>
+                                    <div class="admin-classes-name">
+                                        <span class="admin-classes-class-icon">L</span>
+                                        <div>
+                                            <strong>@item.Class.ClassName</strong>
+                                            <small>Mã lớp: #@item.Class.Id</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <!-- KHÓA HỌC -->
+                                <td>
+                                    <strong class="admin-classes-course-name">
+                                        @(item.Class.Course != null ? item.Class.Course.CourseName : "Chưa xác định")
+                                    </strong>
+                                </td>
+                                <!-- GIÁO VIÊN -->
+                                <td>
+                                    @if (item.Class.Teacher != null)
+                                    {
+                                        <div class="admin-classes-teacher">
+                                            <span class="admin-classes-teacher-avatar">
+                                                @(string.IsNullOrWhiteSpace(item.Class.Teacher.FullName) ? "G" : item.Class.Teacher.FullName.Trim().Substring(0, 1).ToUpper())
+                                            </span>
+                                            <span>@item.Class.Teacher.FullName</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="admin-classes-unassigned">Chưa phân công</span>
+                                    }
+                                </td>
+                                <!-- PHÒNG -->
+                                <td>
+                                    @(item.Class.Room != null && !string.IsNullOrWhiteSpace(item.Class.Room.RoomName) ? item.Class.Room.RoomName : "Chưa cập nhật")
+                                </td>
+                                <!-- SĨ SỐ -->
+                                <td>
+                                    <strong class="admin-classes-enrolled">@item.EnrolledCount</strong>
+                                </td>
+                                <!-- SỨC CHỨA -->
+                                <td>
+                                    <div class="admin-classes-capacity">
+                                        <div class="admin-classes-progress">
+                                            <span style="width: @occupancy.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                                        </div>
+                                        <small>@item.EnrolledCount / @item.Class.MaxCapacity</small>
+                                    </div>
+                                </td>
+                                <!-- TRẠNG THÁI -->
+                                <td>
+                                    <span class="admin-classes-status @statusClass">@statusLabel</span>
+                                </td>
+                                <!-- THAO TÁC -->
+                                <td>
+                                    <div class="admin-classes-actions">
+                                        <a href="@Url.Action("Details", "Classes", new { id = item.Class.Id })" class="admin-classes-action view" title="Chi tiết">Xem</a>
+                                        <a href="@Url.Action("Edit", "Classes", new { id = item.Class.Id })" class="admin-classes-action edit" title="Sửa lớp">Sửa</a>
+                                        <a href="@Url.Action("Delete", "Classes", new { id = item.Class.Id })" class="admin-classes-action delete" title="Xóa lớp">Xóa</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8">
+                                <div class="admin-classes-empty">
+                                    <span>▣</span>
+                                    <strong>Không tìm thấy lớp học</strong>
+                                    <p>Hãy đổi từ khóa hoặc xóa bộ lọc để hiển thị lại danh sách.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="admin-classes-panel-footer">
+            Tổng sức chứa của các lớp trong kết quả: <strong>@totalCapacity học viên</strong>
+        </div>
+    </section>
+</div>

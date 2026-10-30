@@ -1,0 +1,2102 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Assigments.StudentLearningViewModel
+
+@using System
+@using System.Linq
+@using System.Collections.Generic
+@using English_language_center_management_system.Models
+
+@{
+    ViewBag.Title = "Bài tập & tài liệu học tập";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+
+    var materials = Model != null && Model.Materials != null
+        ? Model.Materials
+        : new List<CourseMaterial>();
+
+    var assignments = Model != null && Model.Assignments != null
+        ? Model.Assignments
+        : new List<Assignment>();
+
+    var submissions = Model != null && Model.Submissions != null
+        ? Model.Submissions
+        : new List<Submission>();
+
+    string studentName = "";
+
+    if (Model != null && Model.StudentInfo != null
+        && !string.IsNullOrWhiteSpace(Model.StudentInfo.FullName))
+    {
+        studentName = Model.StudentInfo.FullName;
+    }
+    else if (Session["FullName"] != null)
+    {
+        studentName = Session["FullName"].ToString();
+    }
+    else if (Session["Username"] != null)
+    {
+        studentName = Session["Username"].ToString();
+    }
+    else
+    {
+        studentName = "Học viên";
+    }
+
+    string studentInitial = "H";
+
+    if (!string.IsNullOrWhiteSpace(studentName))
+    {
+        studentInitial = studentName.Trim().Substring(0, 1).ToUpper();
+    }
+
+    DateTime currentTime = DateTime.Now;
+
+    int totalMaterials = materials.Count;
+    int totalAssignments = assignments.Count;
+
+    int submittedAssignments = assignments.Count(a =>
+        submissions.Any(s => s.AssignmentId == a.Id));
+
+    int pendingAssignments = totalAssignments - submittedAssignments;
+
+    int gradedAssignments = assignments.Count(a =>
+        submissions.Any(s =>
+            s.AssignmentId == a.Id && s.Grade.HasValue));
+
+    int overdueAssignments = assignments.Count(a =>
+        a.DueDate < currentTime
+        && !submissions.Any(s => s.AssignmentId == a.Id));
+}
+
+<style>
+    .slr-page,
+    .slr-page * {
+        box-sizing: border-box;
+    }
+
+    .slr-page {
+        min-height: 100vh;
+        margin: -1px;
+        background: #f4f6fb;
+        color: #202938;
+        font-family: "Segoe UI", Arial, sans-serif;
+        font-size: 14px;
+    }
+
+    .slr-shell {
+        display: flex;
+        min-height: 100vh;
+        width: 100%;
+    }
+
+    /* SIDEBAR */
+    .slr-sidebar {
+        width: 248px;
+        min-width: 248px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding: 24px 15px 18px;
+        background: #ffffff;
+        border-right: 1px solid #e8ebf2;
+    }
+
+    .slr-brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 0 10px;
+        margin-bottom: 28px;
+        color: #202938;
+        text-decoration: none !important;
+    }
+
+    .slr-brand-mark {
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-radius: 13px;
+        background: linear-gradient(135deg, #c62828, #e34b4b);
+        color: #ffffff;
+        font-size: 21px;
+        box-shadow: 0 5px 12px rgba(198, 40, 40, .18);
+    }
+
+    .slr-brand-title {
+        display: block;
+        font-size: 16px;
+        line-height: 1.3;
+        font-weight: 800;
+        letter-spacing: .3px;
+    }
+
+    .slr-brand-caption {
+        display: block;
+        margin-top: 3px;
+        color: #8a93a3;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.3px;
+    }
+
+    .slr-user-card {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 13px 10px;
+        margin-bottom: 24px;
+        border: 1px solid #edf0f5;
+        border-radius: 14px;
+        background: #fafbfe;
+    }
+
+    .slr-avatar {
+        width: 41px;
+        height: 41px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-radius: 50%;
+        background: #fff0f0;
+        color: #c62828;
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+    .slr-user-info {
+        min-width: 0;
+    }
+
+    .slr-user-name {
+        overflow: hidden;
+        color: #263247;
+        font-size: 12px;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .slr-user-role {
+        margin-top: 4px;
+        color: #858ea0;
+        font-size: 11px;
+    }
+
+    .slr-menu-label {
+        margin: 0 11px 10px;
+        color: #9aa2b1;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.3px;
+        text-transform: uppercase;
+    }
+
+    .slr-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .slr-nav-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 45px;
+        padding: 11px 13px;
+        border-radius: 10px;
+        color: #657084;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none !important;
+        transition: background .2s ease, color .2s ease;
+    }
+
+        .slr-nav-link:hover {
+            background: #fff4f4;
+            color: #c62828;
+        }
+
+        .slr-nav-link.active {
+            background: #c62828;
+            color: #ffffff;
+            box-shadow: 0 5px 12px rgba(198, 40, 40, .17);
+        }
+
+        .slr-nav-link i {
+            width: 19px;
+            text-align: center;
+            font-size: 17px;
+        }
+
+    .slr-sidebar-bottom {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-top: auto;
+        padding-top: 22px;
+    }
+
+    /* MAIN */
+    .slr-main {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .slr-topbar {
+        min-height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 15px 34px;
+        background: #ffffff;
+        border-bottom: 1px solid #e8ebf2;
+    }
+
+    .slr-topbar-heading {
+        color: #263247;
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+    .slr-topbar-subtitle {
+        margin-top: 4px;
+        color: #8a93a3;
+        font-size: 12px;
+    }
+
+    .slr-topbar-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #526075;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+        .slr-topbar-user .slr-avatar {
+            width: 36px;
+            height: 36px;
+            font-size: 14px;
+        }
+
+    .slr-content {
+        flex: 1;
+        width: 100%;
+        max-width: 1600px;
+        padding: 30px 34px 35px;
+        margin: 0 auto;
+    }
+
+    .slr-breadcrumb {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-bottom: 21px;
+        color: #8992a2;
+        font-size: 12px;
+    }
+
+        .slr-breadcrumb a {
+            color: #6e788b;
+            text-decoration: none;
+        }
+
+            .slr-breadcrumb a:hover {
+                color: #c62828;
+            }
+
+        .slr-breadcrumb .active {
+            color: #c62828;
+            font-weight: 700;
+        }
+
+    .slr-page-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .slr-eyebrow {
+        margin-bottom: 8px;
+        color: #c62828;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+
+    .slr-page-title {
+        margin: 0;
+        color: #202938;
+        font-size: 27px;
+        line-height: 1.35;
+        font-weight: 800;
+    }
+
+    .slr-page-description {
+        max-width: 700px;
+        margin: 9px 0 0;
+        color: #7b8496;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .slr-heading-icon {
+        width: 54px;
+        height: 54px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-radius: 16px;
+        background: #fff0f0;
+        color: #c62828;
+        font-size: 25px;
+    }
+
+    /* ALERTS */
+    .slr-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+        padding: 14px 16px;
+        margin-bottom: 18px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        line-height: 1.6;
+    }
+
+        .slr-alert i {
+            margin-top: 2px;
+            font-size: 18px;
+        }
+
+    .slr-alert-success {
+        background: #effaf3;
+        border-color: #d4efdd;
+        color: #247747;
+    }
+
+    .slr-alert-danger {
+        background: #fff2f2;
+        border-color: #f7d6d6;
+        color: #b42323;
+    }
+
+    /* STATISTICS */
+    .slr-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 26px;
+    }
+
+    .slr-stat-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 132px;
+        padding: 20px;
+        border: 1px solid #edf0f5;
+        border-radius: 15px;
+        background: #ffffff;
+        box-shadow: 0 3px 12px rgba(32, 41, 56, .025);
+    }
+
+    .slr-stat-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .slr-stat-label {
+        color: #798396;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .slr-stat-icon {
+        width: 39px;
+        height: 39px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-radius: 12px;
+        font-size: 18px;
+    }
+
+        .slr-stat-icon.red {
+            background: #fff0f0;
+            color: #c62828;
+        }
+
+        .slr-stat-icon.blue {
+            background: #eef5ff;
+            color: #3478d4;
+        }
+
+        .slr-stat-icon.green {
+            background: #eaf8f0;
+            color: #188751;
+        }
+
+        .slr-stat-icon.orange {
+            background: #fff5e9;
+            color: #d78118;
+        }
+
+    .slr-stat-value {
+        margin-top: 12px;
+        color: #202938;
+        font-size: 27px;
+        line-height: 1.1;
+        font-weight: 800;
+    }
+
+    .slr-stat-foot {
+        margin-top: 7px;
+        color: #939bab;
+        font-size: 11px;
+    }
+
+    /* SECTION AND SEARCH */
+    .slr-section {
+        overflow: hidden;
+        margin-bottom: 25px;
+        border: 1px solid #e9edf4;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 3px 14px rgba(32, 41, 56, .025);
+    }
+
+    .slr-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 21px 23px;
+        border-bottom: 1px solid #eef1f6;
+    }
+
+    .slr-section-heading {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .slr-section-icon {
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-radius: 12px;
+        background: #fff0f0;
+        color: #c62828;
+        font-size: 19px;
+    }
+
+    .slr-section-title {
+        margin: 0;
+        color: #253047;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .slr-section-subtitle {
+        margin-top: 5px;
+        color: #8a93a3;
+        font-size: 11px;
+    }
+
+    .slr-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 29px;
+        height: 25px;
+        padding: 0 8px;
+        margin-left: 5px;
+        border-radius: 8px;
+        background: #fff0f0;
+        color: #c62828;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .slr-search {
+        position: relative;
+        width: 240px;
+        max-width: 100%;
+    }
+
+        .slr-search i {
+            position: absolute;
+            top: 50%;
+            left: 13px;
+            color: #939bab;
+            font-size: 14px;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .slr-search input {
+            width: 100%;
+            height: 41px;
+            padding: 9px 12px 9px 37px;
+            border: 1px solid #e3e8f0;
+            border-radius: 10px;
+            outline: none;
+            background: #fbfcfe;
+            color: #263247;
+            font-family: inherit;
+            font-size: 12px;
+        }
+
+            .slr-search input:focus {
+                border-color: #d96e6e;
+                background: #ffffff;
+                box-shadow: 0 0 0 3px rgba(198, 40, 40, .07);
+            }
+
+    /* TABLE */
+    .slr-table-wrap {
+        overflow-x: auto;
+        width: 100%;
+    }
+
+    .slr-table {
+        width: 100%;
+        margin: 0;
+        border-collapse: collapse;
+        border-spacing: 0;
+    }
+
+        .slr-table thead th {
+            padding: 14px 20px;
+            border: none;
+            border-bottom: 1px solid #edf0f5;
+            background: #fafbfe;
+            color: #8992a2;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .5px;
+            text-align: left;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .slr-table tbody td {
+            padding: 17px 20px;
+            border: none;
+            border-bottom: 1px solid #f0f2f6;
+            color: #5f6a7d;
+            font-size: 12px;
+            vertical-align: middle;
+        }
+
+        .slr-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .slr-table tbody tr:hover {
+            background: #fdfdff;
+        }
+
+    .slr-material-title {
+        display: block;
+        max-width: 380px;
+        color: #2b3549;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+    .slr-material-subtitle {
+        display: block;
+        margin-top: 5px;
+        color: #9aa2b1;
+        font-size: 11px;
+    }
+
+    .slr-class-name {
+        display: block;
+        color: #3e5d91;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .slr-course-name {
+        display: block;
+        margin-top: 4px;
+        color: #929aab;
+        font-size: 11px;
+    }
+
+    .slr-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 9px;
+        border-radius: 7px;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .slr-badge-red {
+        background: #fff0f0;
+        color: #bd2929;
+    }
+
+    .slr-badge-green {
+        background: #eaf8f0;
+        color: #188751;
+    }
+
+    .slr-badge-blue {
+        background: #edf4ff;
+        color: #3478d4;
+    }
+
+    .slr-badge-orange {
+        background: #fff4e5;
+        color: #c77712;
+    }
+
+    .slr-badge-gray {
+        background: #f0f2f6;
+        color: #737e90;
+    }
+
+    .slr-download-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 9px 12px;
+        border: 1px solid #f3d0d0;
+        border-radius: 9px;
+        background: #fff8f8;
+        color: #c62828 !important;
+        font-size: 11px;
+        font-weight: 700;
+        text-decoration: none !important;
+        white-space: nowrap;
+        transition: background .2s ease;
+    }
+
+        .slr-download-link:hover {
+            background: #fff0f0;
+        }
+
+    /* ASSIGNMENTS */
+    .slr-assignment-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: 20px;
+    }
+
+    .slr-assignment-card {
+        padding: 20px;
+        border: 1px solid #e9edf4;
+        border-radius: 14px;
+        background: #ffffff;
+        transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+        .slr-assignment-card:hover {
+            border-color: #e3caca;
+            box-shadow: 0 5px 16px rgba(32, 41, 56, .035);
+        }
+
+    .slr-assignment-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+    }
+
+    .slr-assignment-main {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .slr-assignment-icon {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-radius: 13px;
+        background: #eef4ff;
+        color: #3d73c7;
+        font-size: 20px;
+    }
+
+    .slr-assignment-title {
+        margin: 1px 0 8px;
+        color: #263247;
+        font-size: 14px;
+        line-height: 1.6;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+
+    .slr-assignment-meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px 15px;
+        color: #8992a2;
+        font-size: 11px;
+        line-height: 1.6;
+    }
+
+        .slr-assignment-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+    .slr-assignment-status {
+        display: flex;
+        align-items: flex-end;
+        flex-direction: column;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .slr-due-label {
+        color: #9199a9;
+        font-size: 10px;
+    }
+
+    .slr-due-date {
+        color: #354056;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .slr-assignment-divider {
+        height: 1px;
+        margin: 18px 0 15px;
+        background: #eff1f6;
+    }
+
+    .slr-submission-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 13px;
+    }
+
+    .slr-submission-info {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        min-width: 0;
+        color: #7b8496;
+        font-size: 11px;
+    }
+
+        .slr-submission-info a {
+            color: #416eb3;
+            font-weight: 700;
+            text-decoration: none;
+            overflow-wrap: anywhere;
+        }
+
+            .slr-submission-info a:hover {
+                text-decoration: underline;
+            }
+
+    .slr-grade {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border-radius: 8px;
+        background: #eaf8f0;
+        color: #188751;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .slr-no-grade {
+        color: #8b94a4;
+        font-size: 11px;
+        font-style: italic;
+    }
+
+    .slr-submit-details {
+        width: 100%;
+        margin-top: 17px;
+        padding-top: 14px;
+        border-top: 1px dashed #e5e8ef;
+    }
+
+        .slr-submit-details summary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 9px;
+            background: #c62828;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            list-style: none;
+            transition: background .2s ease;
+        }
+
+            .slr-submit-details summary::-webkit-details-marker {
+                display: none;
+            }
+
+            .slr-submit-details summary:hover {
+                background: #a61f24;
+            }
+
+        .slr-submit-details[open] summary {
+            margin-bottom: 15px;
+        }
+
+    .slr-submit-panel {
+        padding: 18px;
+        border: 1px solid #edf0f5;
+        border-radius: 12px;
+        background: #fafbfe;
+    }
+
+    .slr-overwrite-note {
+        padding: 11px 13px;
+        margin-bottom: 15px;
+        border: 1px solid #d8e8fa;
+        border-radius: 9px;
+        background: #f0f7ff;
+        color: #42658f;
+        font-size: 11px;
+        line-height: 1.7;
+    }
+
+    .slr-form-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .slr-form-group {
+        min-width: 0;
+        margin-bottom: 14px;
+    }
+
+    .slr-form-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #475267;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+        .slr-form-label .optional {
+            color: #98a0af;
+            font-weight: 500;
+        }
+
+    .slr-form-control {
+        display: block;
+        width: 100%;
+        min-height: 43px;
+        padding: 10px 12px;
+        border: 1px solid #dfe4ed;
+        border-radius: 9px;
+        outline: none;
+        background: #ffffff;
+        color: #263247;
+        font-family: inherit;
+        font-size: 12px;
+        transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+        .slr-form-control:focus {
+            border-color: #d96e6e;
+            box-shadow: 0 0 0 3px rgba(198, 40, 40, .07);
+        }
+
+        .slr-form-control[type="file"] {
+            padding: 9px;
+        }
+
+    .slr-form-hint {
+        margin-top: 6px;
+        color: #9199a9;
+        font-size: 10px;
+        line-height: 1.6;
+    }
+
+    .slr-form-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 4px;
+    }
+
+    .slr-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 40px;
+        padding: 10px 15px;
+        border: 1px solid transparent;
+        border-radius: 9px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none !important;
+        transition: background .2s ease, border-color .2s ease;
+    }
+
+    .slr-btn-primary {
+        background: #c62828;
+        color: #ffffff !important;
+    }
+
+        .slr-btn-primary:hover {
+            background: #a61f24;
+        }
+
+    .slr-btn-secondary {
+        border-color: #e0e5ed;
+        background: #ffffff;
+        color: #687386 !important;
+    }
+
+        .slr-btn-secondary:hover {
+            background: #f4f6fa;
+        }
+
+    .slr-locked-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 12px;
+        border: 1px solid #e4e7ed;
+        border-radius: 9px;
+        background: #f7f8fa;
+        color: #747e90;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    /* EMPTY STATE */
+    .slr-empty-state {
+        padding: 42px 20px;
+        text-align: center;
+    }
+
+    .slr-empty-icon {
+        width: 55px;
+        height: 55px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 14px;
+        border-radius: 16px;
+        background: #f1f3f8;
+        color: #9aa3b2;
+        font-size: 24px;
+    }
+
+    .slr-empty-title {
+        margin-bottom: 7px;
+        color: #455066;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .slr-empty-text {
+        color: #9098a8;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .slr-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 18px 34px;
+        border-top: 1px solid #e8ebf2;
+        background: #ffffff;
+        color: #939bab;
+        font-size: 11px;
+    }
+
+        .slr-footer strong {
+            color: #697386;
+        }
+
+    @@media (max-width: 1200px) {
+        .slr-content {
+            padding-right: 24px;
+            padding-left: 24px;
+        }
+
+        .slr-topbar {
+            padding-right: 24px;
+            padding-left: 24px;
+        }
+
+        .slr-stat-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .slr-table thead th,
+        .slr-table tbody td {
+            padding-right: 14px;
+            padding-left: 14px;
+        }
+    }
+
+    @@media (max-width: 900px) {
+        .slr-shell {
+            display: block;
+        }
+
+        .slr-sidebar {
+            width: 100%;
+            min-width: 0;
+            min-height: auto;
+            padding: 15px;
+            border-right: none;
+            border-bottom: 1px solid #e8ebf2;
+        }
+
+        .slr-brand {
+            margin-bottom: 14px;
+        }
+
+        .slr-user-card {
+            margin-bottom: 14px;
+        }
+
+        .slr-nav {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .slr-menu-label {
+            margin-top: 6px;
+        }
+
+        .slr-sidebar-bottom {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #eef1f6;
+        }
+
+        .slr-topbar {
+            min-height: 65px;
+        }
+    }
+
+    @@media (max-width: 600px) {
+        .slr-content {
+            padding: 22px 14px;
+        }
+
+        .slr-topbar {
+            padding: 13px 15px;
+        }
+
+        .slr-topbar-user > span {
+            display: none;
+        }
+
+        .slr-page-title {
+            font-size: 22px;
+        }
+
+        .slr-page-heading {
+            gap: 10px;
+        }
+
+        .slr-heading-icon {
+            width: 43px;
+            height: 43px;
+            font-size: 20px;
+        }
+
+        .slr-stat-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .slr-stat-card {
+            min-height: 120px;
+            padding: 14px;
+        }
+
+        .slr-stat-label {
+            font-size: 11px;
+        }
+
+        .slr-stat-value {
+            font-size: 24px;
+        }
+
+        .slr-stat-icon {
+            width: 33px;
+            height: 33px;
+            font-size: 16px;
+        }
+
+        .slr-section-header {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 17px;
+        }
+
+        .slr-search {
+            width: 100%;
+        }
+
+        .slr-assignment-list {
+            padding: 12px;
+        }
+
+        .slr-assignment-card {
+            padding: 15px;
+        }
+
+        .slr-assignment-top {
+            flex-direction: column;
+        }
+
+        .slr-assignment-status {
+            align-items: flex-start;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        .slr-form-grid {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 0;
+        }
+
+        .slr-submit-panel {
+            padding: 13px;
+        }
+
+        .slr-form-actions {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+            .slr-form-actions .slr-btn {
+                width: 100%;
+            }
+
+        .slr-footer {
+            padding: 16px;
+        }
+    }
+</style>
+
+<div class="slr-page">
+    <div class="slr-shell">
+
+        <!-- SIDEBAR -->
+        <aside class="slr-sidebar">
+
+            <a class="slr-brand" href="@Url.Action("StudentDashboard", "Home")">
+                <span class="slr-brand-mark">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </span>
+                <span>
+                    <span class="slr-brand-title">ENGLISH CENTER</span>
+                    <span class="slr-brand-caption">STUDENT PORTAL</span>
+                </span>
+            </a>
+
+            <div class="slr-user-card">
+                <div class="slr-avatar">@studentInitial</div>
+                <div class="slr-user-info">
+                    <div class="slr-user-name">@studentName</div>
+                    <div class="slr-user-role">Tài khoản học viên</div>
+                </div>
+            </div>
+
+            <div class="slr-menu-label">Tổng quan</div>
+
+            <nav class="slr-nav">
+                <a class="slr-nav-link"
+                   href="@Url.Action("StudentDashboard", "Home")">
+                    <i class="bi bi-grid-1x2"></i>
+                    <span>Tổng quan</span>
+                </a>
+
+                <a class="slr-nav-link"
+                   href="@Url.Action("StudentTimetable", "ClassSessions")">
+                    <i class="bi bi-calendar-week"></i>
+                    <span>Thời khóa biểu</span>
+                </a>
+
+                <a class="slr-nav-link"
+                   href="@Url.Action("StudentEnroll", "Enrollments")">
+                    <i class="bi bi-journal-plus"></i>
+                    <span>Đăng ký lớp học</span>
+                </a>
+
+                <a class="slr-nav-link"
+                   href="@Url.Action("StudentProgress", "Attendances")">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>Tiến độ học tập</span>
+                </a>
+
+                <a class="slr-nav-link active"
+                   href="@Url.Action("StudentLearningResources", "Assignments")">
+                    <i class="bi bi-journal-bookmark-fill"></i>
+                    <span>Bài tập & Tài liệu</span>
+                </a>
+
+                <a class="slr-nav-link"
+                   href="@Url.Action("StudentPayments", "Payments")">
+                    <i class="bi bi-wallet2"></i>
+                    <span>Học phí</span>
+                </a>
+
+                <a class="slr-nav-link"
+                   href="@Url.Action("StudentProfile", "Profiles")">
+                    <i class="bi bi-person-circle"></i>
+                    <span>Hồ sơ cá nhân</span>
+                </a>
+            </nav>
+
+            <div class="slr-sidebar-bottom">
+                <a class="slr-nav-link"
+                   href="@Url.Action("Contact", "Home")">
+                    <i class="bi bi-headset"></i>
+                    <span>Liên hệ hỗ trợ</span>
+                </a>
+
+                <a class="slr-nav-link"
+                   href="@Url.Action("Logout", "Auth")">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Đăng xuất</span>
+                </a>
+            </div>
+
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="slr-main">
+
+            <header class="slr-topbar">
+                <div>
+                    <div class="slr-topbar-heading">Không gian học tập</div>
+                    <div class="slr-topbar-subtitle">
+                        Quản lý tài liệu và bài tập của bạn
+                    </div>
+                </div>
+
+                <div class="slr-topbar-user">
+                    <div class="slr-avatar">@studentInitial</div>
+                    <span>@studentName</span>
+                </div>
+            </header>
+
+            <div class="slr-content">
+
+                <!-- BREADCRUMB -->
+                <div class="slr-breadcrumb">
+                    <a href="@Url.Action("StudentDashboard", "Home")">
+                        <i class="bi bi-house-door"></i> Trang chủ
+                    </a>
+                    <i class="bi bi-chevron-right"></i>
+                    <span class="active">Bài tập & Tài liệu</span>
+                </div>
+
+                <!-- PAGE HEADING -->
+                <div class="slr-page-heading">
+                    <div>
+                        <div class="slr-eyebrow">Learning resources</div>
+
+                        <h1 class="slr-page-title">
+                            Bài tập & Tài liệu học tập
+                        </h1>
+
+                        <p class="slr-page-description">
+                            Xem giáo trình, tải tài liệu do giảng viên cung cấp,
+                            theo dõi hạn nộp và gửi bài tập trực tiếp tại đây.
+                        </p>
+                    </div>
+
+                    <div class="slr-heading-icon">
+                        <i class="bi bi-journal-bookmark-fill"></i>
+                    </div>
+                </div>
+
+                <!-- SUCCESS MESSAGE -->
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="slr-alert slr-alert-success">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <div>@TempData["SuccessMessage"]</div>
+                    </div>
+                }
+
+                <!-- ERROR MESSAGE -->
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="slr-alert slr-alert-danger">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                        <div>@TempData["ErrorMessage"]</div>
+                    </div>
+                }
+
+                <!-- STATISTICS -->
+                <div class="slr-stat-grid">
+
+                    <div class="slr-stat-card">
+                        <div class="slr-stat-top">
+                            <div class="slr-stat-label">Tài liệu học tập</div>
+                            <div class="slr-stat-icon red">
+                                <i class="bi bi-folder2-open"></i>
+                            </div>
+                        </div>
+                        <div class="slr-stat-value">@totalMaterials</div>
+                        <div class="slr-stat-foot">Tài liệu trong các lớp của bạn</div>
+                    </div>
+
+                    <div class="slr-stat-card">
+                        <div class="slr-stat-top">
+                            <div class="slr-stat-label">Tổng bài tập</div>
+                            <div class="slr-stat-icon blue">
+                                <i class="bi bi-journal-text"></i>
+                            </div>
+                        </div>
+                        <div class="slr-stat-value">@totalAssignments</div>
+                        <div class="slr-stat-foot">Bài tập được giao</div>
+                    </div>
+
+                    <div class="slr-stat-card">
+                        <div class="slr-stat-top">
+                            <div class="slr-stat-label">Đã nộp bài</div>
+                            <div class="slr-stat-icon green">
+                                <i class="bi bi-check2-circle"></i>
+                            </div>
+                        </div>
+                        <div class="slr-stat-value">@submittedAssignments</div>
+                        <div class="slr-stat-foot">
+                            @gradedAssignments bài đã được chấm điểm
+                        </div>
+                    </div>
+
+                    <div class="slr-stat-card">
+                        <div class="slr-stat-top">
+                            <div class="slr-stat-label">Chưa nộp bài</div>
+                            <div class="slr-stat-icon orange">
+                                <i class="bi bi-clock-history"></i>
+                            </div>
+                        </div>
+                        <div class="slr-stat-value">@pendingAssignments</div>
+                        <div class="slr-stat-foot">
+                            @overdueAssignments bài đã quá hạn nhưng chưa nộp
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SECTION 1: MATERIALS -->
+                <section class="slr-section">
+
+                    <div class="slr-section-header">
+
+                        <div class="slr-section-heading">
+                            <div class="slr-section-icon">
+                                <i class="bi bi-folder2-open"></i>
+                            </div>
+
+                            <div>
+                                <h2 class="slr-section-title">
+                                    Giáo trình & Tài liệu
+                                    <span class="slr-count">@totalMaterials</span>
+                                </h2>
+
+                                <div class="slr-section-subtitle">
+                                    Tài liệu được giảng viên đăng tải cho lớp học
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="slr-search">
+                            <i class="bi bi-search"></i>
+                            <input type="text"
+                                   id="slr-material-search"
+                                   placeholder="Tìm tên tài liệu, lớp học..." />
+                        </div>
+
+                    </div>
+
+                    @if (materials.Count == 0)
+                    {
+                        <div class="slr-empty-state">
+                            <div class="slr-empty-icon">
+                                <i class="bi bi-inbox"></i>
+                            </div>
+                            <div class="slr-empty-title">
+                                Chưa có tài liệu học tập
+                            </div>
+                            <div class="slr-empty-text">
+                                Hiện chưa có giáo trình hoặc tài liệu nào
+                                được đăng cho các lớp học của bạn.
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="slr-table-wrap">
+                            <table class="slr-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tên tài liệu</th>
+                                        <th>Lớp học</th>
+                                        <th>Ngày đăng</th>
+                                        <th>Loại tài liệu</th>
+                                        <th>Tệp đính kèm</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach (var mat in materials)
+                                    {
+                                        bool isHomework = !string.IsNullOrWhiteSpace(mat.FileUrl)
+                                            && mat.FileUrl.IndexOf(
+                                                "/Uploads/Assignments/",
+                                                StringComparison.OrdinalIgnoreCase) >= 0;
+
+                                        string materialClassName = mat.Class != null
+                                            ? mat.Class.ClassName
+                                            : "Chưa xác định";
+
+                                        string materialCourseName = mat.Class != null
+                                            && mat.Class.Course != null
+                                            ? mat.Class.Course.CourseName
+                                            : "";
+
+                                        string materialSearchText =
+                                            (mat.Title ?? "") + " "
+                                            + materialClassName + " "
+                                            + materialCourseName;
+
+                                        <tr class="slr-material-row"
+                                            data-search="@materialSearchText.ToLowerInvariant()">
+
+                                            <td>
+                                                <span class="slr-material-title">
+                                                    @mat.Title
+                                                </span>
+
+                                                <span class="slr-material-subtitle">
+                                                    Mã tài liệu: #@mat.Id
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span class="slr-class-name">
+                                                    @materialClassName
+                                                </span>
+
+                                                @if (!string.IsNullOrWhiteSpace(materialCourseName))
+                                                {
+                                                    <span class="slr-course-name">
+                                                        @materialCourseName
+                                                    </span>
+                                                }
+                                            </td>
+
+                                            <td>
+                                                @mat.UploadedAt.ToString("dd/MM/yyyy")
+                                                <div class="slr-course-name">
+                                                    @mat.UploadedAt.ToString("HH:mm")
+                                                </div>
+                                            </td>
+
+                                            <td>
+                                                @if (isHomework)
+                                                {
+                                                    <span class="slr-badge slr-badge-orange">
+                                                        <i class="bi bi-pencil-square"></i>
+                                                        Bài tập
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="slr-badge slr-badge-green">
+                                                        <i class="bi bi-book"></i>
+                                                        Giáo trình
+                                                    </span>
+                                                }
+                                            </td>
+
+                                            <td>
+                                                @if (!string.IsNullOrWhiteSpace(mat.FileUrl))
+                                                {
+                                                    <a class="slr-download-link"
+                                                       href="@mat.FileUrl"
+                                                       target="_blank"
+                                                       rel="noopener noreferrer">
+                                                        <i class="bi bi-cloud-download"></i>
+                                                        Mở tài liệu
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="slr-badge slr-badge-gray">
+                                                        <i class="bi bi-file-earmark"></i>
+                                                        Chưa có tệp
+                                                    </span>
+                                                }
+                                            </td>
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="slr-material-no-results"
+                             class="slr-empty-state"
+                             style="display:none;">
+                            <div class="slr-empty-icon">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <div class="slr-empty-title">
+                                Không tìm thấy tài liệu phù hợp
+                            </div>
+                            <div class="slr-empty-text">
+                                Hãy thử từ khóa khác.
+                            </div>
+                        </div>
+                    }
+
+                </section>
+
+                <!-- SECTION 2: ASSIGNMENTS -->
+                <section class="slr-section">
+
+                    <div class="slr-section-header">
+
+                        <div class="slr-section-heading">
+                            <div class="slr-section-icon">
+                                <i class="bi bi-journal-check"></i>
+                            </div>
+
+                            <div>
+                                <h2 class="slr-section-title">
+                                    Bài tập & Nộp bài
+                                    <span class="slr-count">@totalAssignments</span>
+                                </h2>
+
+                                <div class="slr-section-subtitle">
+                                    Theo dõi hạn nộp, trạng thái và kết quả bài làm
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="slr-search">
+                            <i class="bi bi-search"></i>
+                            <input type="text"
+                                   id="slr-assignment-search"
+                                   placeholder="Tìm bài tập, lớp học..." />
+                        </div>
+
+                    </div>
+
+                    @if (assignments.Count == 0)
+                    {
+                        <div class="slr-empty-state">
+                            <div class="slr-empty-icon">
+                                <i class="bi bi-journal-x"></i>
+                            </div>
+                            <div class="slr-empty-title">
+                                Chưa có bài tập được giao
+                            </div>
+                            <div class="slr-empty-text">
+                                Khi giảng viên giao bài tập cho lớp của bạn,
+                                bài tập sẽ xuất hiện tại đây.
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="slr-assignment-list">
+
+                            @foreach (var assign in assignments)
+                            {
+                                var studentSubmission = submissions
+                                    .Where(s => s.AssignmentId == assign.Id)
+                                    .OrderByDescending(s => s.SubmittedAt)
+                                    .FirstOrDefault();
+
+                                bool isSubmitted = studentSubmission != null;
+
+                                bool isOverdue = assign.DueDate < currentTime;
+
+                                bool isGraded = studentSubmission != null
+                                    && studentSubmission.Grade.HasValue;
+
+                                string assignmentClassName = assign.Class != null
+                                    ? assign.Class.ClassName
+                                    : "Chưa xác định";
+
+                                string assignmentCourseName = assign.Class != null
+                                    && assign.Class.Course != null
+                                    ? assign.Class.Course.CourseName
+                                    : "";
+
+                                string assignmentSearchText =
+                                    (assign.Title ?? "") + " "
+                                    + assignmentClassName + " "
+                                    + assignmentCourseName;
+
+                                <article class="slr-assignment-card slr-assignment-row"
+                                         data-search="@assignmentSearchText.ToLowerInvariant()">
+
+                                    <div class="slr-assignment-top">
+
+                                        <div class="slr-assignment-main">
+
+                                            <div class="slr-assignment-icon">
+                                                <i class="bi bi-file-earmark-text"></i>
+                                            </div>
+
+                                            <div style="min-width:0; flex:1;">
+
+                                                <h3 class="slr-assignment-title">
+                                                    @assign.Title
+                                                </h3>
+
+                                                <div class="slr-assignment-meta">
+
+                                                    <span>
+                                                        <i class="bi bi-people"></i>
+                                                        @assignmentClassName
+                                                    </span>
+
+                                                    @if (!string.IsNullOrWhiteSpace(assignmentCourseName))
+                                                    {
+                                                        <span>
+                                                            <i class="bi bi-book"></i>
+                                                            @assignmentCourseName
+                                                        </span>
+                                                    }
+
+                                                    <span>
+                                                        <i class="bi bi-hash"></i>
+                                                        Bài tập #@assign.Id
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                        <div class="slr-assignment-status">
+
+                                            <span class="slr-due-label">
+                                                Hạn nộp
+                                            </span>
+
+                                            <span class="slr-due-date">
+                                                @assign.DueDate.ToString("dd/MM/yyyy HH:mm")
+                                            </span>
+
+                                            @if (isOverdue && !isSubmitted)
+                                            {
+                                                <span class="slr-badge slr-badge-red">
+                                                    <i class="bi bi-exclamation-circle"></i>
+                                                    Đã quá hạn
+                                                </span>
+                                            }
+                                            else if (isOverdue && isSubmitted)
+                                            {
+                                                <span class="slr-badge slr-badge-gray">
+                                                    <i class="bi bi-clock-history"></i>
+                                                    Đã qua hạn nộp
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="slr-badge slr-badge-blue">
+                                                    <i class="bi bi-clock"></i>
+                                                    Đang mở nộp
+                                                </span>
+                                            }
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="slr-assignment-divider"></div>
+
+                                    <div class="slr-submission-row">
+
+                                        <div class="slr-submission-info">
+
+                                            @if (isSubmitted)
+                                            {
+                                                <span class="slr-badge slr-badge-green">
+                                                    <i class="bi bi-check-circle-fill"></i>
+                                                    Đã nộp bài
+                                                </span>
+
+                                                <span>
+                                                    Nộp lúc:
+                                                    @studentSubmission.SubmittedAt.ToString("dd/MM/yyyy HH:mm")
+                                                </span>
+
+                                                if (!string.IsNullOrWhiteSpace(studentSubmission.FileUrl))
+                                                {
+                                                    <a href="@studentSubmission.FileUrl"
+                                                       target="_blank"
+                                                       rel="noopener noreferrer">
+                                                        <i class="bi bi-paperclip"></i>
+                                                        Xem bài đã nộp
+                                                    </a>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="slr-badge slr-badge-orange">
+                                                    <i class="bi bi-hourglass-split"></i>
+                                                    Chưa nộp bài
+                                                </span>
+
+                                                <span>
+                                                    Hãy hoàn thành và nộp bài trước hạn.
+                                                </span>
+                                            }
+
+                                        </div>
+
+                                        @if (isGraded)
+                                        {
+                                            <div class="slr-grade">
+                                                <i class="bi bi-award-fill"></i>
+                                                Điểm: @studentSubmission.Grade.Value.ToString("0.##") / 10
+                                            </div>
+                                        }
+                                        else if (isSubmitted)
+                                        {
+                                            <span class="slr-no-grade">
+                                                <i class="bi bi-hourglass-split"></i>
+                                                Đang chờ giáo viên chấm điểm
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                    @if (isGraded)
+                                    {
+                                        <div class="slr-submit-details">
+                                            <div class="slr-locked-note">
+                                                <i class="bi bi-lock-fill"></i>
+                                                Bài đã được chấm điểm, không thể thay đổi bài nộp.
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <details class="slr-submit-details">
+
+                                            <summary>
+                                                @if (isSubmitted)
+                                                {
+                                                    <i class="bi bi-arrow-repeat"></i>
+                                                    <span>Cập nhật bài nộp</span>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-cloud-upload"></i>
+                                                    <span>Nộp bài làm</span>
+                                                }
+                                            </summary>
+
+                                            <div class="slr-submit-panel">
+
+                                                @if (isSubmitted)
+                                                {
+                                                    <div class="slr-overwrite-note">
+                                                        <i class="bi bi-info-circle"></i>
+                                                        Bạn đã nộp bài này. Khi gửi bài mới,
+                                                        hệ thống sẽ thay thế bài nộp trước đó.
+                                                        Hãy kiểm tra tệp hoặc đường dẫn trước khi gửi.
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="slr-overwrite-note">
+                                                        <i class="bi bi-lightbulb"></i>
+                                                        Bạn có thể dán liên kết bài làm hoặc tải
+                                                        tệp trực tiếp từ máy tính. Chỉ cần sử dụng
+                                                        một trong hai cách.
+                                                    </div>
+                                                }
+
+                                                @using (Html.BeginForm(
+                                                    "SubmitLearningAssignment",
+                                                    "Assignments",
+                                                    FormMethod.Post,
+                                                    new
+                                                    {
+                                                        enctype = "multipart/form-data",
+                                                        @class = "slr-submission-form"
+                                                    }))
+                                                {
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="assignmentId"
+                                                           value="@assign.Id" />
+
+                                                    <div class="slr-form-grid">
+
+                                                        <div class="slr-form-group">
+                                                            <label class="slr-form-label">
+                                                                <i class="bi bi-link-45deg"></i>
+                                                                Liên kết bài làm
+                                                                <span class="optional">(không bắt buộc)</span>
+                                                            </label>
+
+                                                            <input type="text"
+                                                                   name="fileUrl"
+                                                                   class="slr-form-control slr-file-url"
+                                                                   placeholder="https://drive.google.com/..." />
+
+                                                            <div class="slr-form-hint">
+                                                                Ví dụ: Google Drive hoặc liên kết bài làm trực tuyến.
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="slr-form-group">
+                                                            <label class="slr-form-label">
+                                                                <i class="bi bi-paperclip"></i>
+                                                                Tải tệp từ máy tính
+                                                                <span class="optional">(không bắt buộc)</span>
+                                                            </label>
+
+                                                            <input type="file"
+                                                                   name="submissionFile"
+                                                                   class="slr-form-control slr-submission-file" />
+
+                                                            <div class="slr-form-hint">
+                                                                Chọn tệp bài làm trên thiết bị của bạn.
+                                                                Nếu chọn cả tệp và liên kết, hệ thống ưu tiên tệp.
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <div class="slr-form-actions">
+
+                                                        <button type="button"
+                                                                class="slr-btn slr-btn-secondary slr-cancel-submit">
+                                                            <i class="bi bi-x-circle"></i>
+                                                            Đóng
+                                                        </button>
+
+                                                        <button type="submit"
+                                                                class="slr-btn slr-btn-primary">
+                                                            <i class="bi bi-cloud-arrow-up"></i>
+                                                            @(isSubmitted ? "Cập nhật bài nộp" : "Xác nhận nộp bài")
+                                                        </button>
+
+                                                    </div>
+                                                }
+
+                                            </div>
+
+                                        </details>
+                                    }
+
+                                </article>
+                            }
+
+                        </div>
+
+                        <div id="slr-assignment-no-results"
+                             class="slr-empty-state"
+                             style="display:none;">
+                            <div class="slr-empty-icon">
+                                <i class="bi bi-search"></i>
+                            </div>
+                            <div class="slr-empty-title">
+                                Không tìm thấy bài tập phù hợp
+                            </div>
+                            <div class="slr-empty-text">
+                                Hãy thử tìm bằng tiêu đề bài tập hoặc tên lớp học khác.
+                            </div>
+                        </div>
+                    }
+
+                </section>
+
+            </div>
+
+            <footer class="slr-footer">
+                <span>
+                    <strong>ENGLISH CENTER</strong>
+                    &nbsp;·&nbsp; Cổng thông tin học viên
+                </span>
+
+                <span>
+                    <i class="bi bi-book-half"></i>
+                    Chúc bạn học tập hiệu quả!
+                </span>
+            </footer>
+
+        </main>
+
+    </div>
+</div>
+
+<script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            /* Tìm kiếm tài liệu */
+            var materialSearch = document.getElementById("slr-material-search");
+            var materialRows = document.querySelectorAll(".slr-material-row");
+            var materialNoResults = document.getElementById("slr-material-no-results");
+
+            if (materialSearch) {
+                materialSearch.addEventListener("input", function () {
+                    var keyword = materialSearch.value.trim().toLowerCase();
+                    var visibleCount = 0;
+
+                    materialRows.forEach(function (row) {
+                        var searchText = row.getAttribute("data-search") || "";
+
+                        if (searchText.indexOf(keyword) >= 0) {
+                            row.style.display = "";
+                            visibleCount++;
+                        } else {
+                            row.style.display = "none";
+                        }
+                    });
+
+                    if (materialNoResults) {
+                        materialNoResults.style.display =
+                            materialRows.length > 0 && visibleCount === 0
+                                ? "block"
+                                : "none";
+                    }
+                });
+            }
+
+            /* Tìm kiếm bài tập */
+            var assignmentSearch = document.getElementById("slr-assignment-search");
+            var assignmentRows = document.querySelectorAll(".slr-assignment-row");
+            var assignmentNoResults = document.getElementById("slr-assignment-no-results");
+
+            if (assignmentSearch) {
+                assignmentSearch.addEventListener("input", function () {
+                    var keyword = assignmentSearch.value.trim().toLowerCase();
+                    var visibleCount = 0;
+
+                    assignmentRows.forEach(function (row) {
+                        var searchText = row.getAttribute("data-search") || "";
+
+                        if (searchText.indexOf(keyword) >= 0) {
+                            row.style.display = "";
+                            visibleCount++;
+                        } else {
+                            row.style.display = "none";
+                        }
+                    });
+
+                    if (assignmentNoResults) {
+                        assignmentNoResults.style.display =
+                            assignmentRows.length > 0 && visibleCount === 0
+                                ? "block"
+                                : "none";
+                    }
+                });
+            }
+
+            /* Đóng phần biểu mẫu nộp bài */
+            var cancelButtons = document.querySelectorAll(".slr-cancel-submit");
+
+            cancelButtons.forEach(function (button) {
+                button.addEventListener("click", function () {
+                    var details = button.closest("details");
+
+                    if (details) {
+                        details.open = false;
+                    }
+                });
+            });
+
+            /* Kiểm tra dữ liệu trước khi gửi bài */
+            var submissionForms = document.querySelectorAll(".slr-submission-form");
+
+            submissionForms.forEach(function (form) {
+                form.addEventListener("submit", function (event) {
+                    var urlInput = form.querySelector(".slr-file-url");
+                    var fileInput = form.querySelector(".slr-submission-file");
+
+                    var urlValue = urlInput ? urlInput.value.trim() : "";
+                    var hasFile = fileInput
+                        && fileInput.files
+                        && fileInput.files.length > 0;
+
+                    if (!urlValue && !hasFile) {
+                        event.preventDefault();
+                        alert("Vui lòng nhập liên kết bài làm hoặc chọn tệp cần nộp.");
+                        return;
+                    }
+
+                    if (urlValue && !hasFile) {
+                        if (!/^https?:\/\/\S+$/i.test(urlValue)) {
+                            event.preventDefault();
+                            alert("Liên kết bài làm cần bắt đầu bằng http:// hoặc https://.");
+                            if (urlInput) {
+                                urlInput.focus();
+                            }
+                        }
+                    }
+                });
+            });
+
+        });
+</script>

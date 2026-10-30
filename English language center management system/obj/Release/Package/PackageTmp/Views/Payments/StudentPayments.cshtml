@@ -1,0 +1,1393 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Payments.StudentBillingViewModel
+
+@using System
+@using System.Linq
+@using System.Collections.Generic
+@using English_language_center_management_system.Models
+
+@{
+    ViewBag.Title = "Học phí & hóa đơn";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+
+    var enrollments = Model.Enrollments ?? new List<Enrollment>();
+    var paymentHistory = Model.PaymentHistory ?? new List<Payment>();
+
+    string studentName =
+        Model.StudentInfo != null &&
+        !string.IsNullOrWhiteSpace(Model.StudentInfo.FullName)
+            ? Model.StudentInfo.FullName
+            : Session["FullName"] as string;
+
+    if (string.IsNullOrWhiteSpace(studentName))
+    {
+        studentName = Session["Username"] as string;
+    }
+
+    if (string.IsNullOrWhiteSpace(studentName))
+    {
+        studentName = "Học viên";
+    }
+
+    string studentInitial = studentName.Substring(0, 1).ToUpperInvariant();
+
+    int totalEnrollments = enrollments.Count;
+
+    int pendingEnrollments = enrollments.Count(e => e.Status == "Pending");
+
+    int approvedEnrollments = enrollments.Count(e =>
+        e.Status == "Approved" ||
+        e.Status == "Active" ||
+        e.Status == "Đang học" ||
+        e.Status == "Đã duyệt");
+
+    int completedPayments = paymentHistory.Count(p =>
+        p.PaymentStatus == "Paid" ||
+        p.PaymentStatus == "Completed");
+
+    int partialPayments = paymentHistory.Count(p =>
+        p.PaymentStatus == "Partial");
+}
+
+<style>
+    /* ============================================
+       STUDENT PAYMENTS
+       ============================================ */
+
+    #student-payments-page {
+        --sp-primary: #c62828;
+        --sp-primary-dark: #a61f24;
+        --sp-primary-light: #fff0f0;
+        --sp-text: #202938;
+        --sp-muted: #7b8596;
+        --sp-border: #e6eaf0;
+        --sp-background: #f4f6fa;
+        --sp-white: #ffffff;
+        --sp-green: #16814e;
+        --sp-green-light: #eaf8f0;
+        --sp-blue: #2563a6;
+        --sp-blue-light: #edf5ff;
+        --sp-orange: #b96b0b;
+        --sp-orange-light: #fff6e6;
+        min-width: 0;
+        color: var(--sp-text);
+    }
+
+        #student-payments-page,
+        #student-payments-page * {
+            box-sizing: border-box;
+        }
+
+            #student-payments-page .sp-page {
+                min-width: 0;
+            }
+
+            /* Tiêu đề */
+
+            #student-payments-page .sp-heading {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 15px;
+                margin-bottom: 22px;
+            }
+
+            #student-payments-page .sp-heading-content {
+                min-width: 0;
+            }
+
+            #student-payments-page .sp-eyebrow {
+                display: block;
+                margin-bottom: 8px;
+                color: var(--sp-primary);
+                font-size: 10px;
+                font-weight: 850;
+                letter-spacing: 1.5px;
+            }
+
+            #student-payments-page .sp-title {
+                margin: 0;
+                color: var(--sp-text);
+                font-size: 27px;
+                font-weight: 850;
+                line-height: 1.4;
+            }
+
+            #student-payments-page .sp-description {
+                max-width: 740px;
+                margin: 8px 0 0;
+                color: var(--sp-muted);
+                font-size: 12px;
+                line-height: 1.8;
+            }
+
+            #student-payments-page .sp-account-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 9px 12px;
+                border: 1px solid #d8eee0;
+                border-radius: 8px;
+                background: #f0faf3;
+                color: #18764e;
+                font-size: 11px;
+                font-weight: 800;
+                white-space: nowrap;
+            }
+
+            /* Thông báo */
+
+            #student-payments-page .sp-alert {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                margin-bottom: 18px;
+                padding: 13px 15px;
+                border: 1px solid transparent;
+                border-radius: 10px;
+                font-size: 12px;
+                line-height: 1.8;
+            }
+
+                #student-payments-page .sp-alert .bi {
+                    flex-shrink: 0;
+                    margin-top: 2px;
+                    font-size: 16px;
+                }
+
+            #student-payments-page .sp-alert-success {
+                border-color: #c9ead7;
+                background: #effaf4;
+                color: #176b45;
+            }
+
+            #student-payments-page .sp-alert-warning {
+                border-color: #f1dfb5;
+                background: #fff9eb;
+                color: #83580a;
+            }
+
+            /* Tình trạng công nợ */
+
+            #student-payments-page .sp-balance-banner {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 20px;
+                margin-bottom: 22px;
+                padding: 22px 24px;
+                border: 1px solid #efd4d4;
+                border-radius: 14px;
+                background: radial-gradient(circle at 100% 0, rgba(198,40,40,.08), transparent 38%), #ffffff;
+                box-shadow: 0 4px 16px rgba(28,39,60,.03);
+            }
+
+            #student-payments-page .sp-balance-content {
+                min-width: 0;
+            }
+
+            #student-payments-page .sp-balance-label {
+                display: block;
+                margin-bottom: 8px;
+                color: #7b8596;
+                font-size: 10px;
+                font-weight: 850;
+                letter-spacing: 0.8px;
+            }
+
+            #student-payments-page .sp-balance-amount {
+                display: block;
+                color: var(--sp-primary);
+                font-size: 31px;
+                font-weight: 900;
+                line-height: 1.3;
+                overflow-wrap: anywhere;
+            }
+
+            #student-payments-page .sp-balance-caption {
+                display: block;
+                margin-top: 7px;
+                color: #8993a3;
+                font-size: 11px;
+                line-height: 1.7;
+            }
+
+            #student-payments-page .sp-balance-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 66px;
+                height: 66px;
+                flex-shrink: 0;
+                border: 1px solid #f1d6d6;
+                border-radius: 18px;
+                background: #fff0f0;
+                color: var(--sp-primary);
+                font-size: 28px;
+            }
+
+            /* Thẻ thống kê */
+
+            #student-payments-page .sp-stats {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 15px;
+                margin-bottom: 23px;
+            }
+
+            #student-payments-page .sp-stat-card {
+                min-width: 0;
+                padding: 19px 20px;
+                border: 1px solid var(--sp-border);
+                border-radius: 13px;
+                background: #ffffff;
+                box-shadow: 0 4px 16px rgba(28,39,60,.03);
+                transition: transform 0.18s ease, box-shadow 0.18s ease;
+            }
+
+                #student-payments-page .sp-stat-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 7px 20px rgba(28,39,60,.065);
+                }
+
+            #student-payments-page .sp-stat-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+
+            #student-payments-page .sp-stat-label {
+                color: var(--sp-muted);
+                font-size: 10px;
+                font-weight: 850;
+                letter-spacing: .3px;
+                line-height: 1.7;
+            }
+
+            #student-payments-page .sp-stat-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                flex-shrink: 0;
+                border-radius: 11px;
+                background: #fff0f0;
+                color: var(--sp-primary);
+                font-size: 19px;
+            }
+
+                #student-payments-page .sp-stat-icon.green {
+                    background: var(--sp-green-light);
+                    color: var(--sp-green);
+                }
+
+                #student-payments-page .sp-stat-icon.blue {
+                    background: var(--sp-blue-light);
+                    color: var(--sp-blue);
+                }
+
+            #student-payments-page .sp-stat-number {
+                display: block;
+                margin-bottom: 7px;
+                color: var(--sp-text);
+                font-size: 24px;
+                font-weight: 850;
+                line-height: 1.35;
+                overflow-wrap: anywhere;
+            }
+
+            #student-payments-page .sp-stat-description {
+                display: block;
+                color: #8993a3;
+                font-size: 10px;
+                line-height: 1.7;
+            }
+
+            /* Panel */
+
+            #student-payments-page .sp-panel {
+                margin-bottom: 23px;
+                overflow: hidden;
+                border: 1px solid var(--sp-border);
+                border-radius: 14px;
+                background: #ffffff;
+                box-shadow: 0 4px 16px rgba(28,39,60,.03);
+            }
+
+            #student-payments-page .sp-panel-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 15px;
+                padding: 19px 22px;
+                border-bottom: 1px solid #edf0f5;
+            }
+
+            #student-payments-page .sp-panel-heading-main {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-width: 0;
+            }
+
+            #student-payments-page .sp-panel-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                flex-shrink: 0;
+                border-radius: 11px;
+                background: var(--sp-primary-light);
+                color: var(--sp-primary);
+                font-size: 18px;
+            }
+
+                #student-payments-page .sp-panel-icon.green {
+                    background: var(--sp-green-light);
+                    color: var(--sp-green);
+                }
+
+            #student-payments-page .sp-panel-title {
+                margin: 0;
+                color: var(--sp-text);
+                font-size: 15px;
+                font-weight: 850;
+                line-height: 1.5;
+            }
+
+            #student-payments-page .sp-panel-subtitle {
+                margin: 4px 0 0;
+                color: #8993a3;
+                font-size: 11px;
+                line-height: 1.7;
+            }
+
+            #student-payments-page .sp-count-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 36px;
+                padding: 7px 10px;
+                border: 1px solid #e8ebf1;
+                border-radius: 8px;
+                background: #f7f8fb;
+                color: #596579;
+                font-size: 10px;
+                font-weight: 850;
+                white-space: nowrap;
+            }
+
+            /* Bảng */
+
+            #student-payments-page .sp-table-wrap {
+                width: 100%;
+                overflow-x: auto;
+            }
+
+            #student-payments-page .sp-table {
+                width: 100%;
+                min-width: 760px;
+                margin: 0;
+                border-collapse: separate;
+                border-spacing: 0;
+                background: #ffffff;
+            }
+
+                #student-payments-page .sp-table thead th {
+                    padding: 13px 15px;
+                    border-bottom: 1px solid #e9edf3;
+                    background: #f7f8fb;
+                    color: #7b8596;
+                    font-size: 10px;
+                    font-weight: 850;
+                    letter-spacing: .3px;
+                    line-height: 1.5;
+                    text-align: left;
+                    white-space: nowrap;
+                }
+
+                #student-payments-page .sp-table tbody td {
+                    padding: 14px 15px;
+                    border-bottom: 1px solid #edf0f5;
+                    color: #566176;
+                    font-size: 11px;
+                    line-height: 1.7;
+                    vertical-align: middle;
+                }
+
+                #student-payments-page .sp-table tbody tr:last-child td {
+                    border-bottom: 0;
+                }
+
+                #student-payments-page .sp-table tbody tr:hover td {
+                    background: #fffafa;
+                }
+
+            #student-payments-page .sp-primary-text {
+                display: block;
+                color: #344054;
+                font-size: 12px;
+                font-weight: 800;
+                overflow-wrap: anywhere;
+            }
+
+            #student-payments-page .sp-secondary-text {
+                display: block;
+                margin-top: 4px;
+                color: #929aaa;
+                font-size: 10px;
+                overflow-wrap: anywhere;
+            }
+
+            #student-payments-page .sp-receipt {
+                color: #2563a6;
+                font-weight: 850;
+                overflow-wrap: anywhere;
+            }
+
+            #student-payments-page .sp-amount {
+                color: #16814e;
+                font-size: 11px;
+                font-weight: 850;
+                white-space: nowrap;
+            }
+
+            #student-payments-page .sp-tuition {
+                color: #b96b0b;
+                font-size: 11px;
+                font-weight: 850;
+                white-space: nowrap;
+            }
+
+            #student-payments-page .sp-status {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                padding: 6px 8px;
+                border-radius: 6px;
+                font-size: 10px;
+                font-weight: 800;
+                line-height: 1.45;
+                white-space: nowrap;
+            }
+
+            #student-payments-page .sp-status-pending {
+                background: var(--sp-orange-light);
+                color: #9a650d;
+            }
+
+            #student-payments-page .sp-status-approved,
+            #student-payments-page .sp-status-paid {
+                background: var(--sp-green-light);
+                color: var(--sp-green);
+            }
+
+            #student-payments-page .sp-status-partial {
+                background: var(--sp-blue-light);
+                color: var(--sp-blue);
+            }
+
+            #student-payments-page .sp-status-default {
+                background: #f1f3f7;
+                color: #677286;
+            }
+
+            #student-payments-page .sp-empty-state {
+                padding: 36px 20px;
+                text-align: center;
+            }
+
+            #student-payments-page .sp-empty-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 54px;
+                height: 54px;
+                margin: 0 auto 13px;
+                border-radius: 15px;
+                background: #f4f6fa;
+                color: #8993a3;
+                font-size: 23px;
+            }
+
+            #student-payments-page .sp-empty-state strong {
+                display: block;
+                color: #344054;
+                font-size: 13px;
+                font-weight: 850;
+            }
+
+            #student-payments-page .sp-empty-state p {
+                max-width: 470px;
+                margin: 7px auto 0;
+                color: #8993a3;
+                font-size: 11px;
+                line-height: 1.8;
+            }
+
+            #student-payments-page .sp-panel-footer {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 8px;
+                padding: 12px 22px;
+                border-top: 1px solid #edf0f5;
+                background: #fafbfc;
+                color: #8993a3;
+                font-size: 10px;
+                line-height: 1.7;
+            }
+
+                #student-payments-page .sp-panel-footer strong {
+                    color: #596579;
+                }
+
+            /* Liên kết */
+
+            #student-payments-page .sp-action-row {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin: 0 0 20px;
+            }
+
+            #student-payments-page .sp-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                min-height: 39px;
+                padding: 9px 13px;
+                border: 1px solid transparent;
+                border-radius: 8px;
+                font-size: 11px;
+                font-weight: 850;
+                text-decoration: none;
+                transition: all 0.18s ease;
+            }
+
+            #student-payments-page .sp-btn-primary {
+                border-color: var(--sp-primary);
+                background: var(--sp-primary);
+                color: #ffffff;
+            }
+
+                #student-payments-page .sp-btn-primary:hover {
+                    border-color: var(--sp-primary-dark);
+                    background: var(--sp-primary-dark);
+                    color: #ffffff;
+                }
+
+    /* Responsive */
+
+    @@media (max-width: 1000px) {
+        #student-payments-page .sp-stats {
+            gap: 11px;
+        }
+
+        #student-payments-page .sp-stat-card {
+            padding: 16px;
+        }
+
+        #student-payments-page .sp-stat-number {
+            font-size: 21px;
+        }
+    }
+
+    @@media (max-width: 760px) {
+        #student-payments-page .sp-title {
+            font-size: 23px;
+        }
+
+        #student-payments-page .sp-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        #student-payments-page .sp-balance-banner {
+            padding: 18px;
+        }
+
+        #student-payments-page .sp-balance-icon {
+            width: 51px;
+            height: 51px;
+            font-size: 22px;
+        }
+
+        #student-payments-page .sp-panel-header {
+            padding: 16px;
+        }
+
+        #student-payments-page .sp-panel-footer {
+            padding: 12px 16px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        #student-payments-page .sp-stats {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        #student-payments-page .sp-balance-amount {
+            font-size: 25px;
+        }
+
+        #student-payments-page .sp-balance-banner {
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        #student-payments-page .sp-panel-heading-main {
+            gap: 9px;
+        }
+
+        #student-payments-page .sp-panel-icon {
+            width: 37px;
+            height: 37px;
+        }
+    }
+</style>
+
+<div class="student-portal" id="student-payments-page">
+
+    @* SIDEBAR *@
+
+    <aside class="student-sidebar">
+
+        <a class="student-brand"
+           href="@Url.Action("StudentDashboard", "Home")">
+
+            <span class="student-brand-mark">
+                <i class="bi bi-book-half" aria-hidden="true"></i>
+            </span>
+
+            <span class="student-brand-text">
+                ELC PORTAL
+                <small>STUDENT SPACE</small>
+            </span>
+
+        </a>
+
+        <div class="student-sidebar-caption">
+            KHÔNG GIAN HỌC TẬP
+        </div>
+
+        <nav class="student-side-nav">
+
+            <a href="@Url.Action("StudentDashboard", "Home")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-grid-1x2-fill" aria-hidden="true"></i>
+                </span>
+
+                Dashboard
+            </a>
+
+            <a href="@Url.Action("StudentTimetable", "ClassSessions")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-calendar3-week-fill" aria-hidden="true"></i>
+                </span>
+
+                Thời khóa biểu
+            </a>
+
+            <a href="@Url.Action("StudentEnroll", "Enrollments")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-journal-plus" aria-hidden="true"></i>
+                </span>
+
+                Đăng ký lớp học
+            </a>
+
+            <a href="@Url.Action("StudentProgress", "Attendances")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
+                </span>
+
+                Kết quả học tập
+            </a>
+
+            <a href="@Url.Action("StudentLearningResources", "Assignments")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i>
+                </span>
+
+                Bài tập &amp; Tài liệu
+            </a>
+
+            <a href="@Url.Action("StudentPayments", "Payments")"
+               class="student-nav-link is-active"
+               aria-current="page">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-wallet2" aria-hidden="true"></i>
+                </span>
+
+                Học phí &amp; hóa đơn
+            </a>
+
+            <a href="@Url.Action("StudentProfile", "Profiles")"
+               class="student-nav-link">
+
+                <span class="student-nav-icon">
+                    <i class="bi bi-person-vcard-fill" aria-hidden="true"></i>
+                </span>
+
+                Hồ sơ cá nhân
+            </a>
+
+        </nav>
+
+        <div class="student-sidebar-bottom">
+
+            <div class="student-support-card">
+
+                <span class="student-support-icon">
+                    <i class="bi bi-headset" aria-hidden="true"></i>
+                </span>
+
+                <strong>Cần hỗ trợ?</strong>
+
+                <p>Liên hệ trung tâm khi bạn cần giải đáp.</p>
+
+                @Html.ActionLink(
+                    "Liên hệ trung tâm →",
+                    "Contact",
+                    "Home",
+                    null,
+                    new { @class = "student-support-link" }
+                )
+
+            </div>
+
+            @Html.ActionLink(
+                "↪ Đăng xuất",
+                "Logout",
+                "Auth",
+                null,
+                new { @class = "student-logout-link" }
+            )
+
+        </div>
+
+    </aside>
+
+    @* MAIN *@
+
+    <div class="student-main">
+
+        <header class="student-topbar">
+
+            <div class="student-topbar-title">
+                <span>CỔNG HỌC VIÊN</span>
+                <strong>Học phí &amp; hóa đơn</strong>
+            </div>
+
+            <div class="student-topbar-actions">
+
+                <div class="student-topbar-user">
+
+                    <span class="student-avatar-small">
+                        @studentInitial
+                    </span>
+
+                    <span class="student-topbar-user-info">
+                        <strong>@studentName</strong>
+                        <small>Học viên</small>
+                    </span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <main class="student-content">
+
+            <div class="student-breadcrumb">
+                Trang chủ
+                <span>/</span>
+                Cổng học viên
+                <span>/</span>
+                Học phí &amp; hóa đơn
+            </div>
+
+            <div class="sp-page">
+
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="sp-alert sp-alert-success" role="status">
+
+                        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+
+                        <span>@TempData["SuccessMessage"]</span>
+
+                    </div>
+                }
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="sp-alert sp-alert-warning" role="alert">
+
+                        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+
+                        <span>@TempData["ErrorMessage"]</span>
+
+                    </div>
+                }
+
+                @if (Model.PendingEnrollmentCount > 0)
+                {
+                    <div class="sp-alert sp-alert-warning" role="status">
+
+                        <i class="bi bi-clock-history" aria-hidden="true"></i>
+
+                        <span>
+                            Bạn đang có <strong>@Model.PendingEnrollmentCount</strong>
+                            đơn ghi danh ở trạng thái chờ duyệt. Vui lòng theo dõi
+                            công nợ và liên hệ trung tâm để biết cách thanh toán.
+                        </span>
+
+                    </div>
+                }
+
+                @* HEADER *@
+
+                <section class="sp-heading">
+
+                    <div class="sp-heading-content">
+
+                        <span class="sp-eyebrow">
+                            MY FINANCIAL OVERVIEW
+                        </span>
+
+                        <h1 class="sp-title">
+                            Học phí &amp; hóa đơn
+                        </h1>
+
+                        <p class="sp-description">
+                            Theo dõi tổng học phí các lớp đã ghi danh,
+                            số tiền đã được ghi nhận và các giao dịch
+                            thanh toán của bạn.
+                        </p>
+
+                    </div>
+
+                    <span class="sp-account-badge">
+                        <i class="bi bi-shield-check" aria-hidden="true"></i>
+                        Thông tin tài khoản
+                    </span>
+
+                </section>
+
+                @* BALANCE BANNER *@
+
+                <section class="sp-balance-banner">
+
+                    <div class="sp-balance-content">
+
+                        <span class="sp-balance-label">
+                            CÔNG NỢ HIỆN TẠI
+                        </span>
+
+                        <strong class="sp-balance-amount">
+                            @Model.OutstandingBalance.ToString("N0") VNĐ
+                        </strong>
+
+                        @if (Model.OutstandingBalance > 0)
+                        {
+                            <span class="sp-balance-caption">
+                                Đây là số dư công nợ được tính theo dữ liệu
+                                học phí và giao dịch do hệ thống ghi nhận.
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="sp-balance-caption">
+                                Hiện không còn dư nợ theo số liệu tổng hợp
+                                của hệ thống.
+                            </span>
+                        }
+
+                    </div>
+
+                    <span class="sp-balance-icon">
+                        <i class="bi bi-wallet2" aria-hidden="true"></i>
+                    </span>
+
+                </section>
+
+                @* FINANCIAL SUMMARY *@
+
+                <section class="sp-stats">
+
+                    <article class="sp-stat-card">
+
+                        <div class="sp-stat-top">
+
+                            <span class="sp-stat-label">
+                                TỔNG HỌC PHÍ
+                            </span>
+
+                            <span class="sp-stat-icon">
+                                <i class="bi bi-receipt" aria-hidden="true"></i>
+                            </span>
+
+                        </div>
+
+                        <strong class="sp-stat-number">
+                            @Model.TotalTuitionFee.ToString("N0")
+                            <span style="font-size:11px;">VNĐ</span>
+                        </strong>
+
+                        <span class="sp-stat-description">
+                            Tổng học phí các lượt ghi danh được tính phí
+                        </span>
+
+                    </article>
+
+                    <article class="sp-stat-card">
+
+                        <div class="sp-stat-top">
+
+                            <span class="sp-stat-label">
+                                ĐÃ GHI NHẬN THANH TOÁN
+                            </span>
+
+                            <span class="sp-stat-icon green">
+                                <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                            </span>
+
+                        </div>
+
+                        <strong class="sp-stat-number">
+                            @Model.TotalPaid.ToString("N0")
+                            <span style="font-size:11px;">VNĐ</span>
+                        </strong>
+
+                        <span class="sp-stat-description">
+                            Tổng các khoản thanh toán được tính trong báo cáo hiện tại
+                        </span>
+
+                    </article>
+
+                    <article class="sp-stat-card">
+
+                        <div class="sp-stat-top">
+
+                            <span class="sp-stat-label">
+                                LỚP ĐÃ GHI DANH
+                            </span>
+
+                            <span class="sp-stat-icon blue">
+                                <i class="bi bi-journal-check" aria-hidden="true"></i>
+                            </span>
+
+                        </div>
+
+                        <strong class="sp-stat-number">
+                            @totalEnrollments
+                        </strong>
+
+                        <span class="sp-stat-description">
+                            @approvedEnrollments lớp đã duyệt hoặc đang học;
+                            @pendingEnrollments đơn chờ duyệt
+                        </span>
+
+                    </article>
+
+                </section>
+
+                <div class="sp-action-row">
+
+                    <a href="@Url.Action("StudentEnroll", "Enrollments")"
+                       class="sp-btn sp-btn-primary">
+
+                        <i class="bi bi-plus-circle-fill" aria-hidden="true"></i>
+                        Xem lớp học đang mở
+
+                    </a>
+
+                </div>
+
+                @* ENROLLMENTS *@
+
+                <section class="sp-panel">
+
+                    <header class="sp-panel-header">
+
+                        <div class="sp-panel-heading-main">
+
+                            <span class="sp-panel-icon">
+                                <i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i>
+                            </span>
+
+                            <div>
+                                <h2 class="sp-panel-title">
+                                    Các lớp học đã đăng ký
+                                </h2>
+
+                                <p class="sp-panel-subtitle">
+                                    Theo dõi học phí và tình trạng xét duyệt
+                                    của từng lượt ghi danh.
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <span class="sp-count-badge">
+                            @enrollments.Count lớp
+                        </span>
+
+                    </header>
+
+                    <div class="sp-table-wrap">
+
+                        <table class="sp-table">
+
+                            <thead>
+                                <tr>
+                                    <th>LỚP HỌC</th>
+                                    <th>KHÓA HỌC</th>
+                                    <th>HỌC PHÍ</th>
+                                    <th>TRẠNG THÁI GHI DANH</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @if (enrollments.Any())
+                                {
+                                    foreach (var enrollment in enrollments)
+                                    {
+                                        string enrollmentStatusClass = "sp-status-default";
+                                        string enrollmentStatusText =
+                                            string.IsNullOrWhiteSpace(enrollment.Status)
+                                                ? "Chưa xác định"
+                                                : enrollment.Status;
+
+                                        if (enrollment.Status == "Pending")
+                                        {
+                                            enrollmentStatusClass = "sp-status-pending";
+                                            enrollmentStatusText = "Chờ duyệt";
+                                        }
+                                        else if (
+                                            enrollment.Status == "Approved" ||
+                                            enrollment.Status == "Active" ||
+                                            enrollment.Status == "Đang học" ||
+                                            enrollment.Status == "Đã duyệt")
+                                        {
+                                            enrollmentStatusClass = "sp-status-approved";
+                                            enrollmentStatusText = "Đã duyệt / Đang học";
+                                        }
+
+                                        <tr>
+
+                                            <td>
+                                                <span class="sp-primary-text">
+                                                    @(enrollment.Class != null
+                                                        ? enrollment.Class.ClassName
+                                                        : "Chưa xác định")
+                                                </span>
+
+                                                <span class="sp-secondary-text">
+                                                    Mã ghi danh: #@enrollment.Id
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span class="sp-primary-text">
+                                                    @(enrollment.Class != null &&
+                                                      enrollment.Class.Course != null
+                                                        ? enrollment.Class.Course.CourseName
+                                                        : "Chưa xác định")
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span class="sp-tuition">
+                                                    @(enrollment.Class != null &&
+                                                      enrollment.Class.Course != null
+                                                        ? enrollment.Class.Course.TuitionFee.ToString("N0")
+                                                        : "0")
+                                                    VNĐ
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span class="sp-status @enrollmentStatusClass">
+                                                    <i class="bi bi-circle-fill"
+                                                       style="font-size:6px;"
+                                                       aria-hidden="true"></i>
+                                                    @enrollmentStatusText
+                                                </span>
+                                            </td>
+
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="4">
+
+                                            <div class="sp-empty-state">
+
+                                                <span class="sp-empty-icon">
+                                                    <i class="bi bi-journal-x" aria-hidden="true"></i>
+                                                </span>
+
+                                                <strong>Bạn chưa ghi danh lớp học nào</strong>
+
+                                                <p>
+                                                    Khi bạn đăng ký lớp học, thông tin lớp
+                                                    và học phí tương ứng sẽ hiển thị tại đây.
+                                                </p>
+
+                                            </div>
+
+                                        </td>
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <footer class="sp-panel-footer">
+
+                        <span>
+                            Tổng số lượt ghi danh:
+                            <strong>@enrollments.Count</strong>
+                        </span>
+
+                        <span>
+                            Đang chờ duyệt:
+                            <strong>@pendingEnrollments</strong>
+                        </span>
+
+                    </footer>
+
+                </section>
+
+                @* PAYMENT HISTORY *@
+
+                <section class="sp-panel">
+
+                    <header class="sp-panel-header">
+
+                        <div class="sp-panel-heading-main">
+
+                            <span class="sp-panel-icon green">
+                                <i class="bi bi-receipt-cutoff" aria-hidden="true"></i>
+                            </span>
+
+                            <div>
+                                <h2 class="sp-panel-title">
+                                    Lịch sử giao dịch
+                                </h2>
+
+                                <p class="sp-panel-subtitle">
+                                    Các bản ghi giao dịch đã được lưu trong hệ thống.
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <span class="sp-count-badge">
+                            @paymentHistory.Count giao dịch
+                        </span>
+
+                    </header>
+
+                    <div class="sp-table-wrap">
+
+                        <table class="sp-table">
+
+                            <thead>
+                                <tr>
+                                    <th>MÃ BIÊN LAI</th>
+                                    <th>NGÀY GIAO DỊCH</th>
+                                    <th>HÌNH THỨC</th>
+                                    <th>LỚP HỌC</th>
+                                    <th>SỐ TIỀN</th>
+                                    <th>TRẠNG THÁI</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                @if (paymentHistory.Any())
+                                {
+                                    foreach (var payment in paymentHistory)
+                                    {
+                                        string paymentStatusClass = "sp-status-pending";
+                                        string paymentStatusText = "Chờ thanh toán";
+
+                                        if (
+                                            payment.PaymentStatus == "Paid" ||
+                                            payment.PaymentStatus == "Completed")
+                                        {
+                                            paymentStatusClass = "sp-status-paid";
+                                            paymentStatusText = "Đã thanh toán";
+                                        }
+                                        else if (payment.PaymentStatus == "Partial")
+                                        {
+                                            paymentStatusClass = "sp-status-partial";
+                                            paymentStatusText = "Thanh toán một phần";
+                                        }
+                                        else if (
+                                            payment.PaymentStatus != "Pending" &&
+                                            !string.IsNullOrWhiteSpace(payment.PaymentStatus))
+                                        {
+                                            paymentStatusClass = "sp-status-default";
+                                            paymentStatusText = payment.PaymentStatus;
+                                        }
+
+                                        <tr>
+
+                                            <td>
+                                                <span class="sp-receipt">
+                                                    @(string.IsNullOrWhiteSpace(payment.ReceiptNumber)
+                                                        ? "—"
+                                                        : payment.ReceiptNumber)
+                                                </span>
+
+                                                <span class="sp-secondary-text">
+                                                    Mã giao dịch: #@payment.Id
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span class="sp-primary-text">
+                                                    @(payment.PaymentDate.HasValue
+                                                        ? payment.PaymentDate.Value.ToString("dd/MM/yyyy")
+                                                        : "Chưa cập nhật")
+                                                </span>
+
+                                                @if (payment.PaymentDate.HasValue)
+                                                {
+                                                    <span class="sp-secondary-text">
+                                                        @payment.PaymentDate.Value.ToString("HH:mm")
+                                                    </span>
+                                                }
+                                            </td>
+
+                                            <td>
+                                                @(string.IsNullOrWhiteSpace(payment.PaymentMethod)
+                                                    ? "Chưa cập nhật"
+                                                    : payment.PaymentMethod)
+                                            </td>
+
+                                            <td>
+                                                <span class="sp-primary-text">
+                                                    @(payment.Enrollment != null &&
+                                                      payment.Enrollment.Class != null
+                                                        ? payment.Enrollment.Class.ClassName
+                                                        : "Chưa xác định")
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span class="sp-amount">
+                                                    @payment.AmountPaid.ToString("N0") VNĐ
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span class="sp-status @paymentStatusClass">
+                                                    <i class="bi bi-circle-fill"
+                                                       style="font-size:6px;"
+                                                       aria-hidden="true"></i>
+                                                    @paymentStatusText
+                                                </span>
+                                            </td>
+
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="6">
+
+                                            <div class="sp-empty-state">
+
+                                                <span class="sp-empty-icon">
+                                                    <i class="bi bi-receipt" aria-hidden="true"></i>
+                                                </span>
+
+                                                <strong>Chưa có lịch sử giao dịch</strong>
+
+                                                <p>
+                                                    Các bản ghi thanh toán sẽ xuất hiện tại đây
+                                                    khi hệ thống có giao dịch tương ứng.
+                                                </p>
+
+                                            </div>
+
+                                        </td>
+                                    </tr>
+                                }
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                    <footer class="sp-panel-footer">
+
+                        <span>
+                            Tổng số giao dịch:
+                            <strong>@paymentHistory.Count</strong>
+                        </span>
+
+                        <span>
+                            Đã thanh toán đủ:
+                            <strong>@completedPayments</strong>
+                            · Thanh toán một phần:
+                            <strong>@partialPayments</strong>
+                        </span>
+
+                    </footer>
+
+                </section>
+
+            </div>
+
+        </main>
+
+        <footer class="student-footer">
+
+            <span>
+                <i class="bi bi-book-half" aria-hidden="true"></i>
+                © @DateTime.Now.Year English Center
+            </span>
+
+            <span>
+                Hệ thống quản lý trung tâm Anh ngữ · Cổng học viên
+            </span>
+
+        </footer>
+
+    </div>
+
+</div>

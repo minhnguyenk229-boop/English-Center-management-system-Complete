@@ -1,0 +1,458 @@
+﻿
+@model English_language_center_management_system.Models.ClassSession
+
+@{
+    ViewBag.Title = "Xóa buổi học";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    string className = Model.Class != null
+        ? Model.Class.ClassName
+        : "Lớp #" + Model.ClassId;
+
+    string courseName = Model.Class != null && Model.Class.Course != null
+        ? Model.Class.Course.CourseName
+        : "Chưa xác định khóa học";
+
+    string roomName = Model.Room != null
+        ? Model.Room.RoomName
+        : "Chưa xếp phòng";
+
+    double durationMinutes = Math.Max(
+        0,
+        (Model.EndTime - Model.StartTime).TotalMinutes);
+
+    string durationText = (durationMinutes / 60.0).ToString("0.##") + " giờ";
+}
+
+<style>
+    .csdel-page {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding-bottom: 22px;
+        color: #25324a;
+    }
+
+        .csdel-page * {
+            box-sizing: border-box;
+        }
+
+    .csdel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 17px;
+    }
+
+    .csdel-eyebrow {
+        margin-bottom: 6px;
+        color: #929db0;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.2px;
+    }
+
+    .csdel-header h1 {
+        margin: 0 0 5px;
+        color: #25324a;
+        font-size: 24px;
+        font-weight: 800;
+    }
+
+    .csdel-header p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .csdel-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 36px;
+        padding: 8px 12px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+
+    .csdel-btn-back,
+    .csdel-btn-cancel {
+        border-color: #dce3ed;
+        background: #fff;
+        color: #526078;
+    }
+
+        .csdel-btn-back:hover,
+        .csdel-btn-cancel:hover {
+            background: #f5f7fb;
+            color: #25324a;
+        }
+
+    .csdel-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        align-items: start;
+        gap: 16px;
+    }
+
+    .csdel-card,
+    .csdel-warning {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid #e3e9f1;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(26,42,69,.035);
+    }
+
+    .csdel-card-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid #edf0f5;
+        color: #29364d;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .csdel-card-body {
+        padding: 18px;
+    }
+
+    .csdel-identity {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 16px;
+        margin-bottom: 4px;
+        border-bottom: 1px solid #edf0f5;
+    }
+
+    .csdel-identity-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        flex-shrink: 0;
+        border-radius: 13px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 21px;
+    }
+
+    .csdel-identity h2 {
+        margin: 0 0 5px;
+        color: #25324a;
+        font-size: 16px;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+    }
+
+    .csdel-identity p {
+        margin: 0;
+        color: #8995aa;
+        font-size: 11px;
+        line-height: 1.6;
+    }
+
+    .csdel-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f2f6;
+    }
+
+        .csdel-row:last-child {
+            border-bottom: none;
+        }
+
+    .csdel-label {
+        flex-shrink: 0;
+        color: #8995aa;
+        font-size: 11px;
+    }
+
+    .csdel-value {
+        color: #29364d;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: right;
+        overflow-wrap: anywhere;
+    }
+
+    .csdel-time {
+        color: #245bb5;
+        white-space: nowrap;
+    }
+
+    .csdel-warning {
+        border-top: 4px solid #c92828;
+    }
+
+    .csdel-warning-body {
+        padding: 19px;
+    }
+
+    .csdel-warning-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 45px;
+        height: 45px;
+        margin-bottom: 13px;
+        border-radius: 13px;
+        background: #fff0f0;
+        color: #c92828;
+        font-size: 24px;
+        font-weight: 900;
+    }
+
+    .csdel-warning h3 {
+        margin: 0 0 9px;
+        color: #25324a;
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+    .csdel-warning p {
+        margin: 0 0 14px;
+        color: #738097;
+        font-size: 11px;
+        line-height: 1.8;
+    }
+
+    .csdel-alert {
+        margin-bottom: 15px;
+        padding: 12px;
+        border: 1px solid #ffdada;
+        border-radius: 8px;
+        background: #fff4f4;
+        color: #a92323;
+        font-size: 10px;
+        line-height: 1.8;
+    }
+
+        .csdel-alert strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 11px;
+        }
+
+    .csdel-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+        .csdel-actions .csdel-btn {
+            width: 100%;
+            min-height: 39px;
+        }
+
+    .csdel-btn-confirm {
+        border-color: #c92828;
+        background: #c92828;
+        color: #fff;
+    }
+
+        .csdel-btn-confirm:hover {
+            border-color: #a91f1f;
+            background: #a91f1f;
+            color: #fff;
+        }
+
+    .csdel-security-note {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid #edf0f5;
+        color: #8995aa;
+        font-size: 10px;
+        line-height: 1.8;
+    }
+
+    @@media(max-width: 900px) {
+        .csdel-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    @@media(max-width: 600px) {
+        .csdel-header h1 {
+            font-size: 21px;
+        }
+
+        .csdel-card-body,
+        .csdel-warning-body {
+            padding: 14px;
+        }
+
+        .csdel-row {
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .csdel-value {
+            text-align: left;
+        }
+    }
+</style>
+
+<div class="csdel-page">
+
+    <div class="csdel-header">
+        <div>
+            <div class="csdel-eyebrow">
+                ENGLISH LANGUAGE CENTER / QUẢN LÝ LỊCH HỌC
+            </div>
+
+            <h1>Xóa buổi học</h1>
+
+            <p>Kiểm tra thông tin buổi học trước khi xác nhận thao tác.</p>
+        </div>
+
+        <a href="@Url.Action("Index", "ClassSessions")"
+           class="csdel-btn csdel-btn-back">
+            <i class="glyphicon glyphicon-list"></i>
+            Danh sách buổi học
+        </a>
+    </div>
+
+    <div class="csdel-layout">
+
+        <section class="csdel-card">
+
+            <div class="csdel-card-header">
+                Thông tin buổi học cần xóa
+            </div>
+
+            <div class="csdel-card-body">
+
+                <div class="csdel-identity">
+
+                    <div class="csdel-identity-icon">
+                        <i class="glyphicon glyphicon-calendar"></i>
+                    </div>
+
+                    <div>
+                        <h2>@className</h2>
+                        <p>@courseName</p>
+                        <p>Mã buổi học: #@Model.Id</p>
+                    </div>
+
+                </div>
+
+                <div class="csdel-row">
+                    <span class="csdel-label">Lớp học</span>
+                    <span class="csdel-value">@className</span>
+                </div>
+
+                <div class="csdel-row">
+                    <span class="csdel-label">Khóa học</span>
+                    <span class="csdel-value">@courseName</span>
+                </div>
+
+                <div class="csdel-row">
+                    <span class="csdel-label">Ngày học</span>
+                    <span class="csdel-value">
+                        @Model.SessionDate.ToString("dd/MM/yyyy")
+                    </span>
+                </div>
+
+                <div class="csdel-row">
+                    <span class="csdel-label">Giờ bắt đầu</span>
+                    <span class="csdel-value csdel-time">
+                        @Model.StartTime.ToString(@"hh\:mm")
+                    </span>
+                </div>
+
+                <div class="csdel-row">
+                    <span class="csdel-label">Giờ kết thúc</span>
+                    <span class="csdel-value csdel-time">
+                        @Model.EndTime.ToString(@"hh\:mm")
+                    </span>
+                </div>
+
+                <div class="csdel-row">
+                    <span class="csdel-label">Thời lượng</span>
+                    <span class="csdel-value">@durationText</span>
+                </div>
+
+                <div class="csdel-row">
+                    <span class="csdel-label">Phòng học</span>
+                    <span class="csdel-value">@roomName</span>
+                </div>
+
+            </div>
+        </section>
+
+        <aside class="csdel-warning">
+
+            <div class="csdel-warning-body">
+
+                <div class="csdel-warning-icon">!</div>
+
+                <h3>Xác nhận xóa buổi học</h3>
+
+                <p>
+                    Bạn đang chuẩn bị xóa buổi học của lớp
+                    <strong>@className</strong> vào ngày
+                    <strong>@Model.SessionDate.ToString("dd/MM/yyyy")</strong>.
+                </p>
+
+                <div class="csdel-alert">
+                    <strong>
+                        <i class="glyphicon glyphicon-warning-sign"></i>
+                        Lưu ý quan trọng
+                    </strong>
+
+                    Theo quy tắc xử lý hiện có, hệ thống không cho xóa buổi học
+                    đã có dữ liệu điểm danh. Nếu buổi học có điểm danh, thao tác
+                    sẽ bị từ chối và bạn sẽ trở về danh sách.
+                </div>
+
+                @using (Html.BeginForm(
+                    "Delete",
+                    "ClassSessions",
+                    new { id = Model.Id },
+                    FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+
+                    <div class="csdel-actions">
+
+                        <button type="submit"
+                                class="csdel-btn csdel-btn-confirm"
+                                onclick="return confirm('Bạn có chắc chắn muốn xóa buổi học này không?');">
+                            <i class="glyphicon glyphicon-trash"></i>
+                            Xác nhận xóa
+                        </button>
+
+                        <a href="@Url.Action("Details", "ClassSessions", new { id = Model.Id })"
+                           class="csdel-btn csdel-btn-cancel">
+                            Hủy bỏ
+                        </a>
+
+                    </div>
+                }
+
+                <div class="csdel-security-note">
+                    Thao tác xóa được thực hiện qua action Delete hiện có.
+                    Không có quy tắc xóa nào được thay đổi trong giao diện này.
+                </div>
+
+            </div>
+
+        </aside>
+
+    </div>
+
+</div>

@@ -1,0 +1,488 @@
+﻿@model English_language_center_management_system.Models.ViewModels.Courses.CourseDetailViewModel
+
+@{
+    ViewBag.Title = Model.Course.CourseName;
+
+    var course = Model.Course;
+
+    var availableClasses = Model.AvailableClasses
+        ?? new System.Collections.Generic.List<
+            English_language_center_management_system.Models.Class>();
+
+    var teachers = availableClasses
+        .Where(c => c.Teacher != null)
+        .GroupBy(c => c.Teacher.Id)
+        .Select(g => g.First().Teacher)
+        .ToList();
+}
+<style>
+    .course-detail-page .detail-course-visual {
+        position: relative;
+        min-height: 190px;
+        padding: 0;
+        overflow: hidden;
+        background: linear-gradient(135deg, #edf1f7, #fff0f0);
+    }
+
+    .course-detail-page .detail-course-image {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    .course-detail-page .detail-course-image-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background: linear-gradient( 0deg, rgba(18, 28, 45, .78) 0%, rgba(18, 28, 45, .12) 100% );
+    }
+
+    .course-detail-page .detail-course-visual > .detail-course-image-caption {
+        position: absolute;
+        z-index: 2;
+        right: 22px;
+        bottom: 58px;
+        left: 22px;
+        margin: 0;
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, .25);
+    }
+
+    .course-detail-page .detail-course-visual > .detail-course-image-title {
+        position: absolute;
+        z-index: 2;
+        right: 22px;
+        bottom: 19px;
+        left: 22px;
+        overflow: hidden;
+        color: #ffffff;
+        font-size: 22px;
+        font-weight: 850;
+        line-height: 1.25;
+        text-overflow: ellipsis;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, .3);
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+</style>
+<div class="course-detail-page">
+
+    @* 1. ĐƯỜNG DẪN ĐIỀU HƯỚNG *@
+    <div class="detail-breadcrumb">
+        @Html.ActionLink("Trang chủ", "Index", "Home")
+        <span>/</span>
+        @Html.ActionLink("Khóa học", "Index", "Courses")
+        <span>/</span>
+        <span>@course.CourseName</span>
+    </div>
+
+    @* 2. PHẦN GIỚI THIỆU KHÓA HỌC *@
+    <section class="course-detail-hero">
+
+        <div class="course-detail-intro">
+
+            <span class="detail-level">
+                @course.Level
+            </span>
+
+            <h1>@course.CourseName</h1>
+
+            <p class="course-detail-description">
+                @course.Description
+            </p>
+
+            <div class="detail-stats">
+
+                <div class="detail-stat">
+                    <span class="detail-stat-icon">◷</span>
+                    <div>
+                        <small>Thời lượng</small>
+                        <strong>@course.Duration giờ</strong>
+                    </div>
+                </div>
+
+                <div class="detail-stat">
+                    <span class="detail-stat-icon">▦</span>
+                    <div>
+                        <small>Lớp đang mở</small>
+                        <strong>@availableClasses.Count lớp</strong>
+                    </div>
+                </div>
+
+                <div class="detail-stat">
+                    <span class="detail-stat-icon">◎</span>
+                    <div>
+                        <small>Trình độ</small>
+                        <strong>@course.Level</strong>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        @* THẺ HỌC PHÍ *@
+        <aside class="detail-enrollment-card">
+
+            <div class="detail-course-visual">
+
+                @if (!string.IsNullOrWhiteSpace(course.ImageUrl))
+                {
+                    <img class="detail-course-image"
+                         src="@Url.Content(course.ImageUrl)"
+                         alt="Ảnh khóa học @course.CourseName" />
+
+                    <div class="detail-course-image-overlay"></div>
+
+                    <span class="detail-course-image-caption">
+                        ENGLISH CENTER
+                    </span>
+
+                    <strong class="detail-course-image-title">
+                        @course.CourseName
+                    </strong>
+                }
+                else
+                {
+                    <span>ENGLISH CENTER</span>
+
+                    <strong>Learn English<br />Your Way</strong>
+
+                    <div class="detail-visual-circle"></div>
+                }
+
+            </div>
+
+            <div class="detail-enrollment-body">
+
+                <span class="detail-price-label">
+                    Học phí khóa học
+                </span>
+
+                <div class="detail-price">
+                    @course.TuitionFee.ToString("N0") VNĐ
+                </div>
+
+                <p class="detail-price-note">
+                    Thời lượng: @course.Duration giờ
+                </p>
+
+                <a href="#available-classes"
+                   class="btn btn-primary detail-main-button">
+                    Xem lớp đang mở
+                </a>
+
+                @Html.ActionLink(
+                    "Đăng ký tư vấn",
+                    "Contact",
+                    "Home",
+                    null,
+                    new { @class = "btn btn-outline-primary detail-secondary-button" }
+                )
+
+                <div class="detail-card-benefits">
+                    <div>✓ Thông tin lớp học rõ ràng</div>
+                    <div>✓ Có thông tin lịch học</div>
+                    <div>✓ Xem giáo viên phụ trách</div>
+                </div>
+
+            </div>
+        </aside>
+
+    </section>
+
+    @* 3. NỘI DUNG CHÍNH *@
+    <div class="course-detail-content">
+
+        <main class="course-detail-main">
+
+            @* TỔNG QUAN *@
+            <section class="detail-section">
+
+                <div class="detail-section-heading">
+                    <span class="detail-heading-line"></span>
+                    <h2>Tổng quan khóa học</h2>
+                </div>
+
+                <div class="detail-text-block">
+                    @if (!string.IsNullOrWhiteSpace(course.Description))
+                    {
+                        @course.Description
+                    }
+                    else
+                    {
+                        <p>
+                            Thông tin giới thiệu khóa học
+                            sẽ được cập nhật.
+                        </p>
+                    }
+                </div>
+
+                <div class="detail-feature-grid">
+
+                    <div class="detail-feature">
+                        <div class="detail-feature-icon">▤</div>
+                        <h3>Chương trình học</h3>
+                        <p>
+                            Theo dõi nội dung chương trình
+                            được cung cấp cho khóa học.
+                        </p>
+                    </div>
+
+                    <div class="detail-feature">
+                        <div class="detail-feature-icon">✓</div>
+                        <h3>Lịch học minh bạch</h3>
+                        <p>
+                            Xem các lớp đang mở và lịch học
+                            trước khi liên hệ tư vấn.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+            @* LỘ TRÌNH HỌC *@
+            <section class="detail-section">
+
+                <div class="detail-section-heading">
+                    <span class="detail-heading-line"></span>
+                    <h2>Lộ trình học</h2>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(course.Syllabus))
+                {
+                    <div class="detail-syllabus">
+                        @course.Syllabus
+                    </div>
+                }
+                else
+                {
+                    <div class="detail-empty">
+                        <strong>Chương trình học đang được cập nhật</strong>
+                        <p>
+                            Vui lòng liên hệ trung tâm để biết
+                            thêm thông tin về nội dung khóa học.
+                        </p>
+                    </div>
+                }
+
+            </section>
+
+            @* GIÁO VIÊN *@
+            <section class="detail-section">
+
+                <div class="detail-section-heading">
+                    <span class="detail-heading-line"></span>
+                    <h2>Đội ngũ giảng viên</h2>
+                </div>
+
+                @if (teachers.Any())
+                {
+                    <div class="detail-teacher-list">
+
+                        @foreach (var teacher in teachers)
+                        {
+                            <article class="detail-teacher-card">
+
+                                <div class="detail-teacher-avatar">
+                                    @teacher.FullName.Substring(0, 1)
+                                </div>
+
+                                <div class="detail-teacher-info">
+
+                                    <h3>@teacher.FullName</h3>
+
+                                    <p>Giảng viên của trung tâm</p>
+
+                                    @if (!string.IsNullOrWhiteSpace(teacher.Email))
+                                    {
+                                        <div class="detail-teacher-email">
+                                            @teacher.Email
+                                        </div>
+                                    }
+
+                                </div>
+
+                            </article>
+                        }
+
+                    </div>
+                }
+                else
+                {
+                    <div class="detail-empty">
+                        Thông tin giảng viên sẽ được cập nhật
+                        khi có lớp học được phân công giáo viên.
+                    </div>
+                }
+
+            </section>
+
+            @* CÁC LỚP ĐANG MỞ *@
+            <section id="available-classes" class="detail-section">
+
+                <div class="detail-section-heading">
+                    <span class="detail-heading-line"></span>
+                    <h2>Lịch khai giảng và lớp học</h2>
+                </div>
+
+                <p class="detail-section-description">
+                    Các lớp dưới đây đang có trạng thái mở
+                    đăng ký trong hệ thống.
+                </p>
+
+                @if (availableClasses.Any())
+                {
+                    <div class="detail-table-wrapper">
+
+                        <table class="table detail-classes-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Tên lớp</th>
+                                    <th>Lịch học</th>
+                                    <th>Giảng viên</th>
+                                    <th>Phòng</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var item in availableClasses)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@item.ClassName</strong>
+                                        </td>
+
+                                        <td>
+                                            @(string.IsNullOrWhiteSpace(item.ScheduleDescription)
+                                                ? "Liên hệ trung tâm"
+                                                : item.ScheduleDescription)
+                                        </td>
+
+                                        <td>
+                                            @(item.Teacher != null
+                                                ? item.Teacher.FullName
+                                                : "Chưa phân công")
+                                        </td>
+
+                                        <td>
+                                            @(item.Room != null
+                                            && !string.IsNullOrWhiteSpace(item.Room.RoomName)
+                                            ? item.Room.RoomName
+                                            : "Chưa xếp phòng")
+                                        </td>
+
+                                        <td>
+                                            <span class="detail-status">
+                                                Đang mở
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                }
+                else
+                {
+                    <div class="detail-empty">
+                        <strong>Hiện chưa có lớp đang mở</strong>
+                        <p>
+                            Bạn có thể liên hệ trung tâm để
+                            hỏi về lịch khai giảng tiếp theo.
+                        </p>
+
+                        @Html.ActionLink(
+                            "Liên hệ trung tâm",
+                            "Contact",
+                            "Home",
+                            null,
+                            new { @class = "btn btn-outline-primary" }
+                        )
+                    </div>
+                }
+
+            </section>
+
+        </main>
+
+        @* CỘT THÔNG TIN PHỤ *@
+        <aside class="course-detail-sidebar">
+
+            <div class="detail-sidebar-card">
+
+                <h3>Thông tin khóa học</h3>
+
+                <div class="detail-info-row">
+                    <span>Trình độ</span>
+                    <strong>@course.Level</strong>
+                </div>
+
+                <div class="detail-info-row">
+                    <span>Thời lượng</span>
+                    <strong>@course.Duration giờ</strong>
+                </div>
+
+                <div class="detail-info-row">
+                    <span>Số lớp đang mở</span>
+                    <strong>@availableClasses.Count</strong>
+                </div>
+
+                <div class="detail-info-row">
+                    <span>Học phí</span>
+                    <strong>@course.TuitionFee.ToString("N0") VNĐ</strong>
+                </div>
+
+                <a href="#available-classes"
+                   class="btn btn-primary detail-main-button">
+                    Xem lịch học
+                </a>
+
+            </div>
+
+            <div class="detail-sidebar-card detail-help-card">
+
+                <h3>Bạn cần tư vấn thêm?</h3>
+
+                <p>
+                    Liên hệ với trung tâm để được giải đáp
+                    về chương trình, lịch học và học phí.
+                </p>
+
+                @Html.ActionLink(
+                    "Liên hệ tư vấn",
+                    "Contact",
+                    "Home",
+                    null,
+                    new { @class = "btn btn-outline-primary detail-secondary-button" }
+                )
+
+            </div>
+
+        </aside>
+
+    </div>
+
+    @* 4. ĐIỀU HƯỚNG CUỐI TRANG *@
+    <div class="detail-back-link">
+        @Html.ActionLink(
+            "← Quay lại danh mục khóa học",
+            "Index",
+            "Courses"
+        )
+    </div>
+
+</div>
